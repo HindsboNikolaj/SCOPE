@@ -1,0 +1,17 @@
+# Custom agent configuration template
+# Copy this file and fill in your model details.
+
+agent:
+  slm:
+    backend: ""          # ollama | vllm | openai-compatible
+    model_id: ""         # Your model identifier
+    base_url: ""         # API endpoint URL
+    api_key: ""          # API key (or "ollama" for Ollama)
+    temperature: 0.7
+    thinking: "never"    # never | toggle | always | levels
+
+  vlm:
+    backend: ""          # moondream-api | moondream-local | qwen2.5-vl
+    api_key: ""          # VLM API key
+    model_id: ""         # VLM model identifier
+    # base_url: ""       # For self-hosted VLM servers

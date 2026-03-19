@@ -1,0 +1,26 @@
+# ─────────────────────────────────────────────────────────────────
+# Qwen3-Next-80B-A3B + Qwen2.5-VL-7B
+# Paper accuracy: 68.3% (Table 4, SCOPE HRI '26)
+# ─────────────────────────────────────────────────────────────────
+
+agent:
+  slm:
+    # ── Ollama (not available on Ollama) ──
+    # backend: "ollama"
+    # model_id: "qwen3:80b-a3b"
+    # base_url: "${AGENT_API_BASE}"
+    # api_key: "${AGENT_API_KEY}"
+    # ── vLLM ──
+    backend: "vllm"
+    model_id: "Qwen/Qwen3-Next-80B-A3B"
+    base_url: "${AGENT_API_BASE}"
+    api_key: "${AGENT_API_KEY}"
+    temperature: 0.7
+    max_tokens: 2048
+    thinking: "toggle"
+
+  vlm:
+    backend: "qwen2.5-vl"
+    api_key: "${MOONDREAM_API_KEY}"
+    model_id: "Qwen/Qwen2.5-VL-7B-Instruct"
+    base_url: "${VLM_BASE_URL}"

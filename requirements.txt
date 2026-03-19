@@ -1,0 +1,17 @@
+# SCOPE - Core Dependencies
+openai>=1.0.0
+pyyaml>=6.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# Evaluation
+pandas>=2.0.0
+
+# VLM backends (install the one you need)
+# moondream                  # pip install moondream (for local Moondream inference)
+# transformers>=4.40.0       # For local HuggingFace VLMs
+
+# Optional: Object detection
+# ultralytics>=8.0.0         # For YOLO-based detection tools

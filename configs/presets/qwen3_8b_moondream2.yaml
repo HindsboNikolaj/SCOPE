@@ -1,0 +1,15 @@
+# Lightweight configuration for resource-constrained setups
+# Qwen3-4B + Moondream2 (2B)
+
+agent:
+  slm:
+    backend: "ollama"
+    model_id: "qwen3:8b"
+    base_url: "http://localhost:11434/v1"
+    api_key: "ollama"
+    temperature: 0.7
+    thinking: "toggle"
+
+  vlm:
+    backend: "moondream"
+    api_key: "${MOONDREAM_API_KEY}"

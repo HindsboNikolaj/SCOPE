@@ -1,0 +1,26 @@
+# ─────────────────────────────────────────────────────────────────
+# Qwen3-4B-FP8 + Moondream3
+# Paper accuracy: 62.6% (Table 4, SCOPE HRI '26)
+# ─────────────────────────────────────────────────────────────────
+
+agent:
+  slm:
+    # ── Ollama (not available on Ollama) ──
+    # backend: "ollama"
+    # model_id: "qwen3:4b"
+    # base_url: "${AGENT_API_BASE}"
+    # api_key: "${AGENT_API_KEY}"
+    # ── vLLM ──
+    backend: "vllm"
+    model_id: "Qwen/Qwen3-4B-FP8"
+    base_url: "${AGENT_API_BASE}"
+    api_key: "${AGENT_API_KEY}"
+    temperature: 0.7
+    max_tokens: 2048
+    thinking: "toggle"
+
+  vlm:
+    backend: "moondream"
+    api_key: "${MOONDREAM_API_KEY}"
+    model_id: "vikhyatk/moondream3"
+    # base_url: "${VLM_BASE_URL}"    # Uncomment for self-hosted VLM

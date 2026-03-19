@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use SCOPE, please cite our HRI '26 paper."
+title: "SCOPE: A Real-Time Natural Language Camera Agent at the Edge"
+authors:
+  - family-names: Hindsbo
+    given-names: Nikolaj
+    affiliation: Armada AI
+  - family-names: Ehsani
+    given-names: Sina
+    affiliation: Armada AI
+  - family-names: Mishra
+    given-names: Pragyana
+    affiliation: Armada AI
+doi: "10.1145/3757279.3785641"
+date-released: "2026-03-16"
+url: "https://github.com/armada-ai/opus"
+preferred-citation:
+  type: conference-paper
+  title: "SCOPE: A Real-Time Natural Language Camera Agent at the Edge: A Sim-to-Real Benchmark and Analysis of Open-Source Vision and Language Agents for PTZ Camera Tasks"
+  authors:
+    - family-names: Hindsbo
+      given-names: Nikolaj
+    - family-names: Ehsani
+      given-names: Sina
+    - family-names: Mishra
+      given-names: Pragyana
+  collection-title: "Proceedings of the ACM/IEEE International Conference on Human-Robot Interaction (HRI '26)"
+  year: 2026
+  publisher:
+    name: ACM
+  doi: "10.1145/3757279.3785641"

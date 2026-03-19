@@ -1,0 +1,22 @@
+name: scope
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    # Core
+    - openai>=1.0.0
+    - pyyaml>=6.0
+    - python-dotenv>=1.0.0
+    - requests>=2.31.0
+    - Pillow>=10.0.0
+    - numpy>=1.24.0
+    # Evaluation
+    - pandas>=2.0.0
+    # VLM backends — uncomment the one you need:
+    # - moondream              # local Moondream inference
+    # - transformers>=4.40.0  # local HuggingFace VLMs
+    # Optional: object detection
+    # - ultralytics>=8.0.0    # YOLO-based detection

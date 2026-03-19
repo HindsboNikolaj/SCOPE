@@ -1,0 +1,27 @@
+# ─────────────────────────────────────────────────────────────────
+# Qwen3-Next-80B-A3B + Moondream2-4bit
+# Paper accuracy: 66.8% (Table 4, SCOPE HRI '26)
+# ─────────────────────────────────────────────────────────────────
+
+agent:
+  slm:
+    # ── Ollama (not available on Ollama) ──
+    # backend: "ollama"
+    # model_id: "qwen3:80b-a3b"
+    # base_url: "${AGENT_API_BASE}"
+    # api_key: "${AGENT_API_KEY}"
+    # ── vLLM ──
+    backend: "vllm"
+    model_id: "Qwen/Qwen3-Next-80B-A3B"
+    base_url: "${AGENT_API_BASE}"
+    api_key: "${AGENT_API_KEY}"
+    temperature: 0.7
+    max_tokens: 2048
+    thinking: "toggle"
+
+  vlm:
+    backend: "moondream"
+    api_key: "${MOONDREAM_API_KEY}"
+    model_id: "vikhyatk/moondream2"
+    # quantization: 4-bit (set via moondream-station --quantize int4)
+    # base_url: "${VLM_BASE_URL}"    # Uncomment for self-hosted VLM

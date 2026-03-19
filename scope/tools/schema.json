@@ -1,0 +1,143 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "zoom_bounding",
+      "description": "Zoom to FILL THE FRAME with a SPECIFIC OBJECT OR REGION that the user names. Use ONLY when the user mentions a target (a noun phrase), e.g., 'zoom in on the stop sign', 'focus on the plate', 'tighten on the storefront logo'. Do NOT use this tool for numeric zoom requests (e.g., '2x', '200%', '+10 zoom', 'enhance 2x') or generic 'zoom in/out' without a target — use ptz_adjust for those.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "instruction": {
+            "type": "string",
+            "description": "What to zoom in on (e.g. \"red ball\", \"person walking\")"
+          }
+        },
+        "required": ["instruction"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "count_pointing",
+      "description": "Count the number of objects matching a descriptive query in view. Example: \"Count red cars\" or \"Count people wearing hats.\" Returns the integer count.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "instruction": {
+            "type": "string",
+            "description": "Description of items to count (e.g. \"trees\", \"blue cars\")"
+          },
+          "view_type": {
+            "type": "string",
+            "enum": ["current", "full"],
+            "default": "current",
+            "description": "Use 'current' for the live frame; 'full' to run a 360° panorama and count across the stitched view."
+          }
+        },
+        "required": ["instruction"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "query_answer",
+      "description": "Answer a specific question about the current scene or a named target (e.g., \"describe the fence\", \"where is the red truck going?\", \"what does the sign say?\"). Always prefer this tool when the user mentions a specific object, region, or attribute.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "instruction": {
+            "type": "string",
+            "description": "The natural-language question to ask about the scene"
+          },
+          "view_type": {
+            "type": "string",
+            "enum": ["current", "full"],
+            "default": "current",
+            "description": "Use 'current' for the live frame; 'full' to run a 360° panorama and answer from the stitched view."
+          }
+        },
+        "required": ["instruction"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "take_image",
+      "description": "Capture the current camera frame, save it to disk, and return the file path. Useful for logging snapshots or documentation.",
+      "parameters": { "type": "object", "properties": {} }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "home_action",
+      "description": "Move the camera back to its predefined “home” position and zoom level. Use to reset orientation after manual adjustments.",
+      "parameters": { "type": "object", "properties": {} }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_presets",
+      "description": "Retrieve a list of all saved camera preset names available on the server. Returns an array of strings.",
+      "parameters": { "type": "object", "properties": {} }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "go_to_preset",
+      "description": "Move the camera to a named preset position and zoom level. The name must match one returned by get_presets(). If not found, the camera remains unchanged.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "The preset name to go to" }
+        },
+        "required": ["name"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "track_object",
+      "description": "Continuously track a specified object in the camera’s view for a set duration. Example: \"Track any people walking around for the next 30 seconds.\" Returns status and tracking metadata (e.g. bounding boxes over time).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "object_of_interest": {
+            "type": "string",
+            "description": "Description of the target to track (e.g. \"person wearing blue\", \"red car\")"
+          },
+          "duration": { "type": "integer", "description": "Length of time to track the object" },
+          "unit": {
+            "type": "string",
+            "enum": ["seconds", "minutes", "hours"],
+            "description": "Time unit for the duration"
+          }
+        },
+        "required": ["object_of_interest", "duration", "unit"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "ptz_adjust",
+      "description": "Adjust PAN/TILT/ZOOM numerically (relative moves). This tool handles plain-language camera geometry with numbers or simple words (x/%, degrees, 'half/quarter turn'). Examples it SHOULD handle: 'zoom in 2x' -> zoom_factor=2; 'zoom out 50%' -> zoom_percent=-50; 'full zoom in' -> zoom_full='in'; 'go right 10 deg' -> pan_deg=+10; 'look up 15°' -> tilt_deg=+15. Do NOT use this for 'zoom in on <object>' — use zoom_bounding for object-targeted framing.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pan_deg": { "type": "number" },
+          "tilt_deg": { "type": "number" },
+          "zoom_percent": { "type": "number" },
+          "zoom_factor": { "type": "number" },
+          "zoom_full": { "type": "string", "enum": ["in", "out"] }
+        }
+      }
+    }
+  }
+]

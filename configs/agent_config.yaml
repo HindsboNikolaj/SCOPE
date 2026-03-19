@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SCOPE Agent Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+# Configure your SLM (planner) + VLM (perception) combination.
+# Environment variables can be referenced as ${VAR_NAME}.
+
+agent:
+  # SLM — the reasoning/planning backbone
+  slm:
+    backend: "ollama"                  # ollama | vllm | openai-compatible
+    model_id: "qwen3:30b-a3b"         # Model identifier for your backend
+    base_url: "http://localhost:11434/v1"
+    api_key: "ollama"                  # "ollama" for Ollama; set for vLLM/OpenAI
+    temperature: 0.7
+    max_tokens: 2048
+    thinking: "toggle"                 # never | toggle | always | levels
+
+  # VLM — the visual perception backbone
+  vlm:
+    backend: "moondream"               # moondream-api | moondream-local | qwen2.5-vl
+    api_key: "${MOONDREAM_API_KEY}"    # Moondream API key (from .env)
+    model_id: "vikhyatk/moondream2"    # For local loading
+    # base_url: ""                     # Set for self-hosted VLM servers
+
+  # System prompt override (optional)
+  # system_prompt: "You are a PTZ camera agent..."
+
+# Tool configuration
+tools:
+  schema: "scope/tools/schema.json"
+
+# Evaluation settings
+evaluation:
+  benchmark: "benchmark/scope_536.csv"
+  output_dir: "results/"
+  judge:
+    model: "${JUDGE_MODEL_ID}"         # gpt-4o, gpt-oss-120b, or any model you serve
+    base_url: "${JUDGE_API_BASE}"      # Empty = OpenAI; set for local vLLM/Ollama judge
+    api_key: "${JUDGE_API_KEY}"        # Falls back to OPENAI_API_KEY if empty
+
+# Blender simulation settings
+blender:
+  scenes_dir: "benchmark/scenes/"
+  screenshots_dir: "output/screenshots/"
+  render_resolution: [1920, 1080]

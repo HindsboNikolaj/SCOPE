@@ -1,0 +1,100 @@
+{
+  "scenes/after-the-rain-vr-sound/Whitechapel.blend": {
+    "eor-viewpoint": {
+      "type": "PERSP",
+      "clip_start": 0.1,
+      "clip_end": 1000.0,
+      "lens": 28.900001525878906,
+      "location": [14.214277, -0.264489, 8.243183],
+      "rotation_mode": "XYZ",
+      "rotation_euler": [1.303425, 0.009126, 5.706261]
+    },
+    "sor-viewpoint": {
+      "type": "PERSP",
+      "clip_start": 0.1,
+      "clip_end": 1000.0,
+      "lens": 28.900001525878906,
+      "location": [14.214277, -80.354485, 8.243183],
+      "rotation_mode": "XYZ",
+      "rotation_euler": [1.282480, 0.008940, 6.753465]
+    }
+  },
+  "scenes/book-nook/Book_Nook.blend": {
+    "store-front": {
+      "type": "PERSP",
+      "clip_start": 0.1,
+      "clip_end": 1000.0,
+      "lens": 28.900001525878906,
+      "location": [-14.381388, 6.157165, 1.818089],
+      "rotation_mode": "XYZ",
+      "rotation_euler": [1.750248, 0.009577, -1.920242]
+    },
+    "store-front2": {
+      "type": "PERSP",
+      "clip_start": 0.1,
+      "clip_end": 1000.0,
+      "lens": 28.900001525878906,
+      "location": [4.928612, 17.787165, 1.818089],
+      "rotation_mode": "XYZ",
+      "rotation_euler": [1.750163, 0.009577, -3.030209]
+    },
+    "road1": {
+      "type": "PERSP",
+      "clip_start": 0.1,
+      "clip_end": 1000.0,
+      "lens": 28.900001525878906,
+      "location": [-14.381388, 6.157165, 1.818089],
+      "rotation_mode": "XYZ",
+      "rotation_euler": [1.708358, 0.009577, -1.020051]
+    }
+  },
+  "scenes/city-street-one-way/city-street-camera-on-street.blend": {
+    "mailbox": {
+      "type": "PERSP",
+      "clip_start": 0.1,
+      "clip_end": 1000.0,
+      "lens": 23.679855346679688,
+      "location": [1.834707, 2.638021, 3.401960],
+      "rotation_mode": "XYZ",
+      "rotation_euler": [1.520883, 0.0, -3.333316]
+    },
+    "hotel-m": {
+      "type": "PERSP",
+      "clip_start": 0.1,
+      "clip_end": 1000.0,
+      "lens": 23.679855346679688,
+      "location": [1.834707, 2.638021, 3.401960],
+      "rotation_mode": "XYZ",
+      "rotation_euler": [1.597699, 0.0, 3.990115]
+    }
+  },
+  "scenes/postwar-city-exterior-scene/d77c0cc629164202b994da7e203115fc.blend": {
+    "diff-view-1": {
+      "type": "PERSP",
+      "clip_start": 0.1,
+      "clip_end": 100.0,
+      "lens": 23.900001525878906,
+      "location": [1.660621, -1.965461, 3.379590],
+      "rotation_mode": "XYZ",
+      "rotation_euler": [0.844743, -0.000001, 144.789642]
+    },
+    "street-view-1": {
+      "type": "PERSP",
+      "clip_start": 0.1,
+      "clip_end": 100.0,
+      "lens": 23.900001525878906,
+      "location": [0.340621, -0.945462, 0.109590],
+      "rotation_mode": "XYZ",
+      "rotation_euler": [1.570796, 0.0, -0.156446]
+    },
+    "street-view-2": {
+      "type": "PERSP",
+      "clip_start": 0.1,
+      "clip_end": 100.0,
+      "lens": 23.900001525878906,
+      "location": [0.780621, 3.814539, 0.149590],
+      "rotation_mode": "XYZ",
+      "rotation_euler": [1.640613, -0.000002, 147.219131]
+    }
+  }
+}
