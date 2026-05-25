@@ -33,8 +33,9 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 import bpy
 
@@ -106,7 +107,7 @@ print(f"[SCOPE] Access the agent via: bpy.scope_agent")
 # interaction.  It is optional -- SCOPE works without it.
 
 addon_candidates = [
-    PROJECT_ROOT / "scope" / "blender" / "agent_banner.py",
+    PROJECT_ROOT / "src" / "scope" / "blender" / "agent_banner.py",
     PROJECT_ROOT / "addons" / "agent_banner.py",
 ]
 
