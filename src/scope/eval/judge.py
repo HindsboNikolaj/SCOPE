@@ -21,7 +21,11 @@ LOCAL JUDGE SUPPORT:
 """
 
 import os, sys, json, csv, re, argparse, difflib, hashlib
+from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+# Prompts live at repo-root/prompts so they're visible without digging into the package.
+_PROMPTS_DIR = Path(__file__).resolve().parents[3] / "prompts"
 
 
 # --------------------------------------------------------------------------- #
@@ -190,264 +194,18 @@ def detect_region_cue(text: str) -> bool:
 # Judge prompts                                                                #
 # --------------------------------------------------------------------------- #
 
-GENERAL_PROMPT = """You are a strict-but-fair evaluator of a PTZ agent. Judge the FINAL ANSWER compared to the EXPECTED ANSWER (ground truth) using only the conversation and tool outputs.
+GENERAL_PROMPT = (_PROMPTS_DIR / "judge_general.md").read_text(encoding="utf-8")
 
-Evaluation ladder (apply in order):
-1) GROUNDING CHECK (pass/fail): If the final answer is not supported by the tool outputs or contradicts them -> {{"is_correct": false, "error_mode": "hallucination"}}.
-2) TASK TYPE RULES (below): Apply category-specific comparisons and tolerances.
-3) CUE-GATED PENALTIES: Only assign "view_scope" / "order" / "coverage" when the USER TEXT explicitly cues them (e.g., "sweep/360/panorama/all presets/entire scene/full scene", or "first... then..."). Otherwise, do NOT penalize for these.
-4) LENIENCY FLAG: When evaluation_notes includes lenient_open_ended=true, accept concise, grounded answers that capture the core gist even if they miss minor details or formatting.
-
-Content tolerance (unless the CSV overrides via tolerance=K or pct_tol=P in evaluation_notes):
-- Plurals/inflection: "bike" vs "bikes" etc. should not affect correctness of tool args, or final answers.
-- Spatial/comparatives: accept equivalent phrasings when grounded (e.g., "near/close by"; "in front of/by the front").
-
-Scope discipline (FULL vs current view):
-- Determine scope only from the USER TEXT:
-  - FULL if the text cues: full, 360, sweep, panorama, entire scene, whole scene, etc.
-  - CURRENT if the text cues: in view, right now, current view, from here, this view, a certain preset, etc.
-  - MIXED if the text cues both.
-- Map tools -> scope:
-  - Any call with arguments.view_type == "full" (or a panorama/sweep tool) -> FULL.
-  - Otherwise -> CURRENT.
-- Errors (view_scope):
-  - If the user intent is FULL but no FULL tool was used -> view_scope.
-  - If the user intent is CURRENT but a FULL tool was used -> view_scope.
-  - If the user intent is MIXED but both scopes are not evidenced in the tool calls -> view_scope.
-- Order is only enforced when the user explicitly cues a sequence ("first... then...", "before... after...").
-
-Error-mode precedence (first applicable wins):
-1) hallucination
-2) lack_of_tool_call
-3) tool_routing
-4) tool_args
-5) vision_counting
-6) VLM_query
-7) Reasoning
-
-Respond ONLY in JSON:
-{{"is_correct": true/false, "reason": "...brief...", "error_mode": "<one-of>"}}
-"""
-
-
-def _tmpl_base(label: str) -> str:
-    return f"""TASK -- {label}
-Detected region cue in question: {{det_region_cue}}
-Lenient open-ended (from CSV notes): {{lenient_open_ended}}
-
-Full conversation (truncated OK): {{full_conversation}}
-
-Summary:
-Question: {{question}}
-Expected: {{expected_answer}}
-Final: {{final_answer}}
-Tool calls:
-{{tool_calls_parsed}}
-
-Policy specifics:
-- Always normalize case/punctuation/whitespace when comparing text.
-- Treat "about N" as +/-1 for numeric comparisons.
-- Plural tolerance for nouns (e.g., barricade(s), bike(s)).
-- Penalize scope/order/coverage only when the user text cues it explicitly.
-"""
-
+_CATEGORY_KEYS = [
+    "counting", "ocr_identification", "descriptor", "location_spatial",
+    "comparative_relational", "single_call",
+    "multi_step_command_unordered", "multi_step_command_strict",
+    "multi_step_reasoning_unordered", "multi_step_reasoning_strict",
+]
 
 TEMPLATES = {
-    "counting": _tmpl_base("COUNTING") + """
-Look for case-specific errors to:
-
-1) Must be grounded; else hallucination.
-2) Compare counts with tolerance:
-   - "about N" - <=5 -> +/-1; >5 -> +/-20% (rounded)
-   - "More than or less than N" - Look for more than or less than N
-   - else: exact counts only
-3) If within tolerance -> correct.
-4) If explicit region cue was ignored (e.g., left/right/half) -> reasoning error.
-5) Otherwise a count mismatch -> vision_counting.
-
-Allowed error modes: vision_counting, tool_args, lack_of_tool_call, view_scope, hallucination, None.
-
-Respond ONLY with JSON:
-{{"is_correct": true, "reason": "<reason>", "error_mode": "None"}}
-
-{{"is_correct": false, "reason": "<reason>", "error_mode": "<mode>"}}
-""",
-
-    "ocr_identification": _tmpl_base("OCR / IDENTIFICATION") + """
-Look for case-specific errors to:
-
-1) Must be grounded; else hallucination.
-2) Normalize case/punctuation; allow typical OCR noise (0<->O, 1<->l, hyphens), but not incorrect readings.
-4) If explicit region cue was ignored -> tool_args.
-5) If grounded with only minor OCR deviations -> correct; else -> VLM_query.
-
-Allowed: VLM_query, tool_args, lack_of_tool_call, hallucination, None.
-
-Respond ONLY with JSON:
-{{"is_correct": true, "reason": "<reason>", "error_mode": "None"}}
-
-{{"is_correct": false, "reason": "<reason>", "error_mode": "<mode>"}}
-""",
-
-    "descriptor": _tmpl_base("DESCRIPTOR") + """
-Look for case-specific errors to:
-
-1) Must be grounded; else hallucination.
-2) If the question indicated lenient_open_ended=true: accept when at least the core attributes match and nothing overtly contradicts the scene.
-3) Without leniency: accept if gist matches; minor omissions OK.
-4) Wrong core attribute read, color, description -> VLM_query. Ignored explicit region -> tool_args.
-
-Allowed: VLM_query, tool_args, tool_routing, lack_of_tool_call, hallucination, None.
-
-Respond ONLY with JSON:
-{{"is_correct": true, "reason": "<reason>", "error_mode": "None"}}
-
-{{"is_correct": false, "reason": "<reason>", "error_mode": "<mode>"}}
-""",
-
-    "location_spatial": _tmpl_base("LOCATION / SPATIAL") + """
-Look for case-specific errors to:
-1) Must be grounded; else hallucination.
-2) Accept equivalent phrasings for relations when consistent with evidence.
-3) Underlying read errors from VLM calls:
-   - For non-numeric attribute/labels being incorrect -> error VLM_query.
-   - For counts that were wrong beyond tolerances -> error vision_counting.
-4) Region handling:
-   - If an explicit region cue was ignored in tool calls -> tool_args.
-5) Comparison/sequencing in spatial prompts:
-   - If the question implicitly asks to compare two views but the answer failed -> Reasoning.
-   - Apply explicit "order" ONLY when the user cues a sequence.
-
-Allowed: VLM_query, vision_counting, tool_args, Reasoning, hallucination, view_scope, None.
-
-Respond ONLY with JSON:
-{{"is_correct": true, "reason": "<reason>", "error_mode": "None"}}
-
-{{"is_correct": false, "reason": "<reason>", "error_mode": "<mode>"}}
-""",
-
-    "comparative_relational": _tmpl_base("COMPARATIVE / RELATIONAL") + """
-Look for case-specific errors to:
-
-1) Must be grounded; else hallucination.
-2) Validate underlying reads first:
-   - Counts differ beyond tolerance -> vision_counting
-   - Attribute/text reads differ -> VLM_query
-3) Required comparisons:
-   - If the question asks compare A vs B and only one side was observed -> lack_of_tool_call.
-   - If both observed but comparison logic wrong -> Reasoning.
-4) Region/targeting and scope:
-   - Explicit region cue ignored -> tool_args.
-   - Scope misuse (FULL vs current) -> view_scope.
-
-Allowed: vision_counting, VLM_query, lack_of_tool_call, Reasoning, tool_args, view_scope, hallucination, None.
-
-Respond ONLY with JSON:
-{{"is_correct": true, "reason": "<reason>", "error_mode": "None"}}
-
-{{"is_correct": false, "reason": "<reason>", "error_mode": "<mode>"}}
-""",
-
-    "single_call": """TASK -- SINGLE CALL
-Look for case-specific errors to:
-
-Full conversation (truncated OK): {full_conversation}
-
-Summary:
-Question: {question}
-Expected: {expected_answer}
-Final: {final_answer}
-Tool calls:
-{tool_calls_parsed}
-
-Policy specifics:
-1) If the task implies a specific tool and it was not called -> "lack_of_tool_call"; wrong tool -> "tool_routing"; wrong args -> "tool_args".
-2) If the final claim is not supported by tool evidence -> "hallucination".
-3) Scope penalty only if the user text explicitly cues FULL/SWEEP/360/etc. or vice versa.
-
-Allowed: lack_of_tool_call, tool_routing, tool_args, hallucination, view_scope, None.
-
-Respond ONLY with JSON:
-{{"is_correct": true, "reason": "<reason>", "error_mode": "None"}}
-
-{{"is_correct": false, "reason": "<reason>", "error_mode": "<mode>"}}
-""",
-
-    "multi_step_command_unordered": _tmpl_base("MULTI-STEP COMMAND (UNORDERED)") + """
-Required coverage policy: {required_tools_policy}
-Required tool set: {expected_tool_order_json}
-Tool calls:
-{tool_calls_parsed}
-
-Policy specifics:
-1) Final must be grounded; else "hallucination".
-2) Enforce coverage (all/any) only if the user text cues a workflow.
-3) After coverage/scope, still compare content; count/ocr mismatches -> "vision_counting"/"VLM_query".
-
-Allowed: lack_of_tool_call, tool_routing, tool_args, vision_counting, VLM_query, hallucination, None.
-
-Respond ONLY with JSON:
-{{"is_correct": true, "reason": "<reason>", "error_mode": "None"}}
-
-{{"is_correct": false, "reason": "<reason>", "error_mode": "<mode>"}}
-""",
-
-    "multi_step_command_strict": _tmpl_base("MULTI-STEP COMMAND (STRICT)") + """
-Expected exact order: {expected_tool_order_json}
-Tool calls:
-{tool_calls_parsed}
-
-Policy specifics:
-1) Final must be grounded. If not -> "hallucination".
-2) Enforce exact order only if the user text cues a sequence.
-3) Content mismatches -> "vision_counting"/"VLM_query"/"Reasoning".
-
-Allowed: order, lack_of_tool_call, tool_routing, tool_args, vision_counting, VLM_query, Reasoning, hallucination, None.
-
-Respond ONLY with JSON:
-{{"is_correct": true, "reason": "<reason>", "error_mode": "None"}}
-
-{{"is_correct": false, "reason": "<reason>", "error_mode": "<mode>"}}
-""",
-
-    "multi_step_reasoning_unordered": _tmpl_base("MULTI-STEP REASONING (UNORDERED)") + """
-Tool calls:
-{tool_calls_parsed}
-
-Look for case-specific errors to:
-
-Policy specifics:
-1) Final reasoning must be grounded; else "hallucination".
-2) Coverage enforced only if user text cues a workflow.
-3) Non-numeric read wrong -> "VLM_query"; count mismatch -> "vision_counting"; wrong conclusion -> "Reasoning".
-
-Allowed: Reasoning, lack_of_tool_call, tool_routing, tool_args, vision_counting, VLM_query, hallucination, None.
-
-Respond ONLY with JSON:
-{{"is_correct": true, "reason": "<reason>", "error_mode": "None"}}
-
-{{"is_correct": false, "reason": "<reason>", "error_mode": "<mode>"}}
-""",
-
-    "multi_step_reasoning_strict": _tmpl_base("MULTI-STEP REASONING (STRICT)") + """
-Expected exact order: {expected_tool_order_json}
-Tool calls:
-{tool_calls_parsed}
-
-Look for case-specific errors to:
-
-Policy specifics:
-1) Final reasoning must be grounded; else "hallucination".
-2) Enforce exact order only if the user text cues a sequence.
-3) Non-numeric read wrong -> "VLM_query"; count mismatch -> "vision_counting"; wrong conclusion -> "Reasoning".
-
-Allowed: order, Reasoning, lack_of_tool_call, tool_routing, tool_args, vision_counting, VLM_query, hallucination, None.
-
-Respond ONLY with JSON:
-{{"is_correct": true, "reason": "<reason>", "error_mode": "None"}}
-
-{{"is_correct": false, "reason": "<reason>", "error_mode": "<mode>"}}
-""",
+    k: (_PROMPTS_DIR / f"judge_category_{k}.md").read_text(encoding="utf-8")
+    for k in _CATEGORY_KEYS
 }
 
 

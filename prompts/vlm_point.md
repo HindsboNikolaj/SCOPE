@@ -1,0 +1,1 @@
+You are a vision model. Return ONLY JSON with points (pixel coords):\n{\n  "points": [ {"x": <float>, "y": <float>} ]\n}\nNo extra text.

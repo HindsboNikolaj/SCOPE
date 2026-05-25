@@ -2,10 +2,18 @@
 from __future__ import annotations
 import base64, io, json, os, re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import requests
 from PIL import Image
+
+# Prompts live at repo-root/prompts so they're visible without digging into the package.
+_PROMPTS_DIR = Path(__file__).resolve().parents[3] / "prompts"
+_VLM_DET_PROMPT      = (_PROMPTS_DIR / "vlm_detect.md").read_text(encoding="utf-8")
+_VLM_PT_PROMPT       = (_PROMPTS_DIR / "vlm_point.md").read_text(encoding="utf-8")
+_VLM_DET_QWEN_PROMPT = (_PROMPTS_DIR / "vlm_detect_qwen.md").read_text(encoding="utf-8")
+_VLM_PT_QWEN_PROMPT  = (_PROMPTS_DIR / "vlm_point_qwen.md").read_text(encoding="utf-8")
 
 @dataclass
 class VLMCaps:
@@ -198,23 +206,8 @@ class MoondreamLocal(VLMClient):
 # ─── Qwen VL server (OpenAI-compatible /v1) ───────────────────────────────────
 
 class QwenVLServer(VLMClient):
-    SYS_JSON_DET = (
-        "You are a vision model. Given a user instruction about what to find, "
-        "respond with ONLY JSON in this schema:\\n"
-        "{\\n"
-        '  "objects": [\\n'
-        '    {"x_min": <float>, "y_min": <float>, "x_max": <float>, "y_max": <float>}\\n'
-        "  ]\\n"
-        "}\\n"
-        "No extra text."
-    )
-    SYS_JSON_POINT = (
-        "You are a vision model. Return ONLY JSON with points (pixel coords):\\n"
-        "{\\n"
-        '  "points": [ {"x": <float>, "y": <float>} ]\\n'
-        "}\\n"
-        "No extra text."
-    )
+    SYS_JSON_DET = _VLM_DET_PROMPT
+    SYS_JSON_POINT = _VLM_PT_PROMPT
     def __init__(self, base_url: str, model_id: Optional[str] = None, api_key: Optional[str] = None):
         self.base_url = base_url.rstrip("/")
         if not self.base_url.endswith("/v1"): self.base_url += "/v1"
@@ -279,23 +272,8 @@ class QwenVLServer(VLMClient):
 # ─── Qwen VL local (Transformers) ─────────────────────────────────────────────
 
 class QwenVLLocal(VLMClient):
-    SYS_JSON_DET = (
-        "You are a vision model. Given a user instruction about what to find, "
-        "respond with ONLY JSON in this schema:\\n"
-        "{\\n"
-        '  "objects": [\\n'
-        '    {"x_min": <float 0..1>, "y_min": <float 0..1>, "x_max": <float 0..1>, "y_max": <float 0..1>}\\n'
-        "  ]\\n"
-        "}\\n"
-        "No extra text."
-    )
-    SYS_JSON_POINT = (
-        "You are a vision model. Return ONLY JSON with points (0..1 normalized):\\n"
-        "{\\n"
-        '  "points": [ {"x": <float>, "y": <float>} ]\\n'
-        "}\\n"
-        "No extra text."
-    )
+    SYS_JSON_DET = _VLM_DET_QWEN_PROMPT
+    SYS_JSON_POINT = _VLM_PT_QWEN_PROMPT
     def __init__(self, model_id: str = "Qwen/Qwen2.5-VL-7B-Instruct"):
         from transformers import AutoModelForCausalLM, AutoProcessor
         import torch

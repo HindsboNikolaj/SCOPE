@@ -15,10 +15,15 @@ Environment overrides:
 
 from __future__ import annotations
 import os, re, json, time, logging, copy
+from pathlib import Path
 from typing import Dict, Any, Iterable, Tuple, Optional
 from openai import OpenAI
 
 from .thinking import ThinkingMode, thinking_mode_for_model
+
+# Prompts live at repo-root/prompts so they're visible without digging into the package.
+_PROMPTS_DIR = Path(__file__).resolve().parents[3] / "prompts"
+_AGENT_SYSTEM_PROMPT_TMPL = (_PROMPTS_DIR / "agent_system_prompt.md").read_text(encoding="utf-8")
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 log = logging.getLogger("scope.agent")
@@ -144,22 +149,11 @@ class AgentClient:
             except Exception:
                 presets = []
 
-        sp = (
-            "You are a SCOPE PTZ camera agent (simulation mode). "
-            "You are a multi-turn agent; users may ask you to repeat actions.\n"
-        )
         if presets:
-            sp += "Available presets: " + ", ".join(presets) + ".\n"
+            presets_line = "Available presets: " + ", ".join(presets) + "."
         else:
-            sp += "There are currently no presets defined.\n"
-
-        sp += (
-            "\nFollow multi-step and conditional instructions in order.\n"
-            "Only narrate completed actions backed by tool results.\n"
-            "Do not announce future actions; report completed ones.\n"
-            "If unsure what to do, ask a clarifying question.\n"
-        )
-        return sp
+            presets_line = "There are currently no presets defined."
+        return _AGENT_SYSTEM_PROMPT_TMPL.format(presets_line=presets_line)
 
     def _resolve_model_id(self, provided: Optional[str]) -> str:
         if provided and str(provided).strip():
