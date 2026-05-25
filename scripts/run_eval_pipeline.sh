@@ -57,18 +57,10 @@ echo ""
 echo "[Step 1/3] Running benchmark in Blender..."
 echo ""
 
-export QUESTIONS_CSV
-export OUT_CSV="${RAW_CSV}"
-export REPEATS
-
-# Check if Blender is accessible
 if ! command -v "${BLENDER_BIN}" &>/dev/null; then
     echo "WARNING: '${BLENDER_BIN}' not found in PATH."
     echo "  Set BLENDER_BIN to the full path of your Blender binary."
     echo "  Example: BLENDER_BIN=/Applications/Blender.app/Contents/MacOS/Blender"
-    echo ""
-    echo "  Skipping Blender step. If you already have raw results, place them at:"
-    echo "    ${RAW_CSV}"
     echo ""
     if [[ ! -f "${RAW_CSV}" ]]; then
         echo "ERROR: No raw results CSV found at ${RAW_CSV}."
@@ -76,21 +68,10 @@ if ! command -v "${BLENDER_BIN}" &>/dev/null; then
         exit 1
     fi
 else
-    # Find a scene file to open (first .blend in benchmark/scenes/)
-    SCENES_DIR="${PROJECT_ROOT}/benchmark/scenes"
-    SCENE_FILE=""
-    if [[ -d "${SCENES_DIR}" ]]; then
-        SCENE_FILE="$(find "${SCENES_DIR}" -name '*.blend' -type f | head -1 || true)"
-    fi
-
-    if [[ -n "${SCENE_FILE}" ]]; then
-        echo "  Scene: ${SCENE_FILE}"
-        "${BLENDER_BIN}" "${SCENE_FILE}" --python "${PROJECT_ROOT}/scope/eval/runner.py"
-    else
-        echo "  No .blend scene found in ${SCENES_DIR}; running headless."
-        "${BLENDER_BIN}" --background --python "${PROJECT_ROOT}/scope/eval/runner.py"
-    fi
-
+    "${BLENDER_BIN}" --background --python "${PROJECT_ROOT}/scripts/10_run_benchmark.py" -- \
+        --config "${CONFIG}" \
+        --output "${RAW_CSV}" \
+        --resume
     echo ""
     echo "[Step 1/3] Benchmark complete. Raw results: ${RAW_CSV}"
 fi
@@ -105,7 +86,7 @@ JUDGE_BASE="${JUDGE_API_BASE:-${OPENAI_BASE_URL:-https://api.openai.com/v1}}"
 JUDGE_MODEL="${JUDGE_MODEL_ID:-gpt-4o}"
 JUDGE_KEY="${JUDGE_API_KEY:-${OPENAI_API_KEY:-EMPTY}}"
 
-python3 -m scope.eval.judge \
+python3 "${PROJECT_ROOT}/scripts/11_judge.py" \
     -i "${RAW_CSV}" \
     -o "${JUDGED_CSV}" \
     --base-url "${JUDGE_BASE}" \
@@ -120,7 +101,7 @@ echo ""
 echo "[Step 3/3] Computing metrics..."
 echo ""
 
-python3 -m scope.eval.metrics report -i "${JUDGED_CSV}"
+python3 "${PROJECT_ROOT}/scripts/12_metrics.py" report -i "${JUDGED_CSV}"
 
 echo ""
 echo "============================================================"

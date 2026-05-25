@@ -106,6 +106,15 @@ def _parse_args() -> argparse.Namespace:
         "--judge-api-key", type=str, default=None,
         help="Judge API key (overrides JUDGE_API_KEY env var)"
     )
+    # --resume because Blender can crash mid-benchmark; pattern mirrors src/scope/eval/judge.py
+    parser.add_argument(
+        "--resume", dest="resume", action="store_true", default=True,
+        help="Append to existing output, skipping question_ids already present (default: on)"
+    )
+    parser.add_argument(
+        "--no-resume", dest="resume", action="store_false",
+        help="Overwrite the output CSV from scratch"
+    )
     return parser.parse_args(argv)
 
 
@@ -224,18 +233,39 @@ def run_benchmark(args: argparse.Namespace) -> None:
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # -- Resume: read already-completed question_ids from the existing CSV --
+    done: set[str] = set()
+    out_exists = output_path.exists() and output_path.stat().st_size > 0
+    resume = args.resume and out_exists
+    if resume:
+        try:
+            with open(output_path, "r", newline="", encoding="utf-8") as rf:
+                for r in csv.DictReader(rf):
+                    qid = (r.get("question_id") or "").strip()
+                    if qid:
+                        done.add(qid)
+            print(f"[BENCHMARK] Resuming: {len(done)} of {len(rows)} already complete")
+        except Exception as e:
+            print(f"[BENCHMARK] Resume read failed ({e}); starting fresh")
+            done.clear()
+            resume = False
+
     # -- Run each question ---------------------------------------------------
     current_scene = None
     completed = 0
     errors = 0
     t_start = time.time()
 
-    with open(output_path, "w", newline="", encoding="utf-8") as out_f:
+    mode = "a" if resume else "w"
+    with open(output_path, mode, newline="", encoding="utf-8") as out_f:
         writer = csv.DictWriter(out_f, fieldnames=RESULT_FIELDS)
-        writer.writeheader()
+        if not resume:
+            writer.writeheader()
 
         for i, row in enumerate(rows):
             qid = row.get("question_id", f"Q_{i}")
+            if qid in done:
+                continue
             question = row.get("question", "")
             file_loc = row.get("file_location", "")
             preset = row.get("preset_start", "")
