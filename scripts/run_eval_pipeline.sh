@@ -71,6 +71,7 @@ echo ""
 echo "[Step 1/3] Running benchmark in Blender (scope.eval.runner)..."
 echo ""
 
+export SCOPE_CONFIG="${CONFIG}"
 export QUESTIONS_CSV
 export OUT_CSV="${RAW_CSV}"
 export REPEATS

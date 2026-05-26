@@ -85,7 +85,23 @@ def prepare_view_for_capture():
 
 
 # --- Config via env vars -----------------------------------------------------
-QUESTIONS_CSV = os.environ.get("QUESTIONS_CSV") or ""
+# SCOPE_CONFIG (if set) provides defaults; explicit env vars always win.
+# This preserves the documented "env-var-driven knobs" contract while making
+# the YAML config a real source of truth instead of a no-op.
+_cfg: Dict[str, Any] = {}
+_cfg_slm: Dict[str, Any] = {}
+_cfg_eval: Dict[str, Any] = {}
+if os.environ.get("SCOPE_CONFIG"):
+    try:
+        from scope.utils.config import load_agent_config
+        _cfg = load_agent_config(os.environ["SCOPE_CONFIG"]) or {}
+        _cfg_slm = ((_cfg.get("agent") or {}).get("slm") or {})
+        _cfg_eval = (_cfg.get("evaluation") or {})
+        print(f"[runner] Loaded SCOPE_CONFIG: {os.environ['SCOPE_CONFIG']}")
+    except Exception as _e:
+        print(f"[runner] WARN: failed to load SCOPE_CONFIG: {_e}")
+
+QUESTIONS_CSV = os.environ.get("QUESTIONS_CSV") or _cfg_eval.get("benchmark") or ""
 OUT_CSV       = os.environ.get("OUT_CSV") or ""
 REPEATS       = int(os.environ.get("REPEATS") or "1")
 # Resume: skip question_ids that already have a non-empty final_answer in OUT_CSV.
@@ -98,10 +114,17 @@ try:
 except ValueError:
     BENCH_LIMIT = 0
 
-# Optional agent wiring
-API_BASE      = os.environ.get("AGENT_API_BASE") or "http://localhost:11434/v1"
-MODEL_ID      = (os.environ.get("AGENT_MODEL_ID") or os.environ.get("MODEL_ID") or "").strip()
-API_KEY       = os.environ.get("AGENT_API_KEY", "ollama")
+# Optional agent wiring (env wins, then config, then hard-coded default).
+API_BASE      = (os.environ.get("AGENT_API_BASE")
+                 or _cfg_slm.get("base_url")
+                 or "http://localhost:11434/v1")
+MODEL_ID      = (os.environ.get("AGENT_MODEL_ID")
+                 or os.environ.get("MODEL_ID")
+                 or _cfg_slm.get("model_id")
+                 or "").strip()
+API_KEY       = (os.environ.get("AGENT_API_KEY")
+                 or _cfg_slm.get("api_key")
+                 or "ollama")
 
 if not QUESTIONS_CSV or not OUT_CSV:
     print("[FATAL] QUESTIONS_CSV and OUT_CSV must be set in the environment.")
