@@ -163,9 +163,27 @@ class MoondreamServer(VLMClient):
 class MoondreamLocal(VLMClient):
     def __init__(self, model_id: str = "vikhyatk/moondream2", revision: Optional[str] = None):
         from transformers import AutoModelForCausalLM
+        import torch
+        device = os.getenv("VLM_DEVICE", "").strip().lower()
+        if not device:
+            if torch.cuda.is_available():
+                device = "cuda"
+            elif getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+                device = "mps"
+            else:
+                device = "cpu"
+        kwargs: Dict[str, Any] = {
+            "revision": revision,
+            "trust_remote_code": True,
+        }
+        if device == "cuda":
+            kwargs["device_map"] = {"": "cuda"}
         self.model = AutoModelForCausalLM.from_pretrained(
-            model_id, revision=revision, trust_remote_code=True, device_map={"": "cuda"}
+            model_id, **kwargs
         )
+        if device != "cuda":
+            self.model.to(device)
+        self.device = device
         self.name = "Moondream local"
         self.label = "Moondream(local)"
         self.caps = VLMCaps(caption=True, vqa=True, detect=True, point=True)
