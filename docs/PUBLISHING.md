@@ -29,6 +29,28 @@ What's automated vs. manual after the professionalization pass.
 
 ## Still manual (your turn)
 
+### 0. ⏳ arXiv preprint (pending)
+
+The paper isn't on arXiv yet, which means there's no `huggingface.co/papers/<id>` page and the HF Collection can't include the paper as a first-class item. To fix:
+
+1. Sign in at https://arxiv.org/login with `NikolajHindsbo@gmail.com` (Google SSO).
+2. Go to https://arxiv.org/submit. License: arXiv non-exclusive (default).
+3. Upload `paper/SCOPE_HRI26.pdf`.
+4. Metadata (copy verbatim):
+   - **Title**: `SCOPE: A Real-Time Natural Language Camera Agent at the Edge -- A Sim-to-Real Benchmark and Analysis of Open-Source Vision and Language Agents for PTZ Camera Tasks`
+   - **Authors**: `Nikolaj Hindsbo and Sina Ehsani and Pragyana Mishra`
+   - **Abstract**: page-1 abstract from the PDF
+   - **Comments**: `Accepted at ACM/IEEE International Conference on Human-Robot Interaction (HRI '26), Edinburgh, Scotland, UK, March 16-19, 2026. 9 pages.`
+   - **Journal-ref**: `Proceedings of the ACM/IEEE International Conference on Human-Robot Interaction (HRI 2026)`
+   - **DOI**: `10.1145/3757279.3785641`
+   - **ACM classes**: `I.2.9; I.2.10; I.4.8`
+5. Categories: primary `cs.RO`, cross-list `cs.AI`, `cs.CV`.
+6. Submit. Expected processing time: 1-2 business days.
+
+**Endorsement note**: if first-time submitter, may hit "endorsement required for cs.RO" — fastest fix is co-author endorsement (Sina or Pragyana, if either has prior cs.* arXiv papers).
+
+Once an arXiv ID is assigned (e.g. `2603.NNNNN`), the follow-up tasks (Collection paper item, README badge, Space link, citation update) are mechanical — just paste the ID into a Claude/Codex session.
+
 ### 1. ~~Hugging Face setup~~ — done above
 
 1. **Create HF account / token** if you don't have one:
