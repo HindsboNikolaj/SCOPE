@@ -361,7 +361,11 @@ def create_vlm_from_env() -> VLMClient:
     kind = os.getenv("VLM_MODEL") or os.getenv("VLM_KIND") or "Moondream2"
     url  = os.getenv("VLM_MODEL_URL") or os.getenv("VLM_BASE_URL") or ""
     mid  = os.getenv("VLM_MODEL_ID") or ""
-    key  = os.getenv("VLM_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("MOONDREAM_API_KEY") or None
+    # Moondream-first precedence: the Moondream branch must not leak an
+    # OpenAI key as its Moondream Cloud token. Order: explicit VLM_API_KEY,
+    # then the backend-specific key (MOONDREAM_API_KEY), then OPENAI_API_KEY
+    # as a last-resort fallback (only meaningful for the Qwen-via-vLLM path).
+    key  = os.getenv("VLM_API_KEY") or os.getenv("MOONDREAM_API_KEY") or os.getenv("OPENAI_API_KEY") or None
     hint = None
     if url and url.lower() in ("local","api_key","api-key","apikey","api key"):
         hint = "local" if "local" in url.lower() else "api_key"
@@ -372,7 +376,8 @@ def create_vlm_from_config(cfg: Dict[str, Any]) -> VLMClient:
     kind = cfg.get("vlm_model") or os.getenv("VLM_MODEL") or "Moondream2"
     url  = cfg.get("vlm_model_url") or os.getenv("VLM_MODEL_URL") or ""
     mid  = cfg.get("vlm_model_id") or os.getenv("VLM_MODEL_ID") or ""
-    key  = cfg.get("vlm_api_key") or os.getenv("VLM_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("MOONDREAM_API_KEY") or None
+    # Same Moondream-first precedence as create_vlm_from_env.
+    key  = cfg.get("vlm_api_key") or os.getenv("VLM_API_KEY") or os.getenv("MOONDREAM_API_KEY") or os.getenv("OPENAI_API_KEY") or None
     hint = None
     if url and url.lower() in ("local","api_key","api-key","apikey","api key"):
         hint = "local" if "local" in url.lower() else "api_key"
