@@ -98,9 +98,23 @@ See [`docs/RESULTS_FULL.md`](docs/RESULTS_FULL.md) for the full 19-configuration
 ## Run the Benchmark
 
 ```bash
-python scripts/10_run_benchmark.py --config configs/qwen3_30b.yaml --resume
-python scripts/11_judge.py --run-id <id>
-python scripts/12_metrics.py --run-id <id>
+# 1. Run the benchmark inside Blender (writes results/benchmark_results.csv).
+#    --resume is on by default; pass --no-resume to start fresh.
+blender --background --python scripts/10_run_benchmark.py -- \
+    --config configs/agent_config.yaml
+
+# 2. Judge the raw results with the LLM-as-Judge.
+python scripts/11_judge.py -i results/benchmark_results.csv \
+                           -o results/benchmark_results.judged.csv
+
+# 3. Print the accuracy report.
+python scripts/12_metrics.py report -i results/benchmark_results.judged.csv
+```
+
+Or use the end-to-end pipeline wrapper:
+
+```bash
+./scripts/run_eval_pipeline.sh configs/agent_config.yaml results/
 ```
 
 ---

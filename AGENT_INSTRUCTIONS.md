@@ -37,8 +37,9 @@ cp .env.example .env  # then edit to fill the required env vars (see below)
 bash scripts/01_install.sh
 bash scripts/02_pull_models.sh qwen3:30b-a3b   # Ollama path; skip if using vLLM/API
 bash scripts/03_download_scenes.sh
-python scripts/04_install_presets.py            # must run via Blender; see script header
-python -m scope.eval.run --limit 5             # 5-task smoke test
+blender --background --python scripts/04_install_presets.py    # writes preset YAMLs into the .blend files
+blender --background --python scripts/10_run_benchmark.py -- \
+    --config configs/agent_config.yaml --limit 5 --no-resume    # 5-task smoke test
 ```
 
 ## 4. Required env vars
