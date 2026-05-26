@@ -73,7 +73,7 @@ if command -v gdown &>/dev/null; then
     echo "  Note: Some scenes include external texture files in subfolders."
     echo "  Keep the folder structure intact after downloading."
     echo ""
-    gdown --folder "$GDRIVE_FOLDER_URL" -O "$SCENES_DIR" && \
+    gdown --folder --remaining-ok "$GDRIVE_FOLDER_URL" -O "$SCENES_DIR" && \
         info "Download complete. Scenes saved to: $SCENES_DIR" || \
         warn "gdown download failed. Try the manual instructions below."
 else
@@ -107,3 +107,14 @@ echo ""
 echo "  After downloading, verify:"
 echo "    find $SCENES_DIR -name '*.blend' | wc -l   # should print 4"
 echo ""
+
+scene_count=$(find "$SCENES_DIR" -name "*.blend" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$scene_count" -eq 0 ]; then
+    error "No .blend files found in $SCENES_DIR after download attempt."
+    exit 1
+fi
+if [ "$scene_count" -lt 4 ]; then
+    warn "Only found $scene_count .blend file(s); the full benchmark expects 4, but smoke tests may still run if the requested scene is present."
+else
+    info "Verified $scene_count .blend files in $SCENES_DIR."
+fi

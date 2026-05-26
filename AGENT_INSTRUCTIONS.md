@@ -90,7 +90,8 @@ cause).
   for the interpreter shown by `python --version`, or set `PYTHON_BIN=/path/to/python` in `.env`.
 - **vLLM rejects tool calls with "auto tool choice requires --enable-auto-tool-choice"** → re-launch vLLM with `--enable-auto-tool-choice --tool-call-parser hermes`.
 - **`moondream-station` port collision on 2020** → kill the conflicting process or change the station port and update `VLM_BASE_URL`.
-- **`scene_not_found` errors** → `03_download_scenes.sh` likely failed (Google Drive rate limit); re-run, or download manually per the script's printed instructions.
+- **`scene_not_found` errors** → `03_download_scenes.sh` likely failed (Google Drive rate limit or
+  Google Drive's nested-folder item cap); re-run, or download manually per the script's printed instructions.
 - **CUDA OOM on Qwen3-30B-A3B via vLLM** → reduce `--max-model-len` (try 8000), lower `--gpu-memory-utilization` (0.7), or fall back to `qwen3:4b` via Ollama.
 
 ## 7. Action space reference
