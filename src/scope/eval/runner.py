@@ -597,6 +597,40 @@ def _batch_step():
                 _ROW_IDX += 1
                 return 0.01
 
+            # Per-row scene switching: the 541-row benchmark spans 4 distinct
+            # .blend scenes. file_location is a project-relative path like
+            # "scenes/foo/bar.blend"; resolve to absolute under PROJECT_ROOT.
+            floc = (author_fields.get("file_location") or "").strip()
+            if floc:
+                abs_scene = (PROJECT_ROOT / floc).resolve()
+                cur_path = ""
+                try:
+                    cur_path = bpy.data.filepath or ""
+                except Exception:
+                    cur_path = ""
+                if str(abs_scene) != cur_path:
+                    if not abs_scene.exists():
+                        print(f"[runner] scene_not_found: {abs_scene}")
+                        # Persist a placeholder row so resume doesn't loop.
+                        err_row = {k: "" for k in RESULT_HEADER}
+                        err_row.update(author_fields)
+                        err_row.update({
+                            "repeat_idx": _REPEAT_IDX + 1,
+                            "start_ts": now_iso(),
+                            "end_ts": now_iso(),
+                            "final_answer": "",
+                            "judge_error_mode": "scene_not_found",
+                            "judge_reason": f"missing .blend at {abs_scene}",
+                        })
+                        append_result(OUT_CSV, err_row, RESULT_HEADER)
+                        _REPEAT_IDX += 1
+                        if _REPEAT_IDX >= REPEATS:
+                            _REPEAT_IDX = 0
+                            _ROW_IDX += 1
+                        return 0.01
+                    print(f"[runner] Opening scene: {abs_scene}")
+                    bpy.ops.wm.open_mainfile(filepath=str(abs_scene))
+
             _CUR_PROMPT = author_fields["question"]
             _CSV_PRESETS = json.loads(author_fields["presets_available"]) if author_fields["presets_available"] else []
             if _CSV_PRESETS:
