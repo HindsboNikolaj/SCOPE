@@ -91,9 +91,11 @@ if ! command -v "${BLENDER_BIN}" &>/dev/null; then
         exit 1
     fi
 else
-    # Find a scene file to open (first .blend in benchmark/scenes/).
-    # The runner doesn't load scenes itself -- it drives the camera in whatever
-    # .blend Blender was launched with -- so it's important to open one.
+    # Find a seed scene to launch Blender with. The runner now opens the
+    # row's .blend itself per question (the 541-row benchmark spans 4 scenes),
+    # but Blender still needs SOMETHING to start with -- and crucially it must
+    # launch WITH a GUI window, not --background, because screenshot capture
+    # (helper_funcs.screenshot_camera_view) requires 3D viewport context.
     SCENES_DIR="${PROJECT_ROOT}/benchmark/scenes"
     SCENE_FILE=""
     if [[ -d "${SCENES_DIR}" ]]; then
@@ -103,11 +105,13 @@ else
     RUNNER_PY="${PROJECT_ROOT}/src/scope/eval/runner.py"
 
     if [[ -n "${SCENE_FILE}" ]]; then
-        echo "  Scene: ${SCENE_FILE}"
+        echo "  Seed scene: ${SCENE_FILE}"
         "${BLENDER_BIN}" "${SCENE_FILE}" --python "${RUNNER_PY}"
     else
-        echo "  No .blend scene found in ${SCENES_DIR}; running headless."
-        "${BLENDER_BIN}" --background --python "${RUNNER_PY}"
+        echo "ERROR: No .blend scene found in ${SCENES_DIR}."
+        echo "  The runner needs benchmark scenes downloaded first."
+        echo "  Run: bash scripts/03_download_scenes.sh"
+        exit 1
     fi
 
     echo ""

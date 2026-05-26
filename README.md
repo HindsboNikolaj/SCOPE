@@ -122,9 +122,14 @@ If you want to invoke the three stages manually, the equivalents are:
 
 ```bash
 # 1. Runner (canonical, writes the rich schema).
+#    NOTE: do NOT pass --background -- the runner needs a real Blender
+#    GUI window so screenshot capture (helper_funcs.screenshot_camera_view)
+#    has 3D viewport context. The launcher opens the row's .blend itself,
+#    and the runner re-opens per row as the benchmark walks through scenes.
 QUESTIONS_CSV=benchmark/scope_536.csv \
 OUT_CSV=results/raw_results.csv \
-blender --background --python src/scope/eval/runner.py
+blender benchmark/scenes/after-the-rain-vr-sound/Whitechapel.blend \
+        --python src/scope/eval/runner.py
 
 # 2. Judge.
 python scripts/11_judge.py -i results/raw_results.csv \

@@ -37,7 +37,10 @@ cp .env.example .env  # then edit to fill the required env vars (see below)
 bash scripts/01_install.sh
 bash scripts/02_pull_models.sh qwen3:30b-a3b   # Ollama path; skip if using vLLM/API
 bash scripts/03_download_scenes.sh             # ~GB of .blend scenes; required before any benchmark step
-blender --background --python scripts/04_install_presets.py    # uses bpy; writes preset YAMLs into the .blend files
+blender --background --python scripts/04_install_presets.py    # uses bpy; writes Blender camera preset .py files into the user scripts/presets/camera/ dir
+# NOTE: the eval pipeline below intentionally launches Blender WITHOUT --background --
+# screenshot_camera_view() requires a real 3D viewport. --background is only safe here
+# for 04_install_presets.py (no UI needed).
 # 5-task end-to-end smoke test: runs the runner AND the judge AND the metrics report.
 BENCH_LIMIT=5 SCOPE_RESUME=0 bash scripts/run_eval_pipeline.sh
 ```
