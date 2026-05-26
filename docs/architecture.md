@@ -258,7 +258,7 @@ SCOPE/
     presets/presets.json     # Camera preset definitions
   configs/
     agent_config.yaml        # Main configuration (env-var aware)
-    presets/                 # Pre-built SLM+VLM combos (19 paper configs + extras)
+    presets/                 # Pre-built SLM+VLM combos (20 paper configs + extras)
   docs/                      # Extended documentation (this file + others)
   paper/SCOPE_HRI26.pdf      # Published HRI '26 paper
   prompts/                   # Live system prompts (loaded at runtime; see prompts/README.md)

@@ -91,7 +91,7 @@ The benchmark covers 8 task categories (counting, descriptor, location/spatial, 
 | 4 | Qwen3-32B | Qwen2.5-VL-7B | 70.9% |
 | 5 | Qwen3-30B-A3B | Moondream2 | 69.5% |
 
-See [`docs/RESULTS_FULL.md`](docs/RESULTS_FULL.md) for the full 19-configuration matrix.
+See [`docs/RESULTS_FULL.md`](docs/RESULTS_FULL.md) for the full 20-configuration matrix.
 
 ---
 
@@ -123,7 +123,7 @@ Or use the end-to-end pipeline wrapper:
 
 - [`AGENT_INSTRUCTIONS.md`](AGENT_INSTRUCTIONS.md) — setup brief for Claude Code / Codex
 - [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — model hosting, env vars, full YAML reference
-- [`docs/RESULTS_FULL.md`](docs/RESULTS_FULL.md) — all 19 SLM+VLM combinations
+- [`docs/RESULTS_FULL.md`](docs/RESULTS_FULL.md) — all 20 SLM+VLM combinations
 - [`docs/architecture.md`](docs/architecture.md) — agent loop, tool dispatch, project layout
 - [`docs/tool_reference.md`](docs/tool_reference.md) — per-skill parameters and return types
 - [`docs/creating_scenes.md`](docs/creating_scenes.md) — adding new Blender scenes

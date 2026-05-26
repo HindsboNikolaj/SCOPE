@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Pseudocode example -- see docs/architecture.md for runnable patterns.
+# TOOL_FUNCTIONS is None at module load and is only populated lazily on the
+# first AgentClient.ask(); the `TOOL_FUNCTIONS[name] = func` registration
+# below would raise TypeError before that point. Treat the body as a
+# shape-of-the-API illustration, not as a script to execute as-is.
 """
 add_new_tool.py -- Register a custom tool with the SCOPE agent.
 

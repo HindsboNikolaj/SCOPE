@@ -1,4 +1,4 @@
-# Full Results — All 19 SLM+VLM Combinations
+# Full Results — All 20 SLM+VLM Combinations
 
 Table 4 from the paper (overall accuracy on the 536-task benchmark, judged
 by GPT-4o). See the [README](../README.md#top-5-results) for the top-5

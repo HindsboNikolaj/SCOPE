@@ -20,7 +20,6 @@ set -euo pipefail
 #   JUDGE_API_BASE    Judge LLM endpoint            (default: https://api.openai.com/v1)
 #   JUDGE_MODEL_ID    Judge model id                (default: gpt-4o)
 #   JUDGE_API_KEY     Judge API key                 (falls back to OPENAI_API_KEY)
-#   REPEATS           Repeats per question          (default: 1)
 #
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -32,7 +31,6 @@ OUTPUT_DIR="${2:-${PROJECT_ROOT}/results}"
 
 BLENDER_BIN="${BLENDER_BIN:-blender}"
 QUESTIONS_CSV="${QUESTIONS_CSV:-${PROJECT_ROOT}/benchmark/scope_536.csv}"
-REPEATS="${REPEATS:-1}"
 
 # Derived paths
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
@@ -49,7 +47,6 @@ echo " Config:        ${CONFIG}"
 echo " Questions:     ${QUESTIONS_CSV}"
 echo " Output dir:    ${RUN_DIR}"
 echo " Blender:       ${BLENDER_BIN}"
-echo " Repeats:       ${REPEATS}"
 echo "============================================================"
 echo ""
 
