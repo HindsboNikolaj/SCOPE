@@ -135,7 +135,7 @@ If you want to invoke the three stages manually, the equivalents are:
 #    and the runner re-opens per row as the benchmark walks through scenes.
 QUESTIONS_CSV=benchmark/scope_536.csv \
 OUT_CSV=results/raw_results.csv \
-blender benchmark/scenes/after-the-rain-vr-sound/Whitechapel.blend \
+blender benchmark/scenes/whitechapel/whitechapel.blend \
         --python src/scope/eval/runner.py
 
 # 2. Judge.
