@@ -151,10 +151,14 @@ def append_result(path, row, header):
 
 
 def prepare_resume(path: str, header: list) -> set:
-    """Read an existing OUT_CSV and return the set of question_ids that are
-    already complete (non-empty ``final_answer``). Errored rows (empty
-    ``final_answer``) are dropped from the file so they get retried, and the
-    file is rewritten with the canonical header for append-compat.
+    """Read an existing OUT_CSV and return the set of (question_id, repeat_idx)
+    pairs that are already complete (non-empty ``final_answer``). Errored rows
+    (empty ``final_answer``) are dropped from the file so they get retried, and
+    the file is rewritten with the canonical header for append-compat.
+
+    Keying on (qid, repeat) -- not just qid -- means a REPEATS>1 run that
+    crashed partway through a question's repeats correctly resumes the
+    remaining repeats instead of skipping them.
 
     If the existing header doesn't match ``header``, abort: a mismatched schema
     almost certainly means an older runner wrote it and interleaving columns
@@ -191,8 +195,14 @@ def prepare_resume(path: str, header: list) -> set:
             qid = (r.get("question_id") or "").strip()
             if not qid:
                 continue
+            # repeat_idx is 1-based in the output. Default to 1 if missing
+            # (e.g. legacy rows written before this resume model existed).
+            try:
+                rep = int((r.get("repeat_idx") or "1").strip() or "1")
+            except ValueError:
+                rep = 1
             if (r.get("final_answer") or "").strip():
-                done.add(qid)
+                done.add((qid, rep))
                 kept.append(r)
             else:
                 errored += 1  # drop -> retry
@@ -202,7 +212,7 @@ def prepare_resume(path: str, header: list) -> set:
             w.writeheader()
             for r in kept:
                 w.writerow({k: r.get(k, "") for k in header})
-    print(f"[runner] Resume: {len(done)} qids already complete; "
+    print(f"[runner] Resume: {len(done)} (qid, repeat) pairs already complete; "
           f"{errored} errored rows dropped for retry.")
     return done
 
@@ -613,11 +623,16 @@ def _batch_step():
             row = _ROWS[_ROW_IDX]
             author_fields = field_map(row)
 
-            # Resume: skip rows whose question_id is already complete.
-            # Only applies on repeat 0 -- once a row starts we run all repeats.
-            if _REPEAT_IDX == 0 and author_fields["question_id"] in _DONE_QIDS:
-                print(f"[runner] Skipping completed qid={author_fields['question_id']}")
-                _ROW_IDX += 1
+            # Resume: skip (qid, repeat) pairs that already completed.
+            # _DONE_QIDS holds 1-based (qid, repeat_idx) tuples, matching the
+            # repeat_idx value we write to OUT_CSV further below.
+            if (author_fields["question_id"], _REPEAT_IDX + 1) in _DONE_QIDS:
+                print(f"[runner] Skipping completed qid={author_fields['question_id']} "
+                      f"repeat={_REPEAT_IDX + 1}")
+                _REPEAT_IDX += 1
+                if _REPEAT_IDX >= REPEATS:
+                    _REPEAT_IDX = 0
+                    _ROW_IDX += 1
                 return 0.01
 
             # Per-row scene switching: the 541-row benchmark spans 4 distinct
