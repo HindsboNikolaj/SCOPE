@@ -36,10 +36,10 @@ pip install -e .
 cp .env.example .env  # then edit to fill the required env vars (see below)
 bash scripts/01_install.sh
 bash scripts/02_pull_models.sh qwen3:30b-a3b   # Ollama path; skip if using vLLM/API
-bash scripts/03_download_scenes.sh
-blender --background --python scripts/04_install_presets.py    # writes preset YAMLs into the .blend files
-blender --background --python scripts/10_run_benchmark.py -- \
-    --config configs/agent_config.yaml --limit 5 --no-resume    # 5-task smoke test
+bash scripts/03_download_scenes.sh             # ~GB of .blend scenes; required before any benchmark step
+blender --background --python scripts/04_install_presets.py    # uses bpy; writes preset YAMLs into the .blend files
+# 5-task end-to-end smoke test: runs the runner AND the judge AND the metrics report.
+BENCH_LIMIT=5 SCOPE_RESUME=0 bash scripts/run_eval_pipeline.sh
 ```
 
 ## 4. Required env vars
@@ -57,10 +57,18 @@ Read `.env.example` first, then fill at minimum:
 
 ## 5. Validation
 
-After step 3, the smoke run should print 5 task rows ending in `[BENCHMARK]
-Complete: 5 ok, 0 errors`. A judged metrics report should show numeric accuracy
-per category. If any row reports `error: scene_not_found`, re-run step
-`03_download_scenes.sh`.
+After step 3, the smoke run should:
+- Print 5 task rows from `[runner]` (one per question) ending with the runner
+  shutting Blender down cleanly.
+- Write a raw CSV at `results/run_<ts>/raw_results.csv` containing the rich
+  schema (`question_id`, `llm_raw`, `llm_readable`, `final_answer`,
+  `actual_tool_calls_json`, etc.) -- this is what the judge consumes.
+- Run the LLM-as-Judge on that CSV and emit `judged_results.csv`.
+- Print a numeric accuracy report broken down by category.
+
+If the runner errors out because `benchmark/scenes/` is empty, re-run
+`bash scripts/03_download_scenes.sh` (Google Drive rate limiting is the usual
+cause).
 
 ## 6. Common failure modes
 

@@ -54,7 +54,8 @@ pip install -e .
 cp .env.example .env  # fill MOONDREAM_API_KEY, AGENT_API_BASE, AGENT_MODEL_ID, OPENAI_API_KEY
 bash scripts/01_install.sh
 bash scripts/02_pull_models.sh qwen3:30b-a3b
-bash scripts/03_download_scenes.sh && python scripts/04_install_presets.py
+bash scripts/03_download_scenes.sh                                # ~GB of .blend scenes; required before any benchmark step
+blender --background --python scripts/04_install_presets.py       # uses bpy; must run inside Blender
 ```
 
 ## Quick Start for AI agents
@@ -97,24 +98,40 @@ See [`docs/RESULTS_FULL.md`](docs/RESULTS_FULL.md) for the full 20-configuration
 
 ## Run the Benchmark
 
-```bash
-# 1. Run the benchmark inside Blender (writes results/benchmark_results.csv).
-#    --resume is on by default; pass --no-resume to start fresh.
-blender --background --python scripts/10_run_benchmark.py -- \
-    --config configs/agent_config.yaml
-
-# 2. Judge the raw results with the LLM-as-Judge.
-python scripts/11_judge.py -i results/benchmark_results.csv \
-                           -o results/benchmark_results.judged.csv
-
-# 3. Print the accuracy report.
-python scripts/12_metrics.py report -i results/benchmark_results.judged.csv
-```
-
-Or use the end-to-end pipeline wrapper:
+The canonical entry point is the end-to-end pipeline wrapper. It runs
+`scope.eval.runner` inside Blender (which writes the rich, judge-compatible
+CSV schema), then the LLM-as-Judge, then the metrics report.
 
 ```bash
 ./scripts/run_eval_pipeline.sh configs/agent_config.yaml results/
+```
+
+Knobs (all optional, all env-var driven):
+
+| Var | Default | Notes |
+| --- | --- | --- |
+| `QUESTIONS_CSV` | `benchmark/scope_536.csv` | Input question set |
+| `OUT_CSV` | `results/run_<ts>/raw_results.csv` | Pre-set to resume into a specific file |
+| `REPEATS` | `1` | Repeats per question |
+| `SCOPE_RESUME` | `1` | Skip qids that already have a non-empty `final_answer`; `0` = fresh run |
+| `BENCH_LIMIT` | `0` (all) | Cap to first N rows -- handy for smoke tests |
+| `BLENDER_BIN` | `blender` | Full path if Blender isn't on `PATH` |
+| `JUDGE_API_BASE` / `JUDGE_MODEL_ID` / `JUDGE_API_KEY` | OpenAI / `gpt-4o` / `$OPENAI_API_KEY` | Judge config |
+
+If you want to invoke the three stages manually, the equivalents are:
+
+```bash
+# 1. Runner (canonical, writes the rich schema).
+QUESTIONS_CSV=benchmark/scope_536.csv \
+OUT_CSV=results/raw_results.csv \
+blender --background --python src/scope/eval/runner.py
+
+# 2. Judge.
+python scripts/11_judge.py -i results/raw_results.csv \
+                           -o results/judged_results.csv
+
+# 3. Report.
+python scripts/12_metrics.py report -i results/judged_results.csv
 ```
 
 ---
