@@ -1,10 +1,9 @@
 # SCOPE: Simulation and Camera Operations for Perception and Evaluation
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![HRI '26](https://img.shields.io/badge/HRI%20'26-Edinburgh-green.svg)](https://doi.org/10.1145/3757279.3785641)
-[![Benchmark: 541 tasks](https://img.shields.io/badge/Benchmark-541%20tasks-orange.svg)](benchmark/scope_536.csv)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
-
+[![Paper](https://img.shields.io/badge/Paper-HRI%20'26-blue)](https://doi.org/10.1145/3757279.3785641)
+[![Dataset on HF](https://img.shields.io/badge/Dataset-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/datasets/HindsboNikolaj/scope-benchmark)
+[![Space on HF](https://img.shields.io/badge/Space-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/spaces/HindsboNikolaj/scope)
+[![Collection](https://img.shields.io/badge/Collection-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/collections/HindsboNikolaj/scope-hri-26-6a1626e0b8e9b9205c09fffc)
 **SCOPE is a modular multimodal agentic system for natural-language PTZ camera control.** A Small Language Model planner orchestrates a fixed action space — a set of `skills` (camera-control and perception workflows) exposed through an OpenAI-compatible JSON tool schema identical on Blender simulation and a physical AXIS PTZ. A Vision-Language Model handles perception as a callable skill. The repo ships the agent loop, the 9-skill schema, the 541-task HRI '26 benchmark, and an LM-as-Judge eval harness.
 
 **Paper:** [`paper/SCOPE_HRI26.pdf`](paper/SCOPE_HRI26.pdf) |

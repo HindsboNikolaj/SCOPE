@@ -19,9 +19,17 @@ What's automated vs. manual after the professionalization pass.
 - [x] HF dataset card + Space landing page drafts: `scripts/huggingface/`
 - [x] Install-verified end-to-end on real Blender + Ollama (5/5 smoke passed)
 
-## Manual (your turn)
+## Done (automated, after token handoff)
 
-### 1. Hugging Face setup — ~15 min
+### Hugging Face — published
+
+- **Dataset**: https://huggingface.co/datasets/HindsboNikolaj/scope-benchmark
+- **Space**: https://huggingface.co/spaces/HindsboNikolaj/scope
+- **Collection**: https://huggingface.co/collections/HindsboNikolaj/scope-hri-26-6a1626e0b8e9b9205c09fffc
+
+## Still manual (your turn)
+
+### 1. ~~Hugging Face setup~~ — done above
 
 1. **Create HF account / token** if you don't have one:
    - https://huggingface.co/join
