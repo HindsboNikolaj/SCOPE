@@ -66,7 +66,9 @@ def _active_cam():
         raise RuntimeError("No active scene camera set.")
     return cam
 
-OUTPUT_DIR = Path(__file__).resolve().parents[2] / "output"
+# src/scope/tools/blender_tools.py -> parents[3] is the project root
+# ([0]=tools, [1]=scope, [2]=src, [3]=project).
+OUTPUT_DIR = Path(__file__).resolve().parents[3] / "output"
 PANOS_DIR = OUTPUT_DIR / "panos"
 SCREENSHOTS_DIR = OUTPUT_DIR / "screenshots"
 for d in (OUTPUT_DIR, PANOS_DIR, SCREENSHOTS_DIR):

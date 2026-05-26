@@ -50,7 +50,10 @@ def load_agent_config(config_path: Optional[str | Path] = None) -> Dict[str, Any
     if env_path:
         return load_config(env_path)
 
-    project_root = Path(__file__).resolve().parents[2]
+    # After the src/ layout move this file lives at
+    # src/scope/utils/config.py, so parents are:
+    #   [0]=utils, [1]=scope, [2]=src, [3]=<project root>
+    project_root = Path(__file__).resolve().parents[3]
     default = project_root / "configs" / "agent_config.yaml"
     if default.exists():
         return load_config(default)
