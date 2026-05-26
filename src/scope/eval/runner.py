@@ -636,11 +636,13 @@ def _batch_step():
                 return 0.01
 
             # Per-row scene switching: the 541-row benchmark spans 4 distinct
-            # .blend scenes. file_location is a project-relative path like
-            # "scenes/foo/bar.blend"; resolve to absolute under PROJECT_ROOT.
+            # .blend scenes. file_location is prefixed with "scenes/..." but
+            # the scenes actually live under PROJECT_ROOT/benchmark/scenes/,
+            # so the resolution root is PROJECT_ROOT/benchmark (matches the
+            # convention established in 8609789's scene-path fix).
             floc = (author_fields.get("file_location") or "").strip()
             if floc:
-                abs_scene = (PROJECT_ROOT / floc).resolve()
+                abs_scene = (PROJECT_ROOT / "benchmark" / floc).resolve()
                 cur_path = ""
                 try:
                     cur_path = bpy.data.filepath or ""
