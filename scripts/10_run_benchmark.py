@@ -198,7 +198,11 @@ def run_benchmark(args: argparse.Namespace) -> None:
     slm_cfg = cfg.get("agent", {}).get("slm", {})
     blender_cfg = cfg.get("blender", {})
 
-    scenes_dir = args.scenes_dir or blender_cfg.get("scenes_dir", "benchmark/scenes/")
+    # NOTE: the benchmark CSV already prefixes file_location with "scenes/...",
+    # so the scenes root must point one level up (benchmark/) to avoid a
+    # benchmark/scenes/scenes/... double prefix. This was a pre-existing bug at
+    # ef5ec1d and was fixed opportunistically as part of the refactor cleanup.
+    scenes_dir = args.scenes_dir or blender_cfg.get("scenes_dir", "benchmark/")
     if not os.path.isabs(scenes_dir):
         scenes_dir = str(PROJECT_ROOT / scenes_dir)
 
@@ -234,20 +238,74 @@ def run_benchmark(args: argparse.Namespace) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # -- Resume: read already-completed question_ids from the existing CSV --
+    # Only rows with a clean "ok" status count as done. Anything that errored
+    # (scene_not_found / "error: ...") or has a partial/truncated trailing row
+    # is dropped so it gets retried.
     done: set[str] = set()
+    errored: set[str] = set()
     out_exists = output_path.exists() and output_path.stat().st_size > 0
     resume = args.resume and out_exists
     if resume:
         try:
+            # First: validate header matches our writer's schema. A mismatch
+            # almost certainly means the file was written by an older runner
+            # version and resuming would interleave incompatible columns.
             with open(output_path, "r", newline="", encoding="utf-8") as rf:
-                for r in csv.DictReader(rf):
+                header_line = rf.readline()
+            existing_header = next(csv.reader([header_line])) if header_line else []
+            if existing_header != RESULT_FIELDS:
+                print(
+                    f"[BENCHMARK] ERROR: output {output_path} has incompatible "
+                    f"schema; pass --no-resume or delete it."
+                )
+                sys.exit(1)
+
+            # Read the body, drop any trailing incomplete row (no newline or
+            # fewer fields than the header), and bucket question_ids by status.
+            with open(output_path, "r", newline="", encoding="utf-8") as rf:
+                raw = rf.read()
+            # Identify a partial last row: missing terminating newline OR a
+            # short final record.
+            lines = raw.splitlines(keepends=True)
+            partial_last = bool(lines) and not lines[-1].endswith(("\n", "\r"))
+            if partial_last:
+                print(f"[BENCHMARK] Dropping partial trailing row from {output_path}")
+                # Rewrite without the trailing partial line.
+                with open(output_path, "w", newline="", encoding="utf-8") as wf:
+                    wf.write("".join(lines[:-1]))
+
+            kept_rows: list[dict] = []
+            with open(output_path, "r", newline="", encoding="utf-8") as rf:
+                reader = csv.DictReader(rf)
+                for r in reader:
                     qid = (r.get("question_id") or "").strip()
-                    if qid:
+                    if not qid:
+                        continue
+                    status = (r.get("status") or "").strip()
+                    if status == "ok":
                         done.add(qid)
-            print(f"[BENCHMARK] Resuming: {len(done)} of {len(rows)} already complete")
+                        kept_rows.append(r)
+                    else:
+                        # scene_not_found / "error: ..." / blank -> re-run
+                        errored.add(qid)
+            # Rewrite the CSV with only kept (status=ok) rows so we can append
+            # fresh attempts for errored qids without duplicating them.
+            if errored:
+                with open(output_path, "w", newline="", encoding="utf-8") as wf:
+                    w = csv.DictWriter(wf, fieldnames=RESULT_FIELDS)
+                    w.writeheader()
+                    for r in kept_rows:
+                        w.writerow({k: r.get(k, "") for k in RESULT_FIELDS})
+            print(
+                f"[BENCHMARK] Resuming: {len(done)} of {len(rows)} already "
+                f"complete; will re-run {len(errored)} prior errors"
+            )
+        except SystemExit:
+            raise
         except Exception as e:
             print(f"[BENCHMARK] Resume read failed ({e}); starting fresh")
             done.clear()
+            errored.clear()
             resume = False
 
     # -- Run each question ---------------------------------------------------
