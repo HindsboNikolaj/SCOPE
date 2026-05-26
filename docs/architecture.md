@@ -253,7 +253,7 @@ VLM perception, and simulation execution stages.
 ```
 SCOPE/
   benchmark/
-    scope_536.csv            # 536-task benchmark
+    scope_536.csv            # 541-task benchmark (paper reported on a 536-task subset; CSV has grown since)
     scenes/                  # Blender scene files (.blend)
     presets/presets.json     # Camera preset definitions
   configs/

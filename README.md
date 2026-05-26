@@ -2,10 +2,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![HRI '26](https://img.shields.io/badge/HRI%20'26-Edinburgh-green.svg)](https://doi.org/10.1145/3757279.3785641)
-[![Benchmark: 536 tasks](https://img.shields.io/badge/Benchmark-536%20tasks-orange.svg)](benchmark/scope_536.csv)
+[![Benchmark: 541 tasks](https://img.shields.io/badge/Benchmark-541%20tasks-orange.svg)](benchmark/scope_536.csv)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
 
-**SCOPE is a modular multimodal agentic system for natural-language PTZ camera control.** A Small Language Model planner orchestrates a fixed action space — a set of `skills` (camera-control and perception workflows) exposed through an OpenAI-compatible JSON tool schema identical on Blender simulation and a physical AXIS PTZ. A Vision-Language Model handles perception as a callable skill. The repo ships the agent loop, the 9-skill schema, the 536-task HRI '26 benchmark, and an LM-as-Judge eval harness.
+**SCOPE is a modular multimodal agentic system for natural-language PTZ camera control.** A Small Language Model planner orchestrates a fixed action space — a set of `skills` (camera-control and perception workflows) exposed through an OpenAI-compatible JSON tool schema identical on Blender simulation and a physical AXIS PTZ. A Vision-Language Model handles perception as a callable skill. The repo ships the agent loop, the 9-skill schema, the 541-task HRI '26 benchmark, and an LM-as-Judge eval harness.
 
 **Paper:** [`paper/SCOPE_HRI26.pdf`](paper/SCOPE_HRI26.pdf) |
 **DOI:** [10.1145/3757279.3785641](https://doi.org/10.1145/3757279.3785641)

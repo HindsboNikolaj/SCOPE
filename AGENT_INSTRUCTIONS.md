@@ -8,7 +8,7 @@ step fails.
 
 SCOPE is a modular multimodal agentic system for natural-language PTZ camera
 control: an SLM planner + a VLM perception backend + a 9-skill OpenAI-compatible
-tool schema + a 536-task benchmark + an LLM-as-Judge harness.
+tool schema + a 541-task benchmark + an LLM-as-Judge harness.
 
 ## 2. Prerequisites
 

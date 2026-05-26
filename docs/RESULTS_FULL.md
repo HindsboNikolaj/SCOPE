@@ -1,8 +1,9 @@
 # Full Results — All 20 SLM+VLM Combinations
 
-Table 4 from the paper (overall accuracy on the 536-task benchmark, judged
-by GPT-4o). See the [README](../README.md#top-5-results) for the top-5
-condensed view.
+Table 4 from the paper (overall accuracy on the 536-task subset the paper
+was scored against; the shipped CSV has since grown to 541 rows -- see
+`benchmark/scope_536.csv`). Judged by GPT-4o. See the
+[README](../README.md#top-5-results) for the top-5 condensed view.
 
 | SLM | Moondream2 | Moondream3 | Qwen2.5-VL-3B | Qwen2.5-VL-7B |
 |-----|:----------:|:----------:|:--------------:|:--------------:|
