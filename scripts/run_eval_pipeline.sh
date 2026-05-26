@@ -112,7 +112,31 @@ else
     SCENES_DIR="${PROJECT_ROOT}/benchmark/scenes"
     SCENE_FILE=""
     if [[ -d "${SCENES_DIR}" ]]; then
-        SCENE_FILE="$(find "${SCENES_DIR}" -name '*.blend' -type f | head -1 || true)"
+        # Prefer the first benchmark row's scene as the seed. Starting from an
+        # arbitrary .blend can force an immediate bpy.ops.wm.open_mainfile()
+        # during the first row, which is fragile in GUI-launched Blender.
+        SCENE_FILE="$("${PYTHON_BIN}" - "${QUESTIONS_CSV}" "${PROJECT_ROOT}" <<'PY' || true
+import csv
+import sys
+from pathlib import Path
+
+questions_csv = Path(sys.argv[1])
+project_root = Path(sys.argv[2])
+if questions_csv.exists():
+    with questions_csv.open("r", encoding="utf-8", errors="ignore", newline="") as fh:
+        for row in csv.DictReader(fh):
+            floc = (row.get("file_location") or "").strip()
+            if not floc:
+                continue
+            scene = (project_root / "benchmark" / floc).resolve()
+            if scene.exists():
+                print(scene)
+                break
+PY
+)"
+        if [[ -z "${SCENE_FILE}" ]]; then
+            SCENE_FILE="$(find "${SCENES_DIR}" -name '*.blend' -type f | head -1 || true)"
+        fi
     fi
 
     RUNNER_PY="${PROJECT_ROOT}/src/scope/eval/runner.py"
