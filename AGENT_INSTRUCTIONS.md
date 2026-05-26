@@ -15,7 +15,8 @@ tool schema + a 541-task benchmark + an LLM-as-Judge harness.
 Install or verify these before running setup:
 
 - **Blender 4.0+** — must be on `PATH` as `blender`, or set `BLENDER_BIN` to the full binary path
-  (macOS example: `/Applications/Blender.app/Contents/MacOS/Blender`).
+  (macOS example: `/Applications/Blender.app/Contents/MacOS/Blender`). If you prefer a symlink:
+  `ln -s /Applications/Blender.app/Contents/MacOS/Blender /usr/local/bin/blender`.
 - **Python 3.10+** — `python3 --version` should report ≥ 3.10.
 - **An OpenAI-compatible inference endpoint for the SLM**, one of:
   - [Ollama](https://ollama.com) (`ollama serve` on port 11434)
@@ -32,12 +33,15 @@ Install or verify these before running setup:
 Run these from the repo root, in this order. Don't continue past a failure.
 
 ```bash
-pip install -e .
-cp .env.example .env  # then edit to fill the required env vars (see below)
+python -m pip install -e .  # use the same Python that should run judge/metrics
+cp .env.example .env        # then edit to fill the required env vars (see below)
+# If .env contains BLENDER_BIN, AGENT_*, VLM_*, or JUDGE_* values needed for
+# setup commands outside run_eval_pipeline.sh, load them into the shell:
+set -a; source .env; set +a
 bash scripts/01_install.sh
 bash scripts/02_pull_models.sh qwen3:30b-a3b   # Ollama path; skip if using vLLM/API
 bash scripts/03_download_scenes.sh             # ~GB of .blend scenes; required before any benchmark step
-blender --background --python scripts/04_install_presets.py    # uses bpy; writes Blender camera preset .py files into the user scripts/presets/camera/ dir
+"${BLENDER_BIN:-blender}" --background --python scripts/04_install_presets.py    # uses bpy; writes Blender camera preset .py files into the user scripts/presets/camera/ dir
 # NOTE: the eval pipeline below intentionally launches Blender WITHOUT --background --
 # screenshot_camera_view() requires a real 3D viewport. --background is only safe here
 # for 04_install_presets.py (no UI needed).
@@ -57,6 +61,8 @@ Read `.env.example` first, then fill at minimum:
 | `MOONDREAM_API_KEY` | VLM (cloud) | only if using Moondream Cloud |
 | `VLM_BASE_URL` | VLM (local) | e.g. `http://localhost:2020` for moondream-station |
 | `OPENAI_API_KEY` | Judge | or any OpenAI-compatible endpoint via `JUDGE_API_BASE` |
+| `BLENDER_BIN` | Setup / runner | Required when `blender` is not on `PATH`; macOS app path shown above |
+| `PYTHON_BIN` | Judge / metrics | Optional; defaults to `python` in `scripts/run_eval_pipeline.sh` |
 
 ## 5. Validation
 
@@ -76,6 +82,12 @@ cause).
 ## 6. Common failure modes
 
 - **`blender: command not found`** → install Blender, or set `BLENDER_BIN=/full/path/to/blender`.
+- **`ModuleNotFoundError` inside Blender for `yaml`, `openai`, `requests`, `PIL`, or `pandas`** →
+  install deps into Blender's bundled Python, not just your shell Python. On macOS Blender 4.4:
+  `/Applications/Blender.app/Contents/Resources/4.4/python/bin/python3.11 -m pip install pyyaml openai requests Pillow pandas python-dotenv`.
+- **Judge fails after `pip install -e .` with `ModuleNotFoundError: scope`** → `python3`
+  and `pip` may point at different interpreters. Re-run install as `python -m pip install -e .`
+  for the interpreter shown by `python --version`, or set `PYTHON_BIN=/path/to/python` in `.env`.
 - **vLLM rejects tool calls with "auto tool choice requires --enable-auto-tool-choice"** → re-launch vLLM with `--enable-auto-tool-choice --tool-call-parser hermes`.
 - **`moondream-station` port collision on 2020** → kill the conflicting process or change the station port and update `VLM_BASE_URL`.
 - **`scene_not_found` errors** → `03_download_scenes.sh` likely failed (Google Drive rate limit); re-run, or download manually per the script's printed instructions.

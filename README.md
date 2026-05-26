@@ -50,13 +50,19 @@
 ## Quick Start
 
 ```bash
-pip install -e .
-cp .env.example .env  # fill MOONDREAM_API_KEY, AGENT_API_BASE, AGENT_MODEL_ID, OPENAI_API_KEY
+python -m pip install -e .
+cp .env.example .env  # fill MOONDREAM_API_KEY/VLM settings, AGENT_API_BASE, AGENT_MODEL_ID, judge settings
+set -a; source .env; set +a
 bash scripts/01_install.sh
 bash scripts/02_pull_models.sh qwen3:30b-a3b
 bash scripts/03_download_scenes.sh                                # ~GB of .blend scenes; required before any benchmark step
-blender --background --python scripts/04_install_presets.py       # uses bpy; must run inside Blender
+"${BLENDER_BIN:-blender}" --background --python scripts/04_install_presets.py       # uses bpy; must run inside Blender
 ```
+
+On macOS, Blender is often installed at `/Applications/Blender.app/Contents/MacOS/Blender`
+instead of on `PATH`; set `BLENDER_BIN` in `.env` or create a `blender` symlink.
+If `python3` and `pip` point to different interpreters, set `PYTHON_BIN` in `.env`
+so the judge and metrics stages use the same Python that installed `scope-agent`.
 
 ## Quick Start for AI agents
 
@@ -116,6 +122,7 @@ Knobs (all optional, all env-var driven):
 | `SCOPE_RESUME` | `1` | Skip qids that already have a non-empty `final_answer`; `0` = fresh run |
 | `BENCH_LIMIT` | `0` (all) | Cap to first N rows -- handy for smoke tests |
 | `BLENDER_BIN` | `blender` | Full path if Blender isn't on `PATH` |
+| `PYTHON_BIN` | `python` | Python interpreter for judge and metrics |
 | `JUDGE_API_BASE` / `JUDGE_MODEL_ID` / `JUDGE_API_KEY` | OpenAI / `gpt-4o` / `$OPENAI_API_KEY` | Judge config |
 
 If you want to invoke the three stages manually, the equivalents are:

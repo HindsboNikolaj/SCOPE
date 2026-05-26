@@ -14,6 +14,7 @@ set -euo pipefail
 #
 # Environment variables (all optional, with sensible defaults):
 #   BLENDER_BIN       Path to Blender binary           (default: blender)
+#   PYTHON_BIN        Python for judge/metrics         (default: python)
 #   QUESTIONS_CSV     Input questions CSV               (default: benchmark/scope_536.csv)
 #   OUT_CSV           Raw results CSV path              (default: <RUN_DIR>/raw_results.csv)
 #   AGENT_API_BASE    Agent LLM endpoint                (default: http://localhost:11434/v1)
@@ -30,11 +31,21 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Load .env before defaults are resolved so AGENT_*, VLM_*, JUDGE_*,
+# BLENDER_BIN, and PYTHON_BIN entries written during setup take effect.
+if [[ -f "${PROJECT_ROOT}/.env" ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "${PROJECT_ROOT}/.env"
+    set +a
+fi
+
 # --- Parse arguments ---------------------------------------------------------
 CONFIG="${1:-${SCOPE_CONFIG:-${PROJECT_ROOT}/configs/agent_config.yaml}}"
 OUTPUT_DIR="${2:-${PROJECT_ROOT}/results}"
 
 BLENDER_BIN="${BLENDER_BIN:-blender}"
+PYTHON_BIN="${PYTHON_BIN:-python}"
 QUESTIONS_CSV="${QUESTIONS_CSV:-${PROJECT_ROOT}/benchmark/scope_536.csv}"
 REPEATS="${REPEATS:-1}"
 SCOPE_RESUME="${SCOPE_RESUME:-1}"
@@ -61,6 +72,7 @@ echo " Config:        ${CONFIG}"
 echo " Questions:     ${QUESTIONS_CSV}"
 echo " Output dir:    ${RUN_DIR}"
 echo " Blender:       ${BLENDER_BIN}"
+echo " Python:        ${PYTHON_BIN}"
 echo " Repeats:       ${REPEATS}"
 echo " Resume:        ${SCOPE_RESUME}"
 echo " Bench limit:   ${BENCH_LIMIT}"
@@ -129,7 +141,7 @@ JUDGE_BASE="${JUDGE_API_BASE:-${OPENAI_BASE_URL:-https://api.openai.com/v1}}"
 JUDGE_MODEL="${JUDGE_MODEL_ID:-gpt-4o}"
 JUDGE_KEY="${JUDGE_API_KEY:-${OPENAI_API_KEY:-EMPTY}}"
 
-python3 "${PROJECT_ROOT}/scripts/11_judge.py" \
+"${PYTHON_BIN}" "${PROJECT_ROOT}/scripts/11_judge.py" \
     -i "${RAW_CSV}" \
     -o "${JUDGED_CSV}" \
     --base-url "${JUDGE_BASE}" \
@@ -144,7 +156,7 @@ echo ""
 echo "[Step 3/3] Computing metrics..."
 echo ""
 
-python3 "${PROJECT_ROOT}/scripts/12_metrics.py" report -i "${JUDGED_CSV}"
+"${PYTHON_BIN}" "${PROJECT_ROOT}/scripts/12_metrics.py" report -i "${JUDGED_CSV}"
 
 echo ""
 echo "============================================================"
