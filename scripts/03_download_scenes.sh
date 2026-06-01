@@ -12,6 +12,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SCENES_DIR="$PROJECT_ROOT/benchmark/scenes"
+# The HF dataset has `scenes/` as its top-level directory, so we point the
+# download at PROJECT_ROOT/benchmark and let the dataset's own `scenes/`
+# prefix land at PROJECT_ROOT/benchmark/scenes/.
+HF_LOCAL_DIR="$PROJECT_ROOT/benchmark"
 HF_REPO="HindsboNikolaj/scope-benchmark"
 REVISION="${1:-main}"
 
@@ -30,21 +34,30 @@ if [ "$existing" -ge 4 ]; then
     exit 0
 fi
 
-# Prefer Hugging Face — better bandwidth, no auth needed for public datasets
-if command -v huggingface-cli >/dev/null; then
-    info "Downloading from Hugging Face Hub: $HF_REPO@$REVISION"
+# Prefer Hugging Face — better bandwidth, no auth needed for public datasets.
+# Note: `huggingface-cli` was deprecated and removed in huggingface_hub 1.17+.
+# The new entry point is `hf`. We prefer `hf`, fall back to `huggingface-cli`
+# for older installs, then to gdown as a last resort.
+if command -v hf >/dev/null; then
+    info "Downloading from Hugging Face Hub: $HF_REPO@$REVISION (via hf)"
+    hf download "$HF_REPO" \
+        --repo-type dataset \
+        --revision "$REVISION" \
+        --local-dir "$HF_LOCAL_DIR"
+elif command -v huggingface-cli >/dev/null; then
+    info "Downloading from Hugging Face Hub: $HF_REPO@$REVISION (via huggingface-cli)"
     huggingface-cli download "$HF_REPO" \
         --repo-type dataset \
         --revision "$REVISION" \
-        --local-dir "$SCENES_DIR" \
+        --local-dir "$HF_LOCAL_DIR" \
         --local-dir-use-symlinks False
 else
-    warn "huggingface-cli not installed. Install with: pip install huggingface_hub"
+    warn "No huggingface client on PATH. Install with: pip install -U huggingface_hub"
     warn "Falling back to Google Drive mirror (slower, throttled)."
     if ! command -v gdown >/dev/null; then
         error "Need either huggingface_hub or gdown. Install one:"
-        echo "  pip install huggingface_hub   # preferred"
-        echo "  pip install gdown              # fallback"
+        echo "  pip install -U huggingface_hub   # preferred"
+        echo "  pip install gdown                 # fallback"
         exit 1
     fi
     GDRIVE_FOLDER_ID="1Wj9NThod8CD4Aa1K8B8MO2vZtSJKt8CN"
