@@ -4,7 +4,7 @@ What's automated vs. manual after the professionalization pass.
 
 ## Automated (already done — `refactor/professionalize-2026`)
 
-- [x] Repo restructure (src/, paper/, prompts/, docs/, scripts/)
+- [x] Repo restructure (src/, prompts/, docs/, scripts/)
 - [x] README slim to ~140 lines + reword as modular multimodal agentic system
 - [x] AGENT_INSTRUCTIONS.md for Claude Code / Codex setup
 - [x] `.env.example` + `LICENSE` + `.gitignore`
@@ -35,7 +35,7 @@ The paper isn't on arXiv yet, which means there's no `huggingface.co/papers/<id>
 
 1. Sign in at https://arxiv.org/login with `NikolajHindsbo@gmail.com` (Google SSO).
 2. Go to https://arxiv.org/submit. License: arXiv non-exclusive (default).
-3. Upload `paper/SCOPE_HRI26.pdf`.
+3. Upload `SCOPE_HRI26.pdf`.
 4. Metadata (copy verbatim):
    - **Title**: `SCOPE: A Real-Time Natural Language Camera Agent at the Edge -- A Sim-to-Real Benchmark and Analysis of Open-Source Vision and Language Agents for PTZ Camera Tasks`
    - **Authors**: `Nikolaj Hindsbo and Sina Ehsani and Pragyana Mishra`

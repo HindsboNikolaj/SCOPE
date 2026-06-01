@@ -14,4 +14,4 @@ was scored against; the shipped CSV has since grown to 541 rows -- see
 | Qwen3-32B | 66.8% | 71.6% | 65.3% | 70.9% |
 
 Per-category breakdowns and detailed analysis are available in the paper
-([`paper/SCOPE_HRI26.pdf`](../paper/SCOPE_HRI26.pdf)).
+([`SCOPE_HRI26.pdf`](../SCOPE_HRI26.pdf)).

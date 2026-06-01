@@ -260,7 +260,7 @@ SCOPE/
     agent_config.yaml        # Main configuration (env-var aware)
     presets/                 # Pre-built SLM+VLM combos (20 paper configs + extras)
   docs/                      # Extended documentation (this file + others)
-  paper/SCOPE_HRI26.pdf      # Published HRI '26 paper
+  SCOPE_HRI26.pdf      # Published HRI '26 paper
   prompts/                   # Live system prompts (loaded at runtime; see prompts/README.md)
   src/scope/                 # Python package (src-layout)
     agent/
