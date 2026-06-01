@@ -61,28 +61,38 @@ in [`docs/tool_reference.md`](docs/tool_reference.md).
 ### For humans
 
 ```bash
-# 1. Install
-python -m pip install -e .
-cp .env.example .env
-# edit .env: AGENT_API_BASE, AGENT_MODEL_ID, MOONDREAM_API_KEY (or VLM_BASE_URL),
-# OPENAI_API_KEY (or JUDGE_API_BASE), BLENDER_BIN if needed
+# 1. Install scope-agent + drop a blank .env in place
+bash scripts/01_install.sh
+
+# 2. Edit .env. Minimum fields to set:
+#    AGENT_API_BASE, AGENT_MODEL_ID, AGENT_API_KEY  (SLM planner — Ollama / vLLM / hosted)
+#    MOONDREAM_API_KEY  (or VLM_MODEL_URL for a local VLM)
+#    OPENAI_API_KEY     (or JUDGE_API_BASE for a different judge endpoint)
+#    BLENDER_BIN        (only if `blender` isn't on PATH; see note below)
 set -a; source .env; set +a
 
-# 2. Prepare environment (system tools + models + scenes + Blender presets)
-bash scripts/01_install.sh
-bash scripts/02_pull_models.sh qwen3:30b-a3b    # Ollama path; skip if using vLLM / hosted API
+# 3. Pull the planner model, download the scenes, install Blender presets
+bash scripts/02_pull_models.sh qwen3:30b-a3b    # Ollama path; skip if using vLLM / hosted
 bash scripts/03_download_scenes.sh              # ~GB of .blend scenes from Hugging Face Hub
 "${BLENDER_BIN:-blender}" --background --python scripts/04_install_presets.py
 
-# 3. 5-task smoke benchmark (full pipeline: runner → judge → metrics)
+# 4. 5-task smoke benchmark (runs the full pipeline: runner → judge → metrics)
 BENCH_LIMIT=5 SCOPE_RESUME=0 bash scripts/run_eval_pipeline.sh
 ```
 
-If Blender isn't on `PATH`, set `BLENDER_BIN` in `.env`
-(macOS default: `/Applications/Blender.app/Contents/MacOS/Blender`).
-If `python3` and `pip` point at different interpreters, set `PYTHON_BIN`
-in `.env` so the judge and metrics stages use the same Python that
-installed `scope-agent`.
+**Blender path.** If `blender` isn't on `PATH`, set `BLENDER_BIN` in `.env`
+to the full binary path. On macOS that's usually
+`/Applications/Blender.app/Contents/MacOS/Blender`.
+
+**Python interpreter.** If `python3` and `pip` point at different
+interpreters on your machine, set `PYTHON_BIN` in `.env` so the judge
+and metrics stages run under the same Python that installed `scope-agent`.
+
+**About `bpy`.** The benchmark runner (`src/scope/eval/runner.py`) imports
+`bpy`, Blender's Python module. That's normal — the runner is launched
+*inside* Blender by `run_eval_pipeline.sh`, where `bpy` is available.
+Don't try to `import scope.eval.runner` from your regular Python; that
+will fail by design.
 
 ### For an AI agent
 
