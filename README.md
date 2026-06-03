@@ -52,18 +52,11 @@ The repo ships:
 
 ![SCOPE agent in Blender across three urban scenes](docs/images/demo-blender-sim.gif)
 
-**Blender is the simulation environment.** Each `.blend` file under
-`benchmark/scenes/` is one of the agent's worlds — rendered cameras, baked
-lighting, texture-packed geometry. The runner opens scenes one row at a time
-with `bpy.ops.wm.open_mainfile`, and the camera tools resolve to `bpy`
-operations on the active camera: pan/tilt/zoom via Euler rotations and `lens`
-adjustments, preset navigation via stored Python configs, frame capture via a
-viewport screenshot. Two practical consequences: the four scenes are GB-scale
-(hence the Hugging Face Hub download in `03_download_scenes.sh`), and the
-runner imports `bpy` so it only runs *inside* Blender — that's why
-`run_eval_pipeline.sh` launches `blender ... --python ...` instead of bare
-`python`, and why we deliberately omit `--background` (screenshot capture
-needs a real 3D viewport).
+**Simulation environment: [Blender](https://www.blender.org/).** A free,
+scriptable, cross-platform 3D editor with a full Python API
+([`bpy`](https://docs.blender.org/api/current/index.html)). Picked because
+anyone can install it and get the same rendered frames the VLM sees — no
+proprietary sim, no synthetic stand-ins.
 
 ```
                           +------------------+
