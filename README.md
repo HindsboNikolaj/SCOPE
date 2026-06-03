@@ -52,17 +52,35 @@ The repo ships:
 
 ![SCOPE agent in Blender across three urban scenes](docs/images/demo-blender-sim.gif)
 
-```mermaid
-flowchart TD
-  U([User / eval harness]) -->|natural language| P[SLM planner<br/>Qwen3 family]
-  P -->|tool calls JSON| D{tool dispatch}
-  D -->|PTZ moves, presets, capture| C[Camera tools]
-  D -->|count, VQA, detect, point| V[Perception tools]
-  C --> B[Blender 3D scene]
-  V --> M[VLM<br/>Moondream / Qwen-VL]
-  B -.->|rendered frame| V
-  C --> P
-  M --> P
+```
+                          +------------------+
+                          |   User / Eval    |
+                          |   Harness        |
+                          +--------+---------+
+                                   |
+                              natural language
+                                   |
+                          +--------v---------+
+                          |   SLM Planner    |
+                          |  (Qwen3, etc.)   |
+                          +--------+---------+
+                                   |
+                            tool calls (JSON)
+                                   |
+                     +-------------+-------------+
+                     |                           |
+              +------v------+           +--------v--------+
+              |  PTZ Tools  |           | Perception Tools|
+              |  (Blender)  |           |     (VLM)       |
+              +------+------+           +--------+--------+
+                     |                           |
+              Blender scene             caption / VQA /
+              manipulation              detect / point
+                     |                           |
+              +------v---------------------------v--------+
+              |          Blender 3D Scene                  |
+              |   (camera, presets, rendered frames)       |
+              +-------------------------------------------+
 ```
 
 The planner is a Small Language Model (Qwen3 family by default). It
