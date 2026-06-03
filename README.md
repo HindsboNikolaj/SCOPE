@@ -52,6 +52,19 @@ The repo ships:
 
 ![SCOPE agent in Blender across three urban scenes](docs/images/demo-blender-sim.gif)
 
+**Blender is the simulation environment.** Each `.blend` file under
+`benchmark/scenes/` is one of the agent's worlds — rendered cameras, baked
+lighting, texture-packed geometry. The runner opens scenes one row at a time
+with `bpy.ops.wm.open_mainfile`, and the camera tools resolve to `bpy`
+operations on the active camera: pan/tilt/zoom via Euler rotations and `lens`
+adjustments, preset navigation via stored Python configs, frame capture via a
+viewport screenshot. Two practical consequences: the four scenes are GB-scale
+(hence the Hugging Face Hub download in `03_download_scenes.sh`), and the
+runner imports `bpy` so it only runs *inside* Blender — that's why
+`run_eval_pipeline.sh` launches `blender ... --python ...` instead of bare
+`python`, and why we deliberately omit `--background` (screenshot capture
+needs a real 3D viewport).
+
 ```
                           +------------------+
                           |   User / Eval    |
@@ -91,19 +104,6 @@ a primitive; the rest are short **workflows** — multi-step routines like
 *zoom-to-bounding-box* or *count-by-pointing* that the planner can invoke
 as if they were a single skill. Full per-tool params and return types are
 in [`docs/tool_reference.md`](docs/tool_reference.md).
-
-**Blender is the simulation environment.** Each `.blend` file under
-`benchmark/scenes/` is one of the agent's worlds — rendered cameras, baked
-lighting, texture-packed geometry. The runner opens scenes one row at a time
-with `bpy.ops.wm.open_mainfile`, and the camera tools resolve to `bpy`
-operations on the active camera: pan/tilt/zoom via Euler rotations and `lens`
-adjustments, preset navigation via stored Python configs, frame capture via a
-viewport screenshot. Two practical consequences: the four scenes are GB-scale
-(hence the Hugging Face Hub download in `03_download_scenes.sh`), and the
-runner imports `bpy` so it only runs *inside* Blender — that's why
-`run_eval_pipeline.sh` launches `blender ... --python ...` instead of bare
-`python`, and why we deliberately omit `--background` (screenshot capture
-needs a real 3D viewport).
 
 ---
 
