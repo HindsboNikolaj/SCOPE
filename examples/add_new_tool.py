@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Pseudocode example -- see docs/architecture.md for runnable patterns.
+# TOOL_FUNCTIONS is None at module load and is only populated lazily on the
+# first AgentClient.ask(); the `TOOL_FUNCTIONS[name] = func` registration
+# below would raise TypeError before that point. Treat the body as a
+# shape-of-the-API illustration, not as a script to execute as-is.
 """
 add_new_tool.py -- Register a custom tool with the SCOPE agent.
 
@@ -25,8 +30,9 @@ import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 import bpy
 

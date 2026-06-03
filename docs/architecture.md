@@ -245,3 +245,54 @@ across all tool calls in a session:
 
 This breakdown enables profiling bottlenecks across the SLM planning,
 VLM perception, and simulation execution stages.
+
+---
+
+## Project Layout
+
+```
+SCOPE/
+  benchmark/
+    scope_536.csv            # 541-task benchmark (paper reported on a 536-task subset; CSV has grown since)
+    scenes/                  # Blender scene files (.blend)
+    presets/presets.json     # Camera preset definitions
+  configs/
+    agent_config.yaml        # Main configuration (env-var aware)
+    presets/                 # Pre-built SLM+VLM combos (20 paper configs + extras)
+  docs/                      # Extended documentation (this file + others)
+  SCOPE_HRI26.pdf      # Published HRI '26 paper
+  prompts/                   # Live system prompts (loaded at runtime; see prompts/README.md)
+  src/scope/                 # Python package (src-layout)
+    agent/
+      client.py              # AgentClient with tool-execution loop
+      thinking.py            # Thinking-mode helpers per model
+    blender/
+      helper_funcs.py        # Camera screenshot, zoom, panorama
+      preset_helpers.py      # Blender camera preset management
+      agent_banner.py        # Blender UI panel addon
+      presets_banner.py      # Blender presets panel addon
+    tools/
+      blender_tools.py       # All 9 tool implementations
+      vlm_clients.py         # VLM adapters (Moondream, Qwen2.5-VL)
+      schema.json            # OpenAI function-calling tool schema
+    utils/config.py          # YAML loader with ${ENV} resolution
+    eval/
+      judge.py               # LLM-as-Judge (10 category templates)
+      metrics.py             # Accuracy computation and reporting
+  scripts/                   # Numbered pipeline stages (see README Quick Start)
+  examples/                  # Standalone usage examples
+  pyproject.toml             # PEP 621 build config (scope-agent, py>=3.10)
+  .env.example               # Environment variable template
+  CITATION.cff
+  LICENSE                    # MIT
+```
+
+### Extending
+
+- **Add a model:** see [`adding_models.md`](adding_models.md).
+- **Add a scene:** drop `.blend` files in `benchmark/scenes/`, add rows to
+  `benchmark/scope_536.csv`; see [`creating_scenes.md`](creating_scenes.md).
+- **Add a tool:** implement in `src/scope/tools/blender_tools.py`, register
+  in `src/scope/tools/schema.json`; the agent auto-discovers from the schema.
+- **Edit a prompt:** modify the corresponding file under `prompts/`; no code
+  changes needed.

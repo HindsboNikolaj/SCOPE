@@ -1,7 +1,9 @@
 # SCOPE Benchmark
 
-The SCOPE benchmark consists of **536 tasks** defined in
-[`scope_536.csv`](scope_536.csv). Each row specifies a natural-language
+The SCOPE benchmark consists of **541 tasks** defined in
+[`scope_536.csv`](scope_536.csv) (the filename preserves the 536-task
+count the HRI '26 paper was scored against; the CSV has since grown by
+6 extra multi-step-reasoning rows). Each row specifies a natural-language
 question, the Blender scene to load, the expected answer, and metadata used
 for automated evaluation.
 

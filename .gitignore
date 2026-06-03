@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+.venv/
+venv/
+env/
+
+# Environment
+.env
+.env.local
+.envrc
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# SCOPE outputs
+outputs/
+output/
+runs/
+results/
+benchmark/scenes/
+*.blend1
+blender_temp/
+
+# Logs
+*.log
