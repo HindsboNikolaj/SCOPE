@@ -6,6 +6,7 @@ designed for edge deployment and built to be benchmarked the same way
 in Blender simulation and on a real AXIS camera. Published at **HRI 2026**.
 
 [![Paper](https://img.shields.io/badge/Paper-HRI%20'26-blue)](https://doi.org/10.1145/3757279.3785641)
+[![arXiv](https://img.shields.io/badge/arXiv-2606.02951-b31b1b?logo=arxiv)](https://arxiv.org/abs/2606.02951)
 [![Dataset](https://img.shields.io/badge/Dataset-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/datasets/HindsboNikolaj/scope-benchmark)
 [![Space](https://img.shields.io/badge/Space-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/spaces/HindsboNikolaj/scope)
 [![Collection](https://img.shields.io/badge/Collection-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/collections/HindsboNikolaj/scope-hri-26-6a1626e0b8e9b9205c09fffc)
@@ -181,15 +182,18 @@ examples/                        Minimal usage examples (quick_start, add_new_to
 
 ```bibtex
 @inproceedings{Armada2026SCOPE,
-  title     = {SCOPE: A Real-Time Natural Language Camera Agent at the Edge:
-               A Sim-to-Real Benchmark and Analysis of Open-Source Vision
-               and Language Agents for PTZ Camera Tasks},
-  author    = {Hindsbo, Nikolaj and Ehsani, Sina and Mishra, Pragyana},
-  booktitle = {Proceedings of the ACM/IEEE International Conference on
-               Human-Robot Interaction (HRI '26)},
-  year      = {2026},
-  publisher = {ACM},
-  doi       = {10.1145/3757279.3785641},
+  title         = {SCOPE: A Real-Time Natural Language Camera Agent at the Edge:
+                   A Sim-to-Real Benchmark and Analysis of Open-Source Vision
+                   and Language Agents for PTZ Camera Tasks},
+  author        = {Hindsbo, Nikolaj and Ehsani, Sina and Mishra, Pragyana},
+  booktitle     = {Proceedings of the ACM/IEEE International Conference on
+                   Human-Robot Interaction (HRI '26)},
+  year          = {2026},
+  publisher     = {ACM},
+  doi           = {10.1145/3757279.3785641},
+  eprint        = {2606.02951},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.RO},
 }
 ```
 

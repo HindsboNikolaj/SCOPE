@@ -14,6 +14,13 @@ authors:
 doi: "10.1145/3757279.3785641"
 date-released: "2026-03-16"
 url: "https://github.com/HindsboNikolaj/SCOPE"
+identifiers:
+  - type: other
+    value: "arXiv:2606.02951"
+    description: "arXiv preprint"
+  - type: url
+    value: "https://arxiv.org/abs/2606.02951"
+    description: "arXiv abstract page"
 preferred-citation:
   type: conference-paper
   title: "SCOPE: A Real-Time Natural Language Camera Agent at the Edge: A Sim-to-Real Benchmark and Analysis of Open-Source Vision and Language Agents for PTZ Camera Tasks"
@@ -29,3 +36,7 @@ preferred-citation:
   publisher:
     name: ACM
   doi: "10.1145/3757279.3785641"
+  identifiers:
+    - type: other
+      value: "arXiv:2606.02951"
+      description: "arXiv preprint"
