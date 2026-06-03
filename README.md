@@ -5,6 +5,12 @@ A modular multimodal agent for natural-language PTZ camera control,
 designed for edge deployment and built to be benchmarked the same way
 in Blender simulation and on a real AXIS camera. Published at **HRI 2026**.
 
+> **Latest:** the repo now ships [`AGENT_INSTRUCTIONS.md`](AGENT_INSTRUCTIONS.md)
+> for one-shot install via Claude Code or Codex. Open a fresh agent session
+> in this repo, paste the file, and the agent will check prerequisites, fill
+> `.env`, run the setup scripts, and stop at the first failure. Most of
+> the install friction is handled for you.
+
 [![Paper](https://img.shields.io/badge/Paper-HRI%20'26-blue)](https://doi.org/10.1145/3757279.3785641)
 [![arXiv](https://img.shields.io/badge/arXiv-2606.02951-b31b1b?logo=arxiv)](https://arxiv.org/abs/2606.02951)
 [![Dataset](https://img.shields.io/badge/Dataset-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/datasets/HindsboNikolaj/scope-benchmark)
@@ -44,7 +50,20 @@ The repo ships:
 
 ## Architecture
 
-![SCOPE architecture diagram](docs/images/architecture.png)
+![SCOPE agent in Blender across three urban scenes](docs/images/demo-blender-sim.gif)
+
+```mermaid
+flowchart TD
+  U([User / eval harness]) -->|natural language| P[SLM planner<br/>Qwen3 family]
+  P -->|tool calls JSON| D{tool dispatch}
+  D -->|PTZ moves, presets, capture| C[Camera tools]
+  D -->|count, VQA, detect, point| V[Perception tools]
+  C --> B[Blender 3D scene]
+  V --> M[VLM<br/>Moondream / Qwen-VL]
+  B -.->|rendered frame| V
+  C --> P
+  M --> P
+```
 
 The planner is a Small Language Model (Qwen3 family by default). It
 interleaves *reasoning* with *tool calls*. Each tool resolves either to a
@@ -58,8 +77,6 @@ in [`docs/tool_reference.md`](docs/tool_reference.md).
 ---
 
 ## Quick start
-
-### For humans
 
 ```bash
 # 1. Install scope-agent + drop a blank .env in place
@@ -123,11 +140,6 @@ Common knobs (all env-var driven; full list in
 > **Note:** the pipeline launches Blender *without* `--background` —
 > screenshot capture needs a real 3D viewport. The only setup step that
 > uses `--background` is `04_install_presets.py`, which doesn't need UI.
-
-![Blender simulation: agent walking three urban scenes](docs/images/demo-blender-sim.gif)
-
-> *Above: agent in Blender across three scenes. The terminal trace on the
-> left logs every tool call, VLM response, and planner reasoning step.*
 
 ---
 
