@@ -52,6 +52,10 @@ The repo ships:
 
 ![SCOPE agent in Blender across three urban scenes](docs/images/demo-blender-sim.gif)
 
+> *Above: the agent running in Blender across three urban scenes. The
+> terminal trace on the left logs every tool call, VLM response, and
+> planner reasoning step as the run unfolds.*
+
 **Simulation environment: [Blender](https://www.blender.org/).** A free,
 scriptable, cross-platform 3D editor with a full Python API
 ([`bpy`](https://docs.blender.org/api/current/index.html)). Picked because
