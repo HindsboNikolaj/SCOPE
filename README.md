@@ -2,7 +2,7 @@
 
 **A Natural-Language PTZ Camera Agent That Runs Entirely at the Edge**
 
-SCOPE is an edge-focused, tool-using agent for pan–tilt–zoom (PTZ) camera work: a small language model plans, vision tools inspect frames, and camera tools act in a loop. This public repository is the reproducible Blender implementation, benchmark, and evaluation harness for that loop; it does not include the production AXIS-camera backend used in the research demonstrations.
+SCOPE is an edge-focused, tool-using agent for pan–tilt–zoom (PTZ) camera work: a small language model plans, vision tools inspect frames, and camera tools act in a loop. This public repository is the reproducible Blender implementation, benchmark, and evaluation harness for that loop.
 
 [![Paper](https://img.shields.io/badge/Paper-HRI%20'26-blue)](https://doi.org/10.1145/3757279.3785641)
 [![arXiv](https://img.shields.io/badge/arXiv-2606.02951-b31b1b?logo=arxiv)](https://arxiv.org/abs/2606.02951)
