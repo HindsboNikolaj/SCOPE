@@ -8,32 +8,11 @@ VLM backends interact with the Blender simulation.
 
 ## High-Level Overview
 
-```
- User prompt
-      |
-      v
- +--------------------+      +-------------------+
- |   AgentClient      | ---> | OpenAI-compatible |
- |   (scope/agent/    |      | SLM server        |
- |    client.py)      | <--- | (Ollama/vLLM)     |
- +----+----------+----+      +-------------------+
-      |          |
-      |   tool calls (JSON function-calling format)
-      |          |
-      v          v
- +----------+  +------------------+
- | PTZ      |  | Perception       |
- | Tools    |  | Tools            |
- | (Blender)|  | (VLM inference)  |
- +----------+  +------------------+
-      |               |
-      v               v
- +----------------------------+
- |    Blender 3D Scene        |
- |  (bpy camera, presets,     |
- |   rendered frames)         |
- +----------------------------+
-```
+![High-level SCOPE AgentClient overview: user prompt to AgentClient and an OpenAI-compatible SLM; AgentClient invokes Blender PTZ and perception tools over the Blender scene](images/agent-client-overview.svg)
+
+The solid paths are requests and tool calls; dashed paths are grounded text
+results or rendered frames flowing back into the loop. This diagram documents
+the public Blender implementation, not an unpublished physical-camera backend.
 
 ---
 
@@ -259,7 +238,7 @@ SCOPE/
     presets/presets.json     # Camera preset definitions
   configs/
     agent_config.yaml        # Main configuration (env-var aware)
-    presets/                 # Pre-built SLM+VLM combos (20 paper configs + extras)
+    presets/                 # Pre-built SLM+VLM pairing presets
   docs/                      # Extended documentation (this file + others)
   SCOPE_HRI26.pdf      # Published HRI '26 paper
   prompts/                   # Live system prompts (loaded at runtime; see prompts/README.md)

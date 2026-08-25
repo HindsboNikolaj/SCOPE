@@ -45,7 +45,7 @@ SCOPE makes that loop inspectable. Every run records the tool calls, their struc
 
 > The Blender demonstration is the runnable path in this repository. Its trace shows each planner turn, tool call, visual observation, and answer rather than hiding the loop behind a single response.
 
-![SCOPE architecture: AgentClient exchanges tool calls and answers with a planner, which reaches PTZ and perception tools operating on a Blender scene](docs/images/scope-architecture.svg)
+![SCOPE research architecture: a small language model uses PTZ and perception tools to control a scene and query a vision model](docs/images/scope-architecture.svg)
 
 [`AgentClient`](src/scope/agent/client.py) sends the nine function definitions in [`src/scope/tools/schema.json`](src/scope/tools/schema.json) to a planner through an OpenAI-compatible chat/tool-calling API. A planner response is either a final answer or a tool call; SCOPE dispatches the call, appends its text result to the conversation, and repeats until the task ends.
 

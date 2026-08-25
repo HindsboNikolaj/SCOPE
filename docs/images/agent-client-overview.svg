@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1120 672" role="img" aria-labelledby="title desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="title">SCOPE AgentClient high-level architecture</title>
+  <desc id="desc">A user prompt enters AgentClient. AgentClient exchanges messages and tool calls with an OpenAI-compatible small language model server such as Ollama or vLLM. AgentClient invokes PTZ and perception tools in Blender. PTZ tools update the Blender camera; perception tools receive rendered frames from the Blender scene. Text tool results return to AgentClient.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#334155" flood-opacity=".10"/></filter>
+    <marker id="blue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L12 6 L0 12 Z" fill="#2563eb"/></marker>
+    <marker id="purple" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L12 6 L0 12 Z" fill="#7c3aed"/></marker>
+    <marker id="teal" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L12 6 L0 12 Z" fill="#0f766e"/></marker>
+    <marker id="coral" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L12 6 L0 12 Z" fill="#e11d48"/></marker>
+    <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M16 0 H0 V16" fill="none" stroke="#10b981" stroke-opacity=".10" stroke-width="1"/></pattern>
+    <style>
+      .kicker { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .12em; fill: #2563eb; }
+      .heading { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 26px; font-weight: 750; fill: #0f172a; }
+      .subheading { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; fill: #475569; }
+      .card-title { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 18px; font-weight: 750; fill: #0f172a; }
+      .card-detail { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 13px; font-weight: 500; fill: #475569; }
+      .code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; font-weight: 650; fill: #1d4ed8; }
+      .edge { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 650; fill: #475569; }
+      .smallcaps { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 11px; font-weight: 750; letter-spacing: .10em; fill: #64748b; }
+    </style>
+  </defs>
+
+  <rect width="1120" height="672" fill="#f8fafc"/>
+  <rect x="24" y="24" width="1072" height="624" rx="24" fill="#ffffff" stroke="#dbe4f0" stroke-width="2"/>
+  <text x="48" y="64" class="kicker">SCOPE ARCHITECTURE</text>
+  <text x="48" y="96" class="heading">Agent loop: high-level overview</text>
+  <text x="48" y="120" class="subheading">The planner decides; tools execute and return grounded text observations.</text>
+  <path d="M48 144 H1072" stroke="#dbe4f0" stroke-width="2"/>
+
+  <g filter="url(#shadow)">
+    <rect x="48" y="144" width="184" height="96" rx="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+    <text x="140" y="184" class="card-title" text-anchor="middle">User prompt</text>
+    <text x="140" y="208" class="card-detail" text-anchor="middle">natural-language request</text>
+
+    <rect x="304" y="128" width="272" height="128" rx="18" fill="#e0f2fe" stroke="#2563eb" stroke-width="2"/>
+    <rect x="328" y="152" width="12" height="48" rx="6" fill="#2563eb"/>
+    <text x="360" y="168" class="card-title">AgentClient</text>
+    <text x="360" y="192" class="code">scope/agent/client.py</text>
+    <path d="M328 208 H552" stroke="#93c5fd" stroke-width="2"/>
+    <text x="328" y="232" class="card-detail">routes calls and owns history</text>
+
+    <rect x="672" y="128" width="400" height="128" rx="18" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+    <rect x="696" y="152" width="12" height="48" rx="6" fill="#7c3aed"/>
+    <text x="728" y="168" class="card-title">OpenAI-compatible SLM server</text>
+    <text x="728" y="192" class="card-detail">Ollama or vLLM</text>
+    <path d="M696 208 H1048" stroke="#d8b4fe" stroke-width="2"/>
+    <text x="696" y="232" class="card-detail">selects a tool or writes the answer</text>
+  </g>
+
+  <path d="M232 192 H296" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#blue)"/>
+  <text x="264" y="176" class="edge" text-anchor="middle">prompt</text>
+  <path d="M576 168 H664" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#blue)"/>
+  <text x="620" y="156" class="edge" text-anchor="middle">messages + tools</text>
+  <path d="M672 216 H584" stroke="#7c3aed" stroke-width="3" fill="none" marker-end="url(#purple)"/>
+  <text x="628" y="236" class="edge" text-anchor="middle">tool calls / answer</text>
+
+  <rect x="144" y="344" width="832" height="184" rx="24" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8 8"/>
+  <rect x="168" y="328" width="200" height="32" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="268" y="350" class="smallcaps" text-anchor="middle">TOOL EXECUTION</text>
+
+  <path d="M440 256 V320 H320 V400" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#blue)"/>
+  <path d="M440 256 V320 H776 V400" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#blue)"/>
+  <rect x="368" y="276" width="144" height="24" rx="12" fill="#dbeafe"/>
+  <text x="440" y="293" class="smallcaps" text-anchor="middle" fill="#1d4ed8">JSON TOOL CALLS</text>
+  <path d="M320 408 V368 H400 V256" stroke="#0f766e" stroke-width="2" fill="none" stroke-dasharray="8 8" marker-end="url(#teal)"/>
+  <path d="M776 408 V368 H480 V256" stroke="#0f766e" stroke-width="2" fill="none" stroke-dasharray="8 8" marker-end="url(#teal)"/>
+  <text x="560" y="388" class="edge" text-anchor="middle" fill="#0f766e">text tool results</text>
+
+  <g filter="url(#shadow)">
+    <rect x="184" y="408" width="272" height="96" rx="16" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+    <text x="208" y="444" class="card-title">PTZ tools</text>
+    <text x="208" y="468" class="card-detail">Blender camera control</text>
+    <text x="208" y="488" class="code" fill="#be123c">move · zoom · preset</text>
+
+    <rect x="616" y="408" width="320" height="96" rx="16" fill="#ecfeff" stroke="#0891b2" stroke-width="2"/>
+    <text x="640" y="444" class="card-title">Perception tools</text>
+    <text x="640" y="468" class="card-detail">VLM inference over scene frames</text>
+    <text x="640" y="488" class="code" fill="#0e7490">count · query · frame object</text>
+  </g>
+
+  <path d="M320 504 V544 H464 V568" stroke="#e11d48" stroke-width="3" fill="none" marker-end="url(#coral)"/>
+  <text x="392" y="540" class="edge" text-anchor="middle" fill="#be123c">camera action</text>
+  <path d="M656 568 V544 H776 V512" stroke="#0f766e" stroke-width="3" fill="none" stroke-dasharray="8 8" marker-end="url(#teal)"/>
+  <text x="720" y="540" class="edge" text-anchor="middle" fill="#0e7490">rendered frame</text>
+
+  <rect x="320" y="576" width="480" height="64" rx="18" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+  <rect x="320" y="576" width="480" height="64" rx="18" fill="url(#grid)"/>
+  <text x="352" y="604" class="card-title">Blender 3D Scene</text>
+  <text x="352" y="628" class="card-detail">bpy camera · presets · rendered frames</text>
+  <rect x="672" y="592" width="96" height="24" rx="12" fill="#bbf7d0"/>
+  <text x="720" y="609" class="smallcaps" text-anchor="middle" fill="#047857">VISUAL WORLD</text>
+</svg>
