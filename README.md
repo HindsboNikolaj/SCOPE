@@ -10,6 +10,8 @@ in Blender simulation and on a real AXIS camera. Published at **HRI 2026**.
 > in this repo, paste the file, and the agent will check prerequisites, fill
 > `.env`, run the setup scripts, and stop at the first failure. Most of
 > the install friction is handled for you.
+>
+> This repo also exposes the recipes for **agentic control of the camera object in Blender** via the Python API.
 
 [![Paper](https://img.shields.io/badge/Paper-HRI%20'26-blue)](https://doi.org/10.1145/3757279.3785641)
 [![arXiv](https://img.shields.io/badge/arXiv-2606.02951-b31b1b?logo=arxiv)](https://arxiv.org/abs/2606.02951)
