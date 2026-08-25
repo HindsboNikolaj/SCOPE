@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg viewBox="0 0 1120 760" role="img" aria-labelledby="title desc" xmlns="http://www.w3.org/2000/svg">
   <title id="title">SCOPE AgentClient high-level architecture</title>
-  <desc id="desc">A user prompt enters AgentClient. AgentClient exchanges messages and tool calls with an OpenAI-compatible small language model server such as Ollama or vLLM. AgentClient invokes PTZ and perception tools in Blender. PTZ tools update the Blender camera; perception tools receive rendered frames from the Blender scene. Text tool results return to AgentClient.</desc>
+  <desc id="desc">A user prompt enters AgentClient. AgentClient exchanges messages and tool calls with an OpenAI-compatible small language model server such as Ollama or vLLM. AgentClient invokes PTZ and perception tools in Blender. PTZ tools update the Blender camera; perception tools receive cropped camera-view screenshots from the Blender scene. Text tool results return to AgentClient.</desc>
   <defs>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#334155" flood-opacity=".10"/></filter>
     <marker id="blue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L12 6 L0 12 Z" fill="#2563eb"/></marker>
@@ -56,17 +56,17 @@
   <text x="608" y="284" class="edge" text-anchor="middle">tool calls / answer</text>
 
   <rect x="128" y="416" width="864" height="184" rx="24" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8 8"/>
-  <rect x="152" y="400" width="208" height="32" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-  <text x="256" y="422" class="smallcaps" text-anchor="middle">TOOL EXECUTION</text>
+  <rect x="144" y="400" width="192" height="32" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="240" y="422" class="smallcaps" text-anchor="middle">TOOL EXECUTION</text>
 
-  <path d="M408 304 V384 H300 V464" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#blue)"/>
-  <path d="M408 304 V384 H808 V464" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#blue)"/>
+  <path d="M408 304 V368 H300 V464" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#blue)"/>
+  <path d="M408 304 V368 H808 V464" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#blue)"/>
   <rect x="336" y="332" width="144" height="24" rx="12" fill="#dbeafe"/>
   <text x="408" y="349" class="smallcaps" text-anchor="middle" fill="#1d4ed8">JSON TOOL CALLS</text>
   <path d="M300 472 V432 H320 V304" stroke="#0f766e" stroke-width="2" fill="none" stroke-dasharray="8 8" marker-end="url(#teal)"/>
   <path d="M808 472 V432 H496 V304" stroke="#0f766e" stroke-width="2" fill="none" stroke-dasharray="8 8" marker-end="url(#teal)"/>
-  <rect x="528" y="440" width="144" height="24" rx="12" fill="#f8fafc"/>
-  <text x="600" y="457" class="edge" text-anchor="middle" fill="#0f766e">text tool results</text>
+  <rect x="336" y="376" width="144" height="24" rx="12" fill="#f8fafc"/>
+  <text x="408" y="393" class="edge" text-anchor="middle" fill="#0f766e">text tool results</text>
 
   <g filter="url(#shadow)">
     <rect x="160" y="472" width="280" height="96" rx="16" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
@@ -76,14 +76,14 @@
 
     <rect x="648" y="472" width="320" height="96" rx="16" fill="#ecfeff" stroke="#0891b2" stroke-width="2"/>
     <text x="672" y="508" class="card-title">Perception tools</text>
-    <text x="672" y="532" class="card-detail">VLM inference over scene frames</text>
+    <text x="672" y="532" class="card-detail">VLM inference over captured views</text>
     <text x="672" y="552" class="code" fill="#0e7490">count · query · frame object</text>
   </g>
 
   <path d="M300 568 V624 H440 V648" stroke="#e11d48" stroke-width="3" fill="none" marker-end="url(#coral)"/>
   <text x="392" y="620" class="edge" text-anchor="middle" fill="#be123c">camera action</text>
   <path d="M680 648 V624 H808 V576" stroke="#0f766e" stroke-width="3" fill="none" stroke-dasharray="8 8" marker-end="url(#teal)"/>
-  <text x="744" y="620" class="edge" text-anchor="middle" fill="#0e7490">rendered frame</text>
+  <text x="744" y="620" class="edge" text-anchor="middle" fill="#0e7490">camera-view crop</text>
 
   <rect x="320" y="656" width="480" height="64" rx="18" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
   <rect x="320" y="656" width="480" height="64" rx="18" fill="url(#grid)"/>

@@ -62,9 +62,15 @@ The split is deliberate. Perception tools call a configured VLM only when needed
 
 | Tool family | Shipped tools | Blender-side behavior |
 | --- | --- | --- |
-| Camera control | `ptz_adjust`, `go_to_preset`, `home_action`, `get_presets`, `take_image` | Moves the active `bpy` camera, selects a preset, or captures a frame |
+| Camera control | `ptz_adjust`, `go_to_preset`, `home_action`, `get_presets`, `take_image` | Moves the active `bpy` camera, selects a preset, or captures a cropped camera view |
 | Perception | `count_pointing`, `query_answer`, `zoom_bounding` | Captures a frame or panorama and delegates the visual query to the configured VLM |
 | Stateful capability | `track_object` | Exposes the tool contract in simulation; treat it as a simulation stub, not a deployed tracker |
+
+### Camera-view capture is a Blender tool extension point
+
+For default camera-view perception, [`_capture_frame`](src/scope/tools/blender_tools.py) calls [`screenshot_camera_view`](src/scope/blender/helper_funcs.py). That helper temporarily switches Blender’s active 3D view to the scene camera, hides editor overlays and gizmos, takes a lightweight viewport screenshot, and crops it to the camera frustum. The VLM receives the precise PTZ camera viewpoint—not Blender chrome or incidental viewport area.
+
+This capture adapter is part of SCOPE’s Blender tool implementation, not a feature supplied by an OpenAI-compatible schema or MCP. An MCP or other-runtime adapter can expose the same capability, but it must preserve or deliberately replace the device-specific capture step before returning a tool result. Camera-view capture is therefore an explicit, testable extension point alongside tool declaration and dispatch.
 
 The paper describes a real-camera research deployment behind the same kind of high-level tool contract. This repository contributes the Blender implementation of that boundary and its repeatable evaluation path—not public AXIS backend code.
 
@@ -123,7 +129,8 @@ For a persistent SCOPE tool, make both parts of the contract explicit:
 
 1. Add its function schema to [`src/scope/tools/schema.json`](src/scope/tools/schema.json).
 2. Implement a Python function with matching keyword arguments in [`src/scope/tools/blender_tools.py`](src/scope/tools/blender_tools.py); return at least `result`, with timings when they matter to evaluation.
-3. Add benchmark rows or an integration test before treating the new capability as measured.
+3. For a perception tool, reuse `_capture_frame` or supply a documented replacement capture adapter; do not silently substitute a generic Blender viewport screenshot for the cropped camera view.
+4. Add benchmark rows or an integration test before treating the new capability as measured.
 
 ### Use SCOPE from another runtime or camera
 

@@ -130,8 +130,11 @@ to instantiate the correct client.
 Two modules provide the low-level Blender integration:
 
 **`helper_funcs.py`**:
-- `screenshot_camera_view(path)` -- Render the camera view and crop to the
-  camera frustum.
+- `screenshot_camera_view(path)` -- Switch the active `VIEW_3D` area to the
+  scene camera, hide editor overlays and gizmos, capture the viewport, and
+  crop to the camera frustum. Perception tools use it through `_capture_frame`;
+  treat it as a swappable camera-view capture adapter, not a generic desktop
+  screenshot.
 - `blender_zoom(cam, x1, y1, x2, y2)` -- Perspective-aware area zoom with
   cosine correction. Adjusts focal length and rotation to center and fill
   the specified normalized bounding box.
