@@ -87,9 +87,10 @@ structure:
 ```
 
 This schema is passed verbatim to the SLM in every chat completion request.
-The same schema is used in both simulation (Blender) and real-world (PTZ
-camera API) deployments, enabling sim-to-real transfer without schema
-changes.
+The public implementation binds it to Blender simulation tools. The paper and
+demos cover real-camera work, but this repository does not include a physical
+camera adapter; a deployment must implement and validate that boundary
+separately.
 
 ### 3. Tool Implementations (`scope/tools/blender_tools.py`)
 
@@ -253,7 +254,7 @@ VLM perception, and simulation execution stages.
 ```
 SCOPE/
   benchmark/
-    scope_536.csv            # 541-task benchmark (paper reported on a 536-task subset; CSV has grown since)
+    scope_536.csv            # 541-task benchmark (paper scores use a 536-task subset)
     scenes/                  # Blender scene files (.blend)
     presets/presets.json     # Camera preset definitions
   configs/

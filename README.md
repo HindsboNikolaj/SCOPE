@@ -1,17 +1,8 @@
 # SCOPE
 
-**Simulation and Camera Operations for Perception and Evaluation.**
-A modular multimodal agent for natural-language PTZ camera control,
-designed for edge deployment and built to be benchmarked the same way
-in Blender simulation and on a real AXIS camera. Published at **HRI 2026**.
+**Simulation and Camera Operations for Perception and Evaluation**
 
-> **Latest:** the repo now ships [`AGENT_INSTRUCTIONS.md`](AGENT_INSTRUCTIONS.md)
-> for one-shot install via Claude Code or Codex. Open a fresh agent session
-> in this repo, paste the file, and the agent will check prerequisites, fill
-> `.env`, run the setup scripts, and stop at the first failure. Most of
-> the install friction is handled for you.
->
-> This repo also exposes the recipes for **agentic control of the camera object in Blender** via the Python API.
+SCOPE is a modular multimodal agent for natural-language PTZ camera work: a language model plans, vision tools inspect frames, and camera tools act on the scene. It gives builders a Blender-based path to prototype, extend, and evaluate that loop before attaching it to a camera integration of their own.
 
 [![Paper](https://img.shields.io/badge/Paper-HRI%20'26-blue)](https://doi.org/10.1145/3757279.3785641)
 [![arXiv](https://img.shields.io/badge/arXiv-2606.02951-b31b1b?logo=arxiv)](https://arxiv.org/abs/2606.02951)
@@ -19,206 +10,136 @@ in Blender simulation and on a real AXIS camera. Published at **HRI 2026**.
 [![Space](https://img.shields.io/badge/Space-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/spaces/HindsboNikolaj/scope)
 [![Collection](https://img.shields.io/badge/Collection-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/collections/HindsboNikolaj/scope-hri-26-6a1626e0b8e9b9205c09fffc)
 
-![Real PTZ camera, same agent, two different planner LLMs](docs/images/demo-real-camera.gif)
+![SCOPE architecture: a language-model planner uses PTZ and perception tools to control a camera or simulation and query a vision model](docs/images/scope-architecture.svg)
 
-> *Above: real AXIS PTZ camera in our office. Same agent, same exposed
-> tool schema; only the planner LLM changes between runs (Qwen3-30B-A3B
-> MoE vs the dense Qwen3-32B). The visible difference is speed.*
+> The planner receives tool results as text rather than raw image tokens. The same tool boundary keeps camera control, perception, and the planner independently replaceable.
 
----
+## Choose your path
 
-## What it is
-
-A small language model picks actions. A vision-language model handles
-perception. They talk to a fixed action space — pan/tilt/zoom,
-preset navigation, capture, plus VLM-backed counting, VQA, detection,
-and tracking — exposed as an **OpenAI-compatible tool schema** (the same
-tool-calling pattern OpenAI, Anthropic's MCP, and most modern agent
-runtimes share). The schema is *byte-identical* between Blender simulation
-and the physical AXIS PTZ, so anything you measure in sim transfers without
-re-plumbing the agent.
-
-The repo ships:
-
-- The full agent loop and the 9-tool action space.
-- A **536-task benchmark** across 8 categories
-  (counting, descriptor, location/spatial, OCR, single-call,
-  multi-step command, multi-step reasoning, comparative/relational).
-- An **LLM-as-Judge** evaluation harness with per-category metrics.
-- A repack-safe Blender simulation environment with shared scene presets.
-- Per-category judge prompts and the SLM planner system prompt.
-
----
-
-## Architecture
-
-![SCOPE agent in Blender across three urban scenes](docs/images/demo-blender-sim.gif)
-
-> *Above: the agent running in Blender across three urban scenes. The
-> terminal trace on the left logs every tool call, VLM response, and
-> planner reasoning step as the run unfolds.*
-
-**Simulation environment: [Blender](https://www.blender.org/).** A free,
-scriptable, cross-platform 3D editor with a full Python API
-([`bpy`](https://docs.blender.org/api/current/index.html)). Picked because
-anyone can install it and get the same rendered frames the VLM sees — no
-proprietary sim, no synthetic stand-ins.
-
-```
-                          +------------------+
-                          |   User / Eval    |
-                          |   Harness        |
-                          +--------+---------+
-                                   |
-                              natural language
-                                   |
-                          +--------v---------+
-                          |   SLM Planner    |
-                          |  (Qwen3, etc.)   |
-                          +--------+---------+
-                                   |
-                            tool calls (JSON)
-                                   |
-                     +-------------+-------------+
-                     |                           |
-              +------v------+           +--------v--------+
-              |  PTZ Tools  |           | Perception Tools|
-              |  (Blender)  |           |     (VLM)       |
-              +------+------+           +--------+--------+
-                     |                           |
-              Blender scene             caption / VQA /
-              manipulation              detect / point
-                     |                           |
-              +------v---------------------------v--------+
-              |          Blender 3D Scene                  |
-              |   (camera, presets, rendered frames)       |
-              +-------------------------------------------+
-```
-
-The planner is a Small Language Model (Qwen3 family by default). It
-interleaves *reasoning* with *tool calls*. Each tool resolves either to a
-camera-control primitive (PTZ moves, preset navigation, capture) or to a
-perception call back into a VLM (Moondream / Qwen-VL). The first kind is
-a primitive; the rest are short **workflows** — multi-step routines like
-*zoom-to-bounding-box* or *count-by-pointing* that the planner can invoke
-as if they were a single skill. Full per-tool params and return types are
-in [`docs/tool_reference.md`](docs/tool_reference.md).
-
----
+| If you want to… | Start here | What you get |
+| --- | --- | --- |
+| Run a working camera agent in simulation | [Quick start](#quick-start) | A configured Blender smoke run through runner, judge, and metrics |
+| Add a camera or perception capability | [Add a tool](#add-a-tool) | A runnable Blender tutorial, then the persistent extension points |
+| Compare planner/VLM pairs | [Run the benchmark](#run-the-benchmark) | Repeatable traces and an LLM-as-judge report |
+| Change model backends | [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) | Ollama, vLLM, hosted planner, and supported VLM setup |
+| Hand setup to Claude Code or Codex | [`AGENT_INSTRUCTIONS.md`](AGENT_INSTRUCTIONS.md) | An install brief that stops at the first failure |
 
 ## Quick start
 
-```bash
-# 1. Install scope-agent + drop a blank .env in place
-bash scripts/01_install.sh
+Run these from the repository root. You need Python 3.10+, Blender 4.0+, an OpenAI-compatible planner endpoint, a supported VLM, and a judge endpoint for the full evaluation pipeline.
 
-# 2. Edit .env. Minimum fields to set:
-#    AGENT_API_BASE, AGENT_MODEL_ID, AGENT_API_KEY  (SLM planner — Ollama / vLLM / hosted)
-#    MOONDREAM_API_KEY  (or VLM_MODEL_URL for a local VLM)
-#    OPENAI_API_KEY     (or JUDGE_API_BASE for a different judge endpoint)
-#    BLENDER_BIN        (only if `blender` isn't on PATH; see note below)
+```bash
+# Install SCOPE and create local configuration.
+python -m pip install -e .
+test -f .env || cp .env.example .env
+
+# Edit .env, then load it into this shell. At minimum configure:
+# AGENT_API_BASE, AGENT_MODEL_ID, AGENT_API_KEY,
+# a VLM option (for example MOONDREAM_API_KEY or VLM_MODEL_URL),
+# and OPENAI_API_KEY (or JUDGE_API_BASE/JUDGE_API_KEY) for evaluation.
 set -a; source .env; set +a
 
-# 3. Pull the planner model, download the scenes, install Blender presets
-bash scripts/02_pull_models.sh qwen3:30b-a3b    # Ollama path; skip if using vLLM / hosted
-bash scripts/03_download_scenes.sh              # ~GB of .blend scenes from Hugging Face Hub
+# Download scenes and install their Blender camera presets.
+# The model pull is only for the Ollama route; skip it for vLLM or hosted APIs.
+bash scripts/02_pull_models.sh qwen3:30b-a3b
+bash scripts/03_download_scenes.sh
 "${BLENDER_BIN:-blender}" --background --python scripts/04_install_presets.py
 
-# 4. 5-task smoke benchmark (runs the full pipeline: runner → judge → metrics)
+# Exercise the complete runner → judge → metrics path on five tasks.
 BENCH_LIMIT=5 SCOPE_RESUME=0 bash scripts/run_eval_pipeline.sh
 ```
 
-**Blender path.** If `blender` isn't on `PATH`, set `BLENDER_BIN` in `.env`
-to the full binary path. On macOS that's usually
-`/Applications/Blender.app/Contents/MacOS/Blender`.
+If Blender is not on `PATH`, set `BLENDER_BIN` in `.env`; on macOS this is commonly `/Applications/Blender.app/Contents/MacOS/Blender`. The evaluator intentionally launches Blender **with a UI**, not `--background`, because viewport capture needs 3D viewport context. `--background` is safe for the preset installer above.
 
-**Python interpreter.** If `python3` and `pip` point at different
-interpreters on your machine, set `PYTHON_BIN` in `.env` so the judge
-and metrics stages run under the same Python that installed `scope-agent`.
+For an agent-assisted install, paste [`AGENT_INSTRUCTIONS.md`](AGENT_INSTRUCTIONS.md) into a fresh Claude Code or Codex session.
 
-**About `bpy`.** The benchmark runner (`src/scope/eval/runner.py`) imports
-`bpy`, Blender's Python module. That's normal — the runner is launched
-*inside* Blender by `run_eval_pipeline.sh`, where `bpy` is available.
-Don't try to `import scope.eval.runner` from your regular Python; that
-will fail by design.
+## Why SCOPE
 
-### For an AI agent
+| Builder concern | SCOPE’s boundary | What you can verify |
+| --- | --- | --- |
+| A planner chooses the wrong action | A small language model receives a fixed tool list and text results | Tool name, JSON arguments, trace, and final answer |
+| A visual model is the bottleneck | Perception lives behind tools such as `count_pointing` and `query_answer` | Swap a supported VLM without rewriting planner logic |
+| A camera routine needs more than one primitive | Tools may package short workflows, such as detect-then-zoom | The planner calls one stable capability rather than reimplementing the sequence |
+| A change is hard to reproduce on hardware | Blender scenes, presets, questions, and evaluation metadata are versioned | Run the same scene/question path and inspect the resulting trace |
 
-Paste [`AGENT_INSTRUCTIONS.md`](AGENT_INSTRUCTIONS.md) into a Claude Code
-or Codex session. The agent will walk through prerequisites,
-fill `.env`, run the setup scripts, and stop at the first failure.
+The repository ships the agent loop, nine Blender-facing tool definitions, VLM adapters, a 541-task benchmark CSV, and an LLM-as-judge evaluation harness. It is a simulation and evaluation codebase; it does **not** include a public production AXIS-camera backend.
 
----
+## Architecture and action space
 
-## Running the benchmark
+[`AgentClient`](src/scope/agent/client.py) sends the nine definitions in [`src/scope/tools/schema.json`](src/scope/tools/schema.json) to a planner through an OpenAI-compatible chat/tool-calling API. When the planner calls a tool, SCOPE dispatches to a Python function, appends its text result to the conversation, and repeats until the planner returns an answer. In the shipped implementation, those functions operate on Blender’s active camera and call a configured VLM where perception is needed.
+
+| Tool family | Shipped examples | Implementation boundary |
+| --- | --- | --- |
+| Camera control | `ptz_adjust`, `go_to_preset`, `home_action`, `take_image` | [`blender_tools.py`](src/scope/tools/blender_tools.py) manipulates Blender camera state and captures frames |
+| Perception | `count_pointing`, `query_answer`, `zoom_bounding` | The same module captures a frame and delegates to a configured VLM client |
+| Scene context | `get_presets`, `track_object` | Presets are read from Blender; `track_object` is a simulation stub, not a deployed tracker |
+
+The diagram above is exported from the project research page and stored as a self-contained asset; it makes no network request when GitHub renders this README.
+
+## Add a tool
+
+Start with the runnable [custom-tool tutorial](examples/add_new_tool.py):
+
+```bash
+blender my_scene.blend --python examples/add_new_tool.py
+```
+
+It registers a `measure_distance` tool for that Blender process, verifies the schema/function registration, and calls the function directly against two scene objects. Set `SCOPE_RUN_AGENT_DEMO=1` only after configuring a planner endpoint if you also want to ask a live agent to use the tool.
+
+For a persistent SCOPE tool, make both parts of the contract explicit:
+
+1. Add its function schema to [`src/scope/tools/schema.json`](src/scope/tools/schema.json).
+2. Implement a Python function with the same keyword arguments in [`src/scope/tools/blender_tools.py`](src/scope/tools/blender_tools.py); return at least `result`, and include timings when they matter to evaluation.
+3. Add benchmark rows or an integration test before treating the new capability as measured.
+
+### Extend into other agent runtimes or cameras
+
+SCOPE’s shipped schema is **OpenAI-compatible function-calling JSON**, and its shipped execution layer is Python in Blender. MCP is a separate client/server protocol with different transport and result conventions; an OpenAI-compatible tool schema is not an MCP server definition.
+
+To use SCOPE capabilities from MCP or another runtime, write a thin adapter around the boundary you need: map that runtime’s tool declaration and request payload to the SCOPE function arguments, call the implementation, and translate `result`/errors/timings back into the runtime’s result format. Keep the mapping and validation explicit instead of assuming schemas or wire formats are interchangeable.
+
+To attach physical hardware, implement a camera adapter for the device/vendor API you operate, preserve the documented tool argument and result contracts where that is useful, and validate it separately from the Blender benchmark. The paper and demos include real AXIS-camera work, but the public repository does not contain an AXIS backend to reuse or imply deployment readiness.
+
+## Results from the paper
+
+**Scope of these numbers:** the HRI paper reports results on a supported **536-task published subset**, judged by GPT-4o. The current [`benchmark/scope_536.csv`](benchmark/scope_536.csv) filename is historical and the repository ships **541 tasks**; five shipped rows fall outside the published score subset. The public Git history begins with the 541-row CSV, so it does not establish how those rows relate to the paper subset. Report a fresh 541-task run separately rather than comparing it directly with the paper values below.
+
+| Rank | Planner | Planner type | Vision model | Paper accuracy (536 tasks) |
+| :--: | --- | --- | --- | :--: |
+| 1 | Qwen3-30B-A3B | MoE | Moondream3 | **73.8%** |
+| 2 | Qwen3-30B-A3B | MoE | Qwen2.5-VL-7B | 72.4% |
+| 3 | Qwen3-32B | Dense | Moondream3 | 71.6% |
+| 4 | Qwen3-32B | Dense | Qwen2.5-VL-7B | 70.9% |
+| 5 | Qwen3-30B-A3B | MoE | Moondream2 | 69.5% |
+
+`MoE` and `Dense` identify the documented planner architectures; the accuracy values are the paper matrix reproduced in [`docs/RESULTS_FULL.md`](docs/RESULTS_FULL.md). The full page links the 20 published planner/VLM pairings and the paper contains the per-category analysis.
+
+## Run the benchmark
 
 ```bash
 ./scripts/run_eval_pipeline.sh configs/agent_config.yaml results/
 ```
 
-Common knobs (all env-var driven; full list in
-[`docs/CONFIGURATION.md`](docs/CONFIGURATION.md)):
-
-| Var | Default | What it does |
+| Variable | Default | Use it when… |
 | --- | --- | --- |
-| `BENCH_LIMIT` | `0` | Cap to first N questions. Set to `5` for smoke tests |
-| `SCOPE_RESUME` | `1` | Skip qids that already have a non-empty `final_answer`. Set `0` for a fresh run. Blender can occasionally crash mid-run; `SCOPE_RESUME=1` is the right default |
-| `REPEATS` | `1` | Repeats per question |
-| `QUESTIONS_CSV` | `benchmark/scope_536.csv` | Input question set |
-| `OUT_CSV` | `results/run_<ts>/raw_results.csv` | Pin this to resume into a specific file |
+| `BENCH_LIMIT` | `0` | You want a smoke test; set `5` before committing to a full run |
+| `SCOPE_RESUME` | `1` | You want to continue a partial run; set `0` for a clean run |
+| `REPEATS` | `1` | You need repeated executions per question |
+| `QUESTIONS_CSV` | `benchmark/scope_536.csv` | You want a different benchmark input; the default file currently has 541 rows |
+| `OUT_CSV` | `results/run_<ts>/raw_results.csv` | You want to resume into or retain a particular raw-results file |
 
-> **Note:** the pipeline launches Blender *without* `--background` —
-> screenshot capture needs a real 3D viewport. The only setup step that
-> uses `--background` is `04_install_presets.py`, which doesn't need UI.
+The pipeline runs the Blender runner, judges the trace/final response, and prints aggregate metrics. See [`benchmark/README.md`](benchmark/README.md) for the CSV schema and task categories, [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) for backend setup, and [`docs/architecture.md`](docs/architecture.md) for the full loop and extension points.
 
----
+## Repository guide
 
-## Top-5 results
-
-| Rank | SLM | VLM | Overall accuracy |
-|:----:|-----|-----|:----------------:|
-| 1 | Qwen3-30B-A3B | Moondream3 | **73.8 %** |
-| 2 | Qwen3-30B-A3B | Qwen2.5-VL-7B | 72.4 % |
-| 3 | Qwen3-32B | Moondream3 | 71.6 % |
-| 4 | Qwen3-32B | Qwen2.5-VL-7B | 70.9 % |
-| 5 | Qwen3-30B-A3B | Moondream2 | 69.5 % |
-
-Full 20-configuration matrix and per-category breakdowns in
-[`docs/RESULTS_FULL.md`](docs/RESULTS_FULL.md). The headline finding from
-the paper: MoE planners consistently match or exceed dense planners at the
-same parameter budget, and quantization barely moves accuracy.
-
----
-
-## Repo layout
-
-```
-SCOPE_HRI26.pdf                  Published HRI '26 paper
-README.md                        You are here
-AGENT_INSTRUCTIONS.md            Paste-into-Claude/Codex setup brief
-
-src/scope/                       Agent loop, tool dispatch, runner, judge
-benchmark/                       The 536-task CSV + Blender camera presets
-configs/                         Agent + judge YAML configs
-prompts/                         SLM planner system prompt + judge prompts
-scripts/                         Numbered setup + per-stage scripts
-docs/                            Architecture, config, full results, etc.
-examples/                        Minimal usage examples (quick_start, add_new_tool, custom_model)
-```
-
----
-
-## Documentation
-
-- [`AGENT_INSTRUCTIONS.md`](AGENT_INSTRUCTIONS.md) — setup brief for Claude Code / Codex
-- [`docs/architecture.md`](docs/architecture.md) — agent loop, tool dispatch, project layout
-- [`docs/tool_reference.md`](docs/tool_reference.md) — per-tool params and return types
-- [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — model hosting, env vars, full YAML reference
-- [`docs/RESULTS_FULL.md`](docs/RESULTS_FULL.md) — all 20 SLM+VLM combinations + per-category metrics
-- [`docs/creating_scenes.md`](docs/creating_scenes.md) — adding new Blender scenes
-- [`SCOPE_HRI26.pdf`](SCOPE_HRI26.pdf) — the paper
-
----
+| Location | Contents |
+| --- | --- |
+| [`src/scope/`](src/scope/) | Agent loop, Blender helpers, tools, VLM clients, runner, and judge |
+| [`benchmark/`](benchmark/) | The 541-row CSV and camera presets; scene downloads are kept out of Git for size |
+| [`configs/`](configs/) | Planner/VLM configurations and paper pairing presets |
+| [`prompts/`](prompts/) | The live planner system prompt and judge prompts |
+| [`examples/`](examples/) | Quick start, custom model, and custom tool tutorials |
+| [`docs/`](docs/) | Configuration, architecture, tool reference, results, and scene-authoring detail |
 
 ## Citation
 
@@ -238,8 +159,6 @@ examples/                        Minimal usage examples (quick_start, add_new_to
   primaryClass  = {cs.RO},
 }
 ```
-
----
 
 ## License
 
