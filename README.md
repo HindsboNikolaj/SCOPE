@@ -2,7 +2,7 @@
 
 **A Natural-Language PTZ Camera Agent That Runs Entirely at the Edge**
 
-SCOPE is an edge-focused, tool-using agent for pan–tilt–zoom (PTZ) camera work: a small language model plans, vision tools inspect frames, and camera tools act in a loop. This public repository is the reproducible Blender implementation, benchmark, and evaluation harness for that loop.
+SCOPE turns a plain-language camera request into a closed loop: a small language model plans, vision-language tools inspect the scene, and PTZ tools act before the agent answers. It is a modular multimodal agent designed for edge deployment and benchmarked through a reproducible Blender digital twin; published at HRI 2026.
 
 [![Paper](https://img.shields.io/badge/Paper-HRI%20'26-blue)](https://doi.org/10.1145/3757279.3785641)
 [![arXiv](https://img.shields.io/badge/arXiv-2606.02951-b31b1b?logo=arxiv)](https://arxiv.org/abs/2606.02951)
@@ -10,42 +10,49 @@ SCOPE is an edge-focused, tool-using agent for pan–tilt–zoom (PTZ) camera wo
 [![Space](https://img.shields.io/badge/Space-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/spaces/HindsboNikolaj/scope)
 [![Collection](https://img.shields.io/badge/Collection-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/collections/HindsboNikolaj/scope-hri-26-6a1626e0b8e9b9205c09fffc)
 
-![Research demonstration of SCOPE driving a physical PTZ camera](docs/images/demo-real-camera.gif)
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/images/demo-real-camera.gif" alt="Research demonstration of SCOPE driving a physical PTZ camera" width="100%" />
+      <strong>Physical camera — research demonstration.</strong><br />
+      The same high-level agent design and exposed tool contract drive the AXIS PTZ camera. The planner differs between the Qwen3-30B-A3B MoE and dense Qwen3-32B runs, so the visible difference is speed. The public repository does not include AXIS driver code.
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/images/demo-blender-sim.gif" alt="SCOPE running in the Blender simulation across three urban scenes" width="100%" />
+      <strong>Blender simulation — runnable here.</strong><br />
+      The agent runs across three urban scenes. The trace logs each planner step, tool call, and VLM observation as the loop unfolds.
+    </td>
+  </tr>
+</table>
 
-> Research demonstration: the HRI system drives a physical AXIS PTZ camera with the same high-level agent design. The public repository preserves the runnable Blender-side tools and benchmark; it does **not** publish the AXIS driver or make a hardware deployment claim.
+## What it is
 
----
+A small language model picks actions; a vision-language model handles perception. They meet at nine named tools: pan, tilt, zoom, presets, and capture on one side; VLM-backed counting, visual questions, and object framing on the other, plus a simulated tracking stub. The public action surface is expressed as OpenAI-compatible function-calling JSON and executed against Blender’s Python camera API.
 
-## A request becomes a control loop
+This repository also exposes the recipes for agentic control of a camera object in Blender via that Python API. It ships:
 
-“Go to the highway preset, then pan right in 15-degree steps until you see at least six cones” is not a single image question. The planner must select a viewpoint, move the camera, ask for visual evidence, decide whether the evidence is enough, and repeat before it answers.
-
-SCOPE makes that loop inspectable. Every run records the tool calls, their structured arguments, the short text observations returned to the planner, timings, and the final answer that the evaluator scores.
-
-| The research problem | What the public repository gives you | Why it matters to a builder |
-| --- | --- | --- |
-| A camera agent must act, observe, and decide again | A Blender camera with presets plus a nine-tool agent loop | You can reproduce the control loop without a physical camera integration |
-| A live scene changes while models are being compared | Versioned scenes, questions, expected answers, and run traces | You can isolate a model, prompt, or tool change rather than compare two different days in the field |
-| A good answer must be attributable | Tool-call and answer scoring through an LLM-as-judge harness | You can inspect where a run failed: routing, action arguments, perception, or the final response |
+- The full agent loop and nine-tool action surface.
+- A 541-row task CSV and the supported 536-task subset used for the published results.
+- An LLM-as-judge evaluation harness with per-category metrics.
+- A repack-safe Blender simulation environment with shared scene presets.
+- Per-category judge prompts and the SLM planner system prompt.
 
 ## Choose your path
 
 | If you want to… | Start here | You will leave with… |
 | --- | --- | --- |
 | Run the complete loop in simulation | [Quick start](#quick-start) | A five-task Blender smoke run through runner, judge, and metrics |
-| See how an agent reasons over tools | [Architecture](#architecture-plan-act-observe-answer) | The planner/tool/scene boundary and the trace it produces |
+| Understand the agent boundary | [Architecture](#architecture-plan-act-observe-answer) | The planner, tool, and scene loop—and what returns to the planner |
 | Add a camera or perception capability | [Add a tool](#add-a-tool) | A runnable Blender tutorial and the persistent extension points |
-| Compare planner and vision choices | [Published results](#published-results) | Paper numbers with their exact 536-task scope and model types |
+| Compare planner and vision choices | [Published results](#published-results) | Paper numbers with their exact 536-task scope and planner types |
 | Change serving backends | [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) | Ollama, vLLM, hosted planner, and VLM configuration details |
 | Hand setup to Claude Code or Codex | [`AGENT_INSTRUCTIONS.md`](AGENT_INSTRUCTIONS.md) | A prerequisite-first install brief that stops at the first failure |
 
 ## Architecture: plan, act, observe, answer
 
-![SCOPE driving a Blender scene, with the agent trace visible alongside](docs/images/demo-blender-sim.gif)
-
-> The Blender demonstration is the runnable path in this repository. Its trace shows each planner turn, tool call, visual observation, and answer rather than hiding the loop behind a single response.
-
 ![SCOPE research architecture: a small language model uses PTZ and perception tools to control a scene and query a vision model](docs/images/scope-architecture.svg)
+
+> **Figure — planning, camera control, and perception remain independently replaceable.** The planner chooses an action or writes an answer; camera and perception tools return grounded text observations that let it decide whether another look is necessary.
 
 [`AgentClient`](src/scope/agent/client.py) sends the nine function definitions in [`src/scope/tools/schema.json`](src/scope/tools/schema.json) to a planner through an OpenAI-compatible chat/tool-calling API. A planner response is either a final answer or a tool call; SCOPE dispatches the call, appends its text result to the conversation, and repeats until the task ends.
 
