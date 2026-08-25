@@ -1,17 +1,39 @@
-# Full Results — All 20 SLM+VLM Combinations
+# Published Results — 19 Planner–Perception Pairings
 
-Table 4 from the paper (overall accuracy on the 536-task subset the paper
-was scored against; the shipped CSV has since grown to 541 rows -- see
-`benchmark/scope_536.csv`). Judged by GPT-4o. See the
-[README](../README.md#top-5-results) for the top-5 condensed view.
+The HRI paper reports the following average accuracies on its GPT-4o-judged
+**536-task published subset** (Table 5 in [`SCOPE_HRI26.pdf`](../SCOPE_HRI26.pdf)).
+The repository now ships a 541-row CSV under the historical
+[`benchmark/scope_536.csv`](../benchmark/scope_536.csv) filename; five shipped
+rows fall outside the published score subset. Public Git history begins with the
+541-row CSV, so it does not establish task-by-task provenance for that difference.
 
-| SLM | Moondream2 | Moondream3 | Qwen2.5-VL-3B | Qwen2.5-VL-7B |
-|-----|:----------:|:----------:|:--------------:|:--------------:|
-| Qwen3-4B | 52.1% | 56.7% | 50.4% | 55.2% |
-| Qwen3-4B-FP8 | 51.3% | 55.8% | 49.8% | 54.5% |
-| Qwen3-8B | 58.6% | 63.4% | 57.1% | 62.0% |
-| Qwen3-30B-A3B | 69.5% | **73.8%** | 67.2% | 72.4% |
-| Qwen3-32B | 66.8% | 71.6% | 65.3% | 70.9% |
+Do not compare a fresh 541-task run directly with the 536-task paper values.
+The curated reading guide is in the [README](../README.md#published-results).
 
-Per-category breakdowns and detailed analysis are available in the paper
-([`SCOPE_HRI26.pdf`](../SCOPE_HRI26.pdf)).
+| Planner | Planner type | Precision | Vision model | Average accuracy |
+| --- | --- | --- | --- | :---: |
+| Qwen3-4B | Dense | FP16 | Moondream2 | 59.7% |
+| Qwen3-4B-FP8 | Dense | FP8 | Moondream2 | 60.3% |
+| Qwen3-30B-A3B | MoE | FP16 | Moondream2 | 67.3% |
+| Qwen3-30B-A3B-FP8 | MoE | FP8 | Moondream2 | 69.6% |
+| Qwen3-32B | Dense | FP16 | Moondream2 | 68.0% |
+| Qwen3-Next-80B-A3B | MoE | FP16 | Moondream2 | 70.6% |
+| Qwen3-4B | Dense | FP16 | Moondream2-4bit | 62.3% |
+| Qwen3-4B-FP8 | Dense | FP8 | Moondream2-4bit | 61.3% |
+| Qwen3-30B-A3B | MoE | FP16 | Moondream2-4bit | 66.9% |
+| Qwen3-30B-A3B-FP8 | MoE | FP8 | Moondream2-4bit | 65.7% |
+| Qwen3-32B | Dense | FP16 | Moondream2-4bit | 65.9% |
+| Qwen3-Next-80B-A3B | MoE | FP16 | Moondream2-4bit | 66.8% |
+| Qwen3-4B | Dense | FP16 | Moondream3 | 61.4% |
+| Qwen3-4B-FP8 | Dense | FP8 | Moondream3 | 62.6% |
+| Qwen3-30B-A3B | MoE | FP16 | Moondream3 | **73.8%** |
+| Qwen3-30B-A3B-FP8 | MoE | FP8 | Moondream3 | 69.1% |
+| Qwen3-32B | Dense | FP16 | Moondream3 | 68.8% |
+| Qwen3-Next-80B-A3B | MoE | FP16 | Moondream3 | 69.3% |
+| Qwen3-Next-80B-A3B | MoE | FP16 | Qwen2.5-VL-7B | 68.3% |
+
+The paper finds that stronger planners reduce tool-routing and sequencing errors;
+for stronger planner pairings, visual perception accounts for most of the
+remaining end-to-end failures. Reported latency also depends on the serving path
+and evaluation hardware, so this table is an accuracy reference rather than a
+deployment promise.

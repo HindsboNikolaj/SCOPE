@@ -1,11 +1,12 @@
 # SCOPE Benchmark
 
 The SCOPE benchmark consists of **541 tasks** defined in
-[`scope_536.csv`](scope_536.csv) (the filename preserves the 536-task
-count the HRI '26 paper was scored against; the CSV has since grown by
-6 extra multi-step-reasoning rows). Each row specifies a natural-language
-question, the Blender scene to load, the expected answer, and metadata used
-for automated evaluation.
+[`scope_536.csv`](scope_536.csv). The filename preserves the **536-task**
+published score subset used in the HRI '26 paper; five shipped rows fall
+outside that subset. The public Git history begins with the full 541-row CSV,
+so it does not establish task-by-task provenance for the difference. Each row
+specifies a natural-language question, the Blender scene to load, the expected
+answer, and metadata used for automated evaluation.
 
 ---
 

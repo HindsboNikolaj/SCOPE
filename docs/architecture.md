@@ -8,32 +8,11 @@ VLM backends interact with the Blender simulation.
 
 ## High-Level Overview
 
-```
- User prompt
-      |
-      v
- +--------------------+      +-------------------+
- |   AgentClient      | ---> | OpenAI-compatible |
- |   (scope/agent/    |      | SLM server        |
- |    client.py)      | <--- | (Ollama/vLLM)     |
- +----+----------+----+      +-------------------+
-      |          |
-      |   tool calls (JSON function-calling format)
-      |          |
-      v          v
- +----------+  +------------------+
- | PTZ      |  | Perception       |
- | Tools    |  | Tools            |
- | (Blender)|  | (VLM inference)  |
- +----------+  +------------------+
-      |               |
-      v               v
- +----------------------------+
- |    Blender 3D Scene        |
- |  (bpy camera, presets,     |
- |   rendered frames)         |
- +----------------------------+
-```
+![High-level SCOPE AgentClient overview: user prompt to AgentClient and an OpenAI-compatible SLM; AgentClient invokes Blender PTZ and perception tools over the Blender scene](images/agent-client-overview.svg)
+
+The solid paths are requests and tool calls; dashed paths are grounded text
+results or rendered frames flowing back into the loop. This diagram documents
+the public Blender implementation, not an unpublished physical-camera backend.
 
 ---
 
@@ -87,9 +66,10 @@ structure:
 ```
 
 This schema is passed verbatim to the SLM in every chat completion request.
-The same schema is used in both simulation (Blender) and real-world (PTZ
-camera API) deployments, enabling sim-to-real transfer without schema
-changes.
+The public implementation binds it to Blender simulation tools. The paper and
+demos cover real-camera work, but this repository does not include a physical
+camera adapter; a deployment must implement and validate that boundary
+separately.
 
 ### 3. Tool Implementations (`scope/tools/blender_tools.py`)
 
@@ -150,8 +130,11 @@ to instantiate the correct client.
 Two modules provide the low-level Blender integration:
 
 **`helper_funcs.py`**:
-- `screenshot_camera_view(path)` -- Render the camera view and crop to the
-  camera frustum.
+- `screenshot_camera_view(path)` -- Switch the active `VIEW_3D` area to the
+  scene camera, hide editor overlays and gizmos, capture the viewport, and
+  crop to the camera frustum. Perception tools use it through `_capture_frame`;
+  treat it as a swappable camera-view capture adapter, not a generic desktop
+  screenshot.
 - `blender_zoom(cam, x1, y1, x2, y2)` -- Perspective-aware area zoom with
   cosine correction. Adjusts focal length and rotation to center and fill
   the specified normalized bounding box.
@@ -253,12 +236,12 @@ VLM perception, and simulation execution stages.
 ```
 SCOPE/
   benchmark/
-    scope_536.csv            # 541-task benchmark (paper reported on a 536-task subset; CSV has grown since)
+    scope_536.csv            # 541-task benchmark (paper scores use a 536-task subset)
     scenes/                  # Blender scene files (.blend)
     presets/presets.json     # Camera preset definitions
   configs/
     agent_config.yaml        # Main configuration (env-var aware)
-    presets/                 # Pre-built SLM+VLM combos (20 paper configs + extras)
+    presets/                 # Pre-built SLM+VLM pairing presets
   docs/                      # Extended documentation (this file + others)
   SCOPE_HRI26.pdf      # Published HRI '26 paper
   prompts/                   # Live system prompts (loaded at runtime; see prompts/README.md)
