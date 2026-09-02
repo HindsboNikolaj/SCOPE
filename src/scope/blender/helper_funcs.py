@@ -340,24 +340,36 @@ def _force_scene_update():
         pass
 
 
-def _stitch_panorama(st):
-    """Reproject every frame onto one cylinder and blend the overlaps.
+def _rot_z(a):
+    c, s = math.cos(a), math.sin(a)
+    return np.array([[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]])
 
-    Why reproject rather than paste side by side: each frame is a pinhole image, so
-    a feature away from the frame centre sits further from that centre than its
-    angle alone would put it, by a factor of 1/cos(angle). Pasting two such frames
-    edge to edge steps the scale at the join. That step is what reads as the seam,
-    and the stretch near each frame edge is what reads as distortion. Mapping every
-    output pixel through the angle it represents removes both, because the output is
-    angle-linear by construction.
 
-    Why blend rather than butt-join: even an exact reprojection differs a little
-    between two frames that see the same angle, because the viewport shades from a
-    different camera position in the sweep. A weight that peaks at each frame centre
-    and falls to zero at its edge spreads the crossover over the whole overlap, so no
-    single column carries the join.
+def _euler_xyz_matrix(rx, ry, rz):
+    """Blender's default XYZ Euler order, as a world-from-camera matrix.
+
+    Blender applies X, then Y, then Z, so the composed matrix is Rz . Ry . Rx.
     """
-    import os, math
+    cx, sx = math.cos(rx), math.sin(rx)
+    cy, sy = math.cos(ry), math.sin(ry)
+    cz, sz = math.cos(rz), math.sin(rz)
+    Rx = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
+    Ry = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
+    Rz = np.array([[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]])
+    return Rz @ Ry @ Rx
+
+
+def _stitch_panorama(st):
+    """Reproject and blend a sweep. `st` is the state dict start_panorama_capture builds.
+
+    Required keys: frames, h_fov, v_fov, step, run_dir.
+    Optional: orig_rotation, the camera's Euler at the start of the sweep. Without it the
+    camera is assumed level, which reproduces the old behaviour rather than failing.
+    """
+    # Imported here rather than at module scope, because helper_funcs.py does not import
+    # os or numpy at the top and this function must drop into it without changing that.
+    import os
+    import math
     import numpy as np
     from PIL import Image
 
@@ -365,69 +377,88 @@ def _stitch_panorama(st):
     if not frames:
         raise RuntimeError("panorama: no frames were captured")
 
-    h_fov, v_fov = st["h_fov"], st["v_fov"]
-    step = st["step"]
+    h_fov = float(st["h_fov"])
+    v_fov = float(st["v_fov"])
+    step = float(st["step"])
 
     first = Image.open(frames[0]).convert("RGB")
     fw, fh = first.size
 
-    # Vertical span of the output cylinder.
-    #
-    # A pinhole frame does not cover the same elevation everywhere. At an angle dd
-    # away from its centre it reaches only atan(tan(v_fov/2) * cos(dd)). The worst
-    # served azimuth is the midpoint between two frame centres, where the nearest
-    # frame is step/2 away. Sizing the cylinder to full v_fov therefore leaves
-    # unfilled wedges along the top and bottom edges, which is a part of the scene
-    # that never comes back. Sizing it to what every azimuth can actually supply
-    # gives a complete rectangle instead. The cost is a small vertical crop, which
-    # is preferable to a hole: a hole is indistinguishable from dark scenery to
-    # whatever reads the panorama afterwards.
+    rot = st.get("orig_rotation")
+    R0 = _euler_xyz_matrix(*rot) if rot else np.eye(3)
+    R0T = R0.T
+
+    # Vertical span of the output. A frame reaches less elevation away from its centre, so
+    # sizing the cylinder to the full vertical field of view leaves unfilled corners at the
+    # midpoint between two frames. Size it to what every azimuth can supply, which fills the
+    # rectangle completely. The cost is a small crop, which is preferable to a hole: a hole
+    # is indistinguishable from dark scenery to whatever reads the panorama.
     v_out = 2.0 * math.atan(math.tan(v_fov * 0.5) * math.cos(step * 0.5))
 
-    # Keep the horizontal angular resolution of the source frames, so the panorama
-    # neither invents detail nor throws any away.
     pano_w = int(round(fw * (2.0 * math.pi) / h_fov))
     pano_h = fh
 
     acc = np.zeros((pano_h, pano_w, 3), dtype=np.float64)
     wsum = np.zeros((pano_h, pano_w, 1), dtype=np.float64)
 
-    # Output pixel centres expressed as angles.
-    az = (np.arange(pano_w) + 0.5) * (2.0 * math.pi / pano_w)      # 0 .. 2pi
-    el = (0.5 - (np.arange(pano_h) + 0.5) / pano_h) * v_out        # up positive
+    az = (np.arange(pano_w) + 0.5) * (2.0 * math.pi / pano_w)
+    el = (0.5 - (np.arange(pano_h) + 0.5) / pano_h) * v_out
     tan_h = math.tan(h_fov * 0.5)
     tan_v = math.tan(v_fov * 0.5)
 
+    # Directions in camera space, one per output row, before the sweep rotation.
+    v_e = np.stack([np.zeros_like(el), np.sin(el), -np.cos(el)], axis=1)   # (H, 3)
+    base = v_e @ R0.T                                                      # R0 . v(e)
+
+    half = h_fov * 0.5
     for i, path in enumerate(frames):
         im = Image.open(path).convert("RGB")
         if im.size != (fw, fh):
+            # The frustum crop can land a pixel differently between frames. Normalise
+            # rather than fail; one pixel is not worth losing a panorama over.
             im = im.resize((fw, fh))
         img = np.asarray(im, dtype=np.float64)
 
-        # Offset of every output column from this frame's centre, wrapped to [-pi, pi).
         d_az = (az - i * step + math.pi) % (2.0 * math.pi) - math.pi
-        cols = np.nonzero(np.abs(d_az) < (h_fov * 0.5))[0]
+        # A generous column range. Which pixels are really visible is decided below by the
+        # projection itself, not by this bound.
+        cols = np.nonzero(np.abs(d_az) < half * 1.30)[0]
         if cols.size == 0:
             continue
-        dd = d_az[cols]
+        dd = d_az[cols]                                                    # (C,)
 
-        # Pinhole mapping. The 1/cos(dd) term on the vertical axis is the correction
-        # that keeps horizontal lines straight away from the frame centre.
-        x = (0.5 + np.tan(dd) / (2.0 * tan_h)) * fw
-        y = (0.5 - (np.tan(el)[:, None] / np.cos(dd)[None, :]) / (2.0 * tan_v)) * fh
+        # d_cam = R0^T . Rz(dd) . R0 . v(e), for every (row, column) pair.
+        Rz = np.zeros((dd.size, 3, 3))
+        c, s = np.cos(dd), np.sin(dd)
+        Rz[:, 0, 0] = c; Rz[:, 0, 1] = -s
+        Rz[:, 1, 0] = s; Rz[:, 1, 1] = c
+        Rz[:, 2, 2] = 1.0
+        M = np.einsum('ij,cjk->cik', R0T, Rz)          # (C,3,3)
+        d_cam = np.einsum('cij,rj->rci', M, base)      # (H,C,3)
 
-        xi = np.clip(np.rint(x).astype(np.int64), 0, fw - 1)
-        yr = np.rint(y).astype(np.int64)
-        valid = (yr >= 0) & (yr < fh)
-        yi = np.clip(yr, 0, fh - 1)
+        x, y, z = d_cam[..., 0], d_cam[..., 1], d_cam[..., 2]
+        in_front = z < -1e-9
+        zz = np.where(in_front, -z, 1.0)
+        u = 0.5 + (x / zz) / (2.0 * tan_h)
+        w = 0.5 - (y / zz) / (2.0 * tan_v)
 
-        # Feather weight: 1 at the frame centre, 0 at its horizontal edge.
-        w = np.cos(dd / (h_fov * 0.5) * (math.pi * 0.5))
-        w = np.clip(w, 1e-6, None)[None, :] * valid
+        px = np.rint(u * fw).astype(np.int64)
+        py = np.rint(w * fh).astype(np.int64)
+        valid = in_front & (px >= 0) & (px < fw) & (py >= 0) & (py < fh)
+        if not valid.any():
+            continue
+        px = np.clip(px, 0, fw - 1)
+        py = np.clip(py, 0, fh - 1)
 
-        patch = img[yi, np.broadcast_to(xi, yi.shape)]
-        acc[:, cols, :] += patch * w[..., None]
-        wsum[:, cols, :] += w[..., None]
+        # Feather across the frame, so no single column carries a join. Weight is measured
+        # from the projected position rather than from the angle, which keeps it correct
+        # when the tilt makes the two differ.
+        wgt = np.cos(np.clip((u - 0.5) * math.pi, -math.pi / 2, math.pi / 2))
+        wgt = np.where(valid, np.clip(wgt, 1e-6, None), 0.0)
+
+        patch = img[py, px]
+        acc[:, cols, :] += patch * wgt[..., None]
+        wsum[:, cols, :] += wgt[..., None]
 
     covered = wsum[..., 0] > 1e-6
     out = np.zeros_like(acc)
@@ -439,15 +470,3 @@ def _stitch_panorama(st):
     st["stitched"] = dest
     st["coverage"] = float(covered.mean())
     return dest
-
-
-# Re-export for convenience
-list_presets = None
-apply_preset = None
-create_preset = None
-
-try:
-    from ..blender.preset_helpers import list_presets, apply_preset, create_preset
-except ImportError:
-    # When running inside Blender, preset_helpers may be imported differently
-    pass
