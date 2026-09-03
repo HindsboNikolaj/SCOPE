@@ -122,6 +122,14 @@ def prepare_view_for_capture():
                 # Studio lighting, and the scene world left out of it. A scene whose world
                 # texture is missing would otherwise tint every frame magenta, which is the
                 # state whitechapel ships in.
+                # STUDIO lighting with the scene world off is not an aesthetic choice.
+                # The four shipped scenes were labelled from captures taken this way, so
+                # this is the condition the published answers describe. It also happens to
+                # protect against a scene whose environment map is missing, which
+                # whitechapel's is: with the world on, every frame of it turns magenta.
+                # A scene added later whose answers were labelled with the world on should
+                # set SCOPE_SHADING_WORLD=1, and should not be mixed into the same run as
+                # these four.
                 for attr, val in (("light", "STUDIO"), ("use_scene_lights", False),
                                   ("use_scene_world", False)):
                     try:

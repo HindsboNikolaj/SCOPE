@@ -206,6 +206,21 @@ def fast_opengl_screenshot(out_path: str, scale_crop: bool = True):
             return False
         return None
 
+    # A note about the four scenes this benchmark ships with, because it decides the
+    # default above and it is not recoverable from the code.
+    #
+    # book-nook, city-street, postwar-city and whitechapel were all labelled from captures
+    # taken in Material Preview with STUDIO lighting, which means the scene world was NOT
+    # drawn. The published answers describe those images. Turning the world on gives a
+    # better-looking picture that no longer matches what a labeller saw: an outdoor scene
+    # gains a sky where the labeller had flat grey, and a 360 degree sweep changes most of
+    # its area. So for these four, leave the world off, and read the grey as a property of
+    # the dataset rather than a fault to correct.
+    #
+    # A scene added later is not bound by that. If its answers are labelled from captures
+    # taken with the world on, then SCOPE_SHADING_WORLD=1 is the right setting for it, and
+    # the thing to be careful about is only that one run should not mix the two. Record
+    # which was used alongside the results.
     _lights = _flag("SCOPE_SHADING_LIGHTS")
     if _lights is not None:
         space.shading.use_scene_lights = _lights
