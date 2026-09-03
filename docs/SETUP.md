@@ -72,21 +72,24 @@ answers "bookshelves filled with books". Given a Solid capture of the same camer
 
 ### What each costs
 
-Measured per frame at a 640 pixel long edge, under software OpenGL, which is what a headless
-container gets: an Xvfb display has no hardware GL, so a GPU on the box does not accelerate the
-viewport. The first frame of each scene includes shader compilation and is reported separately
-because it is not representative of the rest.
+Measured per frame under software OpenGL, which is what a headless container gets: an Xvfb
+display has no hardware GL, so the GPUs on the box accelerate the vision model and never touch
+the viewport. Each scene was captured at its own saved resolution, which differs a lot between
+them, so the resolution is given alongside. The first frame of each scene includes shader
+compilation and is listed separately because it is not representative of the rest.
 
-| scene | MATERIAL, first frame | MATERIAL, after | SOLID+TEXTURE |
-|---|---|---|---|
-| `book-nook` | 91 s | 41 to 62 s | 7 to 9 s |
-| `postwar-city` | 32 s | 5 to 9 s | 1.2 to 1.4 s |
-| `whitechapel` | 60 s | 10 to 46 s | not measured |
-| `city-street` | 8500 s | 790 to 4200 s | 1.7 to 13 s |
+| scene | resolution | MATERIAL, first frame | MATERIAL, after | SOLID+TEXTURE |
+|---|---|---|---|---|
+| `book-nook` | 3240x3240, 10.5 Mpx | 91 s | 41 to 62 s | 6.6 to 9.0 s |
+| `city-street` | 1269x1026, 1.3 Mpx | 8500 s | 790 to 4200 s | 1.7 to 13 s |
+| `postwar-city` | 1267x712, 0.9 Mpx | 32 s | 5 to 9 s | 1.2 to 1.4 s |
+| `whitechapel` | 1267x712, 0.9 Mpx | 60 s | 10 to 46 s | not measured |
 
-`city-street` is the outlier and it is not a fluke: its materials are expensive enough to shade
-in software that a nine frame panorama would take most of a day. Halving the capture resolution
-brings it back into range, since software shading cost scales with pixel count.
+`city-street` is the outlier and the resolution column is what makes it clear. It costs 790
+seconds a frame at 1.3 megapixels while `book-nook` costs 41 at 10.5, which is roughly a
+thousandfold difference per pixel. This is shader complexity, not image size, so reducing the
+capture resolution helps far less here than the arithmetic suggests. In Material Preview a nine
+frame panorama of this scene takes hours; in Solid it takes a minute.
 
 These are software numbers. No figure here should be read as the cost on a machine with a real
 display and a GPU driver, which was not measured.
@@ -97,7 +100,8 @@ worst case, which is affordable.
 
 **Drop the capture resolution before you drop the shading mode.** Resolution costs image
 detail; shading mode costs whole categories of answer. A shop interior that is dark in SOLID is
-dark at every resolution.
+dark at every resolution. The exception is `city-street`, where the cost is in the shaders
+rather than the pixels and resolution buys back much less than expected.
 
 **Use SOLID with TEXTURE only when MATERIAL is genuinely impractical.** Report such a run as its
 own configuration rather than comparing it against the published table.
