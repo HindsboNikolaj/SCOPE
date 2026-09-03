@@ -111,6 +111,20 @@ def prepare_view_for_capture():
                 space.region_3d.view_perspective = "CAMERA"
                 space.camera = bpy.context.scene.camera
 
+                # Fit the camera frame to the region. In camera view the frame is drawn inset
+                # with the out-of-frame area around it, and the offscreen render includes that
+                # background: measured at 23% scene and 77% flat grey on postwar-city. Fitting
+                # takes it to 89%, so the model is shown the picture rather than a picture in a
+                # field. Without this the capture resolution is nominal rather than real.
+                try:
+                    region = next(r for r in area.regions if r.type == "WINDOW")
+                    with bpy.context.temp_override(
+                            window=bpy.context.window, screen=bpy.context.screen,
+                            area=area, region=region, space=space):
+                        bpy.ops.view3d.view_center_camera()
+                except (RuntimeError, AttributeError, StopIteration):
+                    pass
+
                 sh = space.shading
                 if SCOPE_VIEW_SHADING in ("SOLID", "MATERIAL", "RENDERED"):
                     sh.type = SCOPE_VIEW_SHADING

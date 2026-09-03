@@ -232,7 +232,27 @@ def fast_opengl_screenshot(out_path: str, scale_crop: bool = True):
     scene.render.filepath = out_path
 
     override = {'window': win, 'screen': win.screen, 'area': area, 'region': region, 'space': space}
+
+    # Fit the camera frame to the region before rendering.
+    #
+    # render.opengl(view_context=True) renders the 3D view, and in camera view the camera
+    # rectangle is drawn inset inside the region with the out-of-frame area around it. That
+    # background is part of the render. Measured on postwar-city, the camera frame was 23% of
+    # the image and the other 77% was flat viewport grey, so every capture threw away most of
+    # its resolution and handed the vision model a small picture in a large empty field.
+    #
+    # view_center_camera sets the camera-view zoom so the frame fits the region, which takes
+    # that 23% to 89%. Pushing the zoom further gains 0.6% more, so this is effectively the
+    # whole win.
+    #
+    # The alternative, view_context=False, renders the camera exactly and fills the frame, but
+    # falls back to Workbench shading: flat grey massing with no textures at all. That is
+    # unusable here, which is why the fix is a zoom rather than a different render call.
     with C.temp_override(**override):
+        try:
+            bpy.ops.view3d.view_center_camera()
+        except (RuntimeError, AttributeError):
+            pass
         bpy.ops.render.opengl(write_still=True, view_context=True)
 
     if scale_crop:
