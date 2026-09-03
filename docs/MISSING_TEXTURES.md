@@ -8,10 +8,29 @@ This manifest categorizes them by source so they can be reacquired.
 
 | Scene | Total refs | Already packed | Still missing |
 |---|---|---|---|
-| whitechapel | 193 | 188 | 5 |
-| book-nook | 385 | 0 | 296 |
-| city-street | 127 | 0 | 61 |
-| postwar-city | 71 | 25 | 46 |
+| whitechapel | 193 | 187 | 5 |
+| book-nook | 387 | 385 | 0 |
+| city-street | 127 | 126 | 0 |
+| postwar-city | 71 | 21 | 46 |
+
+**Updated after checking the published files.** The book-nook and city-street rows previously
+read 0 packed with 296 and 61 missing. Those numbers described the scenes before they were
+re-packed for release. The files on Hugging Face have everything embedded, so nothing needs
+recovering for either one, and in particular the 296 Second Life texture rips listed below
+for book-nook are already in the download. Measured by opening each scene from
+`scripts/03_download_scenes.sh` and counting image datablocks that are neither packed nor
+resolvable on disk.
+
+**Which asset is missing matters more than how many.** postwar-city is missing 46 files and
+renders perfectly usably: they are ordinary surface textures, so the damage is a magenta door
+and a few flat panels in an otherwise complete scene. whitechapel is missing 5 and every
+Cycles frame is unusable, because one of the five is `207-free-hdri-skies-com.hdr`, the world
+environment map, and it is the scene's only light source. A missing world costs more than
+forty missing surfaces.
+
+This does not affect benchmark results. SCOPE captures the viewport with studio lighting,
+which ignores the scene world, so the magenta only appears when somebody renders the scene as
+authored.
 
 ## By source
 

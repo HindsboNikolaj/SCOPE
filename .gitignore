@@ -34,3 +34,10 @@ blender_temp/
 
 # Logs
 *.log
+
+# scripts/03_download_scenes.sh downloads the Hugging Face dataset into benchmark/, and the
+# dataset carries its own copies of these. Without this, following the documented quickstart
+# leaves the working tree dirty and overwrites benchmark/README.md with the dataset's version.
+benchmark/.gitattributes
+benchmark/paper.pdf
+benchmark/scope_541.csv
