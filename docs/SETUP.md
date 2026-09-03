@@ -85,11 +85,40 @@ compilation and is listed separately because it is not representative of the res
 | `postwar-city` | 1267x712, 0.9 Mpx | 32 s | 5 to 9 s | 1.2 to 1.4 s |
 | `whitechapel` | 1267x712, 0.9 Mpx | 60 s | 10 to 46 s | not measured |
 
-`city-street` is the outlier and the resolution column is what makes it clear. It costs 790
-seconds a frame at 1.3 megapixels while `book-nook` costs 41 at 10.5, which is roughly a
-thousandfold difference per pixel. This is shader complexity, not image size, so reducing the
-capture resolution helps far less here than the arithmetic suggests. In Material Preview a nine
-frame panorama of this scene takes hours; in Solid it takes a minute.
+`city-street` is the outlier, and it is worth being precise about why, because the obvious
+mitigation does not work.
+
+Captured at deliberately absurd sizes to find out where the cost lives:
+
+| capture size | pixels | seconds | seconds per megapixel |
+|---|---:|---:|---:|
+| 184x149 | 0.027 Mpx | 1459 | 53,000 (includes shader compilation) |
+| 346x280 | 0.097 Mpx | 729 | 7,500 |
+
+A capture of twenty-seven thousand pixels took twenty-four minutes. Whatever that is, it is not
+pixel-bound, and the second row shows the cost stays near 7,500 seconds per megapixel once
+compilation is done, against roughly 5 for the other three scenes. Dropping the resolution
+recovers almost nothing.
+
+The cause is per-material shader compilation under software OpenGL. On a machine with a real GL
+driver it is unremarkable. Here, Material Preview is not a practical mode for it: a ten frame
+sweep would take most of a day. `SCOPE_SHADING=SOLID` with `SCOPE_SHADING_COLOR=TEXTURE` brings
+the same nine frame sweep back to 57 seconds.
+
+What Solid costs on this particular scene is more than the usual "anything behind glass". Its
+colour does not survive either:
+
+| mode | colourfulness | seconds |
+|---|---:|---:|
+| Material Preview | 9.2 | see above |
+| Solid, `color_type=TEXTURE` | 1.70 | 11.8 |
+| Solid, `color_type=MATERIAL` | 1.57 | 1.6 |
+
+The colour type was confirmed applied, and 44 of the scene's 73 materials carry an image texture
+node, so this is not a configuration mistake: Workbench does not resolve these particular
+materials to their textures. Geometry, layout and signage do survive, and shop names stay
+legible. Treat a Solid capture of `city-street` as a different configuration rather than as a
+cheaper version of the same one.
 
 These are software numbers. No figure here should be read as the cost on a machine with a real
 display and a GPU driver, which was not measured.

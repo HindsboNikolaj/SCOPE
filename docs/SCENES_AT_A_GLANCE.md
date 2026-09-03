@@ -4,23 +4,27 @@ Every camera position the benchmark starts from, what it sees, and what it sees 
 
 Both pictures are viewport screenshots in Material Preview, which is the mode captures use and the mode the vision models are shown. Neither is a Cycles render.
 
-**2 of the 10 viewpoints are not shown here yet:** `city-street/hotel-m`, `city-street/mailbox`.
+**Two of these were not captured in the mode the benchmark grades on.** `city-street/hotel-m`, `city-street/mailbox` are in Solid with textures rather than Material Preview.
 
-`city-street` costs about 75 minutes a frame in Material Preview under software OpenGL, where the other three scenes cost 6 to 19 seconds, so a ten frame sweep of it is not practical on a machine without a display. That is a property of its materials rather than of its size: it is the smallest of the four by pixel count. See [SETUP.md](SETUP.md) for the per-scene numbers.
+`city-street` costs about 7,500 seconds per megapixel in Material Preview under software OpenGL, against roughly 5 for the other three scenes. A single 184 by 149 pixel capture of it took twenty-four minutes, so the cost is not in the image size: it is per-material shader compilation, and this scene has 127 materials. On a machine with a real GL driver it is unremarkable. Solid with textures brings the same sweep back to 57 seconds.
+
+What that mode costs, measured rather than assumed. Geometry, layout and signage survive: the shop names are legible in the result. Colour largely does not. The same view scores a colourfulness of 1.70 in Solid against 9.2 in Material Preview, and switching Workbench to its flat colour modes changes that to 1.57, so almost none of the difference is texture. The colour type was verified as applied, and 44 of the scene's 73 materials do carry an image texture node; Workbench simply does not resolve them. Anything behind glass is lost too. See [SETUP.md](SETUP.md).
 
 ## The breakdown
 
-| scene | preset | rows start here | of those, full-view | panorama |
-|---|---|---:|---:|---|
-| `book-nook` | `road1` | 56 | 8 | 10 frames, 36° step, 164s |
-| `book-nook` | `store-front` | 56 | 9 | 10 frames, 36° step, 530s |
-| `book-nook` | `store-front2` | 56 | 9 | 10 frames, 36° step, 158s |
-| `postwar-city` | `diff-view-1` | 40 | 5 | 9 frames, 40° step, 104s |
-| `postwar-city` | `street-view-1` | 40 | 6 | 9 frames, 40° step, 67s |
-| `postwar-city` | `street-view-2` | 40 | 6 | 9 frames, 40° step, 62s |
-| `whitechapel` | `eor-viewpoint` | 68 | 10 | 10 frames, 36° step, 191s |
-| `whitechapel` | `sor-viewpoint` | 65 | 10 | 10 frames, 36° step, 141s |
-| | **total** | **421** | **63** | |
+| scene | preset | rows start here | of those, full-view | sweep | shading |
+|---|---|---:|---:|---|---|
+| `book-nook` | `road1` | 56 | 8 | 10 frames, 36° step, 164s | MATERIAL |
+| `book-nook` | `store-front` | 56 | 9 | 10 frames, 36° step, 530s | MATERIAL |
+| `book-nook` | `store-front2` | 56 | 9 | 10 frames, 36° step, 158s | MATERIAL |
+| `city-street` | `hotel-m` | 61 | 15 | 9 frames, 40° step, 59s | **SOLID+TEXTURE** |
+| `city-street` | `mailbox` | 59 | 15 | 9 frames, 40° step, 57s | **SOLID+TEXTURE** |
+| `postwar-city` | `diff-view-1` | 40 | 5 | 9 frames, 40° step, 104s | MATERIAL |
+| `postwar-city` | `street-view-1` | 40 | 6 | 9 frames, 40° step, 67s | MATERIAL |
+| `postwar-city` | `street-view-2` | 40 | 6 | 9 frames, 40° step, 62s | MATERIAL |
+| `whitechapel` | `eor-viewpoint` | 68 | 10 | 10 frames, 36° step, 191s | MATERIAL |
+| `whitechapel` | `sor-viewpoint` | 65 | 10 | 10 frames, 36° step, 141s | MATERIAL |
+| | **total** | **541** | **93** | |
 
 A *full-view* row is one whose `answer_view` is `full`: the question cannot be answered from the starting frame, so the agent has to look around first. There are 93 of them across the whole benchmark, and every viewpoint has some, so every viewpoint needs a full view that works. It does not follow that every viewpoint needs a panorama, which is the next section.
 
@@ -33,13 +37,15 @@ A 360 degree sweep is the obvious way to give an agent more than its starting fr
 | `book-nook/road1` | **strip** | 29% | 100% | 10f, 164s | wide90 51%, wide110 53% |
 | `book-nook/store-front` | **wide110** | 55% | 99% | 1f, 40s | strip 26%, wide90 61% |
 | `book-nook/store-front2` | **wide90** | 71% | 100% | 1f, 154s | strip 34%, wide110 61% |
+| `city-street/hotel-m` | **strip** | 83% | - | 9f, 59s | - |
+| `city-street/mailbox` | **strip** | 85% | - | 9f, 57s | - |
 | `postwar-city/diff-view-1` | **wide90** | 56% | 100% | 1f, 54s | strip 32%, wide110 40% |
 | `postwar-city/street-view-1` | **strip** | 97% | 100% | 9f, 67s | wide90 87%, wide110 83% |
 | `postwar-city/street-view-2` | **strip** | 85% | 100% | 9f, 62s | wide90 77%, wide110 79% |
 | `whitechapel/eor-viewpoint` | **strip** | 98% | 91% | 10f, 191s | wide90 85%, wide110 75% |
 | `whitechapel/sor-viewpoint` | **wide110** | 67% | 99% | 1f, 31s | strip 33%, wide90 85% |
 
-4 of these keep the strip and 4 do not, which is why the choice is made per viewpoint rather than once.
+6 of these keep the strip and 4 do not, which is why the choice is made per viewpoint rather than once.
 
 A strip stops being worth its frames for two different reasons. `postwar-city/diff-view-1` is 3.4 metres up and pitched down at a plaza, so turning on the spot adds only sky. `book-nook/store-front` and `whitechapel/sor-viewpoint` face directions their author never modelled: these are dioramas built to be seen from one side, and much of the turn is empty because there is nothing there.
 
@@ -60,6 +66,8 @@ So both are tried at every viewpoint whose pitch is not already level, and the o
 | `book-nook/road1` | 97.88° | as-posed | 29% | levelled 86% |
 | `book-nook/store-front` | 100.28° | as-posed | 26% | levelled 86% |
 | `book-nook/store-front2` | 100.28° | as-posed | 34% | levelled 87% |
+| `city-street/hotel-m` | 91.54° | as-posed | 83% | none, already level |
+| `city-street/mailbox` | 87.14° | as-posed | 85% | levelled 83% |
 | `postwar-city/diff-view-1` | 48.4° | as-posed | 32% | levelled 10% |
 | `postwar-city/street-view-1` | 90.0° | as-posed | 97% | none, already level |
 | `postwar-city/street-view-2` | 94.0° | as-posed | 85% | levelled 86% |
@@ -113,6 +121,34 @@ A modern city corner with a bookshop. The only scene with a working sky, an 8K H
 **The 360 sweep, for comparison.** 10 frames at a 36° step, 158 seconds, stitched to 6756×1198. Seam contrast 1.464, where 1.0 would mean a join is indistinguishable from ordinary picture detail. 34% of it is scene rather than background.
 
 ![book-nook store-front2 panorama](img/scenes/book-nook__store-front2__pano.jpg)
+
+## city-street
+
+A one-way street with hotel frontage. Complete, and authored with no world environment at all. Its materials are far more expensive to shade in software than the other three, which is why its captures are smaller here.
+
+### `hotel-m`
+
+61 benchmark rows start here, 15 of them needing the full view.
+
+**The camera view.** What the model is shown before it does anything. Captured at 692x560.
+
+![city-street hotel-m camera view](img/scenes/city-street__hotel-m__view.jpg)
+
+**The full 360.** 9 frames at a 40° step, 59 seconds, stitched to 4795×802. Seam contrast 1.146, where 1.0 would mean a join is indistinguishable from ordinary picture detail. 83% of it is scene rather than background.
+
+![city-street hotel-m panorama](img/scenes/city-street__hotel-m__pano.jpg)
+
+### `mailbox`
+
+59 benchmark rows start here, 15 of them needing the full view.
+
+**The camera view.** What the model is shown before it does anything. Captured at 992x802.
+
+![city-street mailbox camera view](img/scenes/city-street__mailbox__view.jpg)
+
+**The full 360.** 9 frames at a 40° step, 57 seconds, stitched to 4795×802. Seam contrast 1.388, where 1.0 would mean a join is indistinguishable from ordinary picture detail. 85% of it is scene rather than background.
+
+![city-street mailbox panorama](img/scenes/city-street__mailbox__pano.jpg)
 
 ## postwar-city
 
