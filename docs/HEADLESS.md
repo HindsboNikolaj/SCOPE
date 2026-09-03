@@ -5,8 +5,9 @@ real 3D viewport. On a laptop or a workstation that is fine. On a GPU server it 
 not: a datacentre NVIDIA driver is installed for compute and ships no OpenGL, so there is no
 display and no GL, and Blender will not start its interface at all.
 
-This document is what was learned making it work anyway, on a box with eight A100s, driver
-570.148.08, and no graphics stack of any kind.
+This document is what was learned making it work anyway, on a datacentre GPU server with a
+compute-only NVIDIA driver and no graphics stack of any kind. Nothing below depends on the
+particular card or driver version; what matters is that the driver ships no OpenGL.
 
 ## This is not the recommended setup
 
