@@ -107,12 +107,37 @@ except OSError as e:
 _CAPTURE_BACKEND = os.environ.get("SCOPE_CAPTURE", "viewport").strip().lower()
 
 
+_BLANK_WARNED = False
+
+
 def _capture_frame(prefix: str = "raw") -> str:
+    global _BLANK_WARNED
     fp = SCREENSHOTS_DIR / f"{_now_ts()}_{prefix}.png"
     if _CAPTURE_BACKEND in ("opengl", "offscreen", "headless"):
         fast_opengl_screenshot(str(fp))
     else:
         screenshot_camera_view(str(fp))
+
+    # Say something the first time a capture comes back with no variation at all.
+    #
+    # This is the quietest failure in the whole pipeline. screenshot_area returns a solid black
+    # image on a virtual display without raising, and everything downstream carries on: the
+    # detector is shown black, reports the whole frame as its box, and zoom_bounding used to
+    # answer "Zoomed to target". A whole run can complete and be graded on black rectangles.
+    #
+    # A warning rather than an exception, because a legitimately dark frame is possible and
+    # losing a long run to a heuristic would be worse than the heuristic missing something.
+    if not _BLANK_WARNED:
+        try:
+            lo, hi = Image.open(fp).convert("L").getextrema()
+            if hi - lo == 0:
+                _BLANK_WARNED = True
+                print(f"[scope] WARNING: capture {fp.name} is a single flat colour "
+                      f"(value {lo}). Every result from this run will be about a blank image. "
+                      f"With no real display set SCOPE_CAPTURE=opengl; see docs/HEADLESS.md.",
+                      flush=True)
+        except Exception:
+            pass
     return str(fp)
 
 _HOME = None
@@ -210,6 +235,7 @@ def zoom_bounding(instruction: str):
     img_path = _capture_frame("prezoom")
     bbox = None
     vlm_time = 0.0
+    detect_error = None
     try:
         objs, t_det = _vlm_detect(img_path, instruction)
         vlm_time += t_det
@@ -233,17 +259,40 @@ def zoom_bounding(instruction: str):
                     pad = 0.06
                     bbox = (_clamp(min(xs)/W - pad, 0, 1), _clamp(min(ys)/H - pad, 0, 1),
                             _clamp(max(xs)/W + pad, 0, 1), _clamp(max(ys)/H + pad, 0, 1))
-    except Exception:
-        pass
+    except Exception as e:
+        detect_error = f"{type(e).__name__}: {e}"
+
     if not bbox:
-        bbox = (0.0, 0.0, 1.0, 1.0)
+        # Nothing was found. The camera is left where it is and the caller is told.
+        #
+        # This used to fall back to the whole frame, (0,0,1,1), and zoom to that. It reads like
+        # a harmless no-op and is not: the zoom factor becomes 1/margin, so the camera zooms
+        # 2% OUT and re-aims nowhere, and the call still returned "Zoomed to target: <thing>".
+        # An agent then believes it is looking at the thing it asked for.
+        #
+        # It also made three unrelated faults indistinguishable, since all of them arrive here:
+        # a model that genuinely cannot see the object, a model that is unreachable, and a
+        # capture that came back black. The last one is easy to hit, because screenshot_area
+        # returns black with no error on a virtual display, and a detector shown a black frame
+        # reports the whole frame as its box. Same output as an unconfigured model.
+        post_path = _capture_frame("postzoom")
+        return {
+            "result": f"Could not locate '{instruction}' in the current view. "
+                      f"The camera has not moved.",
+            "found": False, "bbox": None, "path": post_path,
+            "error": detect_error,
+            "timings": {"vlm": round(vlm_time, 3),
+                        "script": round(time.time() - t_script0 - vlm_time, 3)},
+        }
+
     x1, y1, x2, y2 = bbox
     cam = _active_cam()
-    blender_zoom(cam, x1, y1, x2, y2)
+    applied, _ = blender_zoom(cam, x1, y1, x2, y2)
     post_path = _capture_frame("postzoom")
     return {
         "result": f"Zoomed to target: {instruction}",
-        "bbox": [x1, y1, x2, y2], "path": post_path,
+        "found": True,
+        "bbox": [x1, y1, x2, y2], "zoom": round(float(applied), 3), "path": post_path,
         "timings": {"vlm": round(vlm_time, 3), "script": round(time.time() - t_script0 - vlm_time, 3)},
     }
 
