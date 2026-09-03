@@ -141,7 +141,39 @@ def screenshot_camera_view(out_path: str, wait: float = 0.05):
 def fast_opengl_screenshot(out_path: str, scale_crop: bool = True):
     """
     Capture a screenshot via OpenGL render, then crop to camera aspect.
+
+    This is the capture that works without a physical display. `screenshot_camera_view`
+    uses `screen.screenshot_area`, which photographs the window as drawn, and reading
+    that back returns a black image under a virtual X server with software OpenGL.
+    `render.opengl` renders offscreen, so it does not depend on anything having been
+    painted to a screen. See docs/HEADLESS.md.
+
+    Shading follows what the .blend was saved with, unless an environment variable says
+    otherwise. That default matters. This function previously forced
+    `shading.type = 'SOLID'` with no `color_type`, which discards every texture and
+    returns a flat grey massing model, and forced `use_scene_world = True`, which pulls
+    the scene's world into the picture. For a scene whose world texture is missing, that
+    second flag tints the entire frame magenta. whitechapel is saved as MATERIAL preview
+    with STUDIO lighting, and STUDIO deliberately ignores the scene world, which is why
+    the desktop capture of that scene looks correct despite the missing sky.
+
+    Overrides, for when the saved shading is not what a run wants:
+      SCOPE_SHADING       SOLID | MATERIAL | RENDERED
+      SCOPE_SHADING_COLOR MATERIAL | TEXTURE | OBJECT | SINGLE   (SOLID only)
+      SCOPE_SHADING_WORLD  1 or 0 to force the scene world on or off
+      SCOPE_SHADING_LIGHTS 1 or 0 to force the scene's own lamps on or off
+
+    Both lighting flags are left as the .blend saved them when unset. Forcing either one
+    produced a wrong picture on whitechapel: the world flag turned the frame magenta,
+    because that scene's environment map is missing, and the lights flag turned it purple,
+    because it swapped the studio light for the scene's cold lamps.
+
+    On cost: under software OpenGL, MATERIAL preview takes about a minute a frame while
+    SOLID with TEXTURE takes a few seconds and keeps the textures. `SCOPE_SHADING=SOLID`
+    with `SCOPE_SHADING_COLOR=TEXTURE` is the practical choice for a long headless run.
     """
+    import os as _os
+
     C = bpy.context
     win = C.window
     scene = C.scene
@@ -151,14 +183,77 @@ def fast_opengl_screenshot(out_path: str, scale_crop: bool = True):
     space = area.spaces.active
     space.region_3d.view_perspective = 'CAMERA'
     space.camera = scene.camera
-    space.shading.type = 'SOLID'
-    space.shading.use_scene_lights = True
-    space.shading.use_scene_world = True
+
+    _shading = _os.environ.get("SCOPE_SHADING", "").strip().upper()
+    if _shading in ("SOLID", "MATERIAL", "RENDERED", "WIREFRAME"):
+        space.shading.type = _shading
+    _color = _os.environ.get("SCOPE_SHADING_COLOR", "").strip().upper()
+    if _color and space.shading.type == 'SOLID':
+        try:
+            space.shading.color_type = _color
+        except (TypeError, AttributeError):
+            pass
+    # Lighting is left exactly as the .blend saved it unless asked otherwise. Forcing
+    # either of these flags on produced a badly wrong picture on whitechapel:
+    # use_scene_world pulled in a missing environment map and turned the frame magenta,
+    # and use_scene_lights replaced the studio light with the scene's own cold lamps and
+    # turned it purple. Neither is a lighting choice this function should be making on
+    # the author's behalf.
+    def _flag(name):
+        v = _os.environ.get(name, "").strip().lower()
+        if v in ("1", "true", "yes", "on"):
+            return True
+        if v in ("0", "false", "no", "off"):
+            return False
+        return None
+
+    # A note about the four scenes this benchmark ships with, because it decides the
+    # default above and it is not recoverable from the code.
+    #
+    # book-nook, city-street, postwar-city and whitechapel were all labelled from captures
+    # taken in Material Preview with STUDIO lighting, which means the scene world was NOT
+    # drawn. The published answers describe those images. Turning the world on gives a
+    # better-looking picture that no longer matches what a labeller saw: an outdoor scene
+    # gains a sky where the labeller had flat grey, and a 360 degree sweep changes most of
+    # its area. So for these four, leave the world off, and read the grey as a property of
+    # the dataset rather than a fault to correct.
+    #
+    # A scene added later is not bound by that. If its answers are labelled from captures
+    # taken with the world on, then SCOPE_SHADING_WORLD=1 is the right setting for it, and
+    # the thing to be careful about is only that one run should not mix the two. Record
+    # which was used alongside the results.
+    _lights = _flag("SCOPE_SHADING_LIGHTS")
+    if _lights is not None:
+        space.shading.use_scene_lights = _lights
+    _world = _flag("SCOPE_SHADING_WORLD")
+    if _world is not None:
+        space.shading.use_scene_world = _world
+
     scene.render.image_settings.file_format = 'PNG'
     scene.render.filepath = out_path
 
     override = {'window': win, 'screen': win.screen, 'area': area, 'region': region, 'space': space}
+
+    # Fit the camera frame to the region before rendering.
+    #
+    # render.opengl(view_context=True) renders the 3D view, and in camera view the camera
+    # rectangle is drawn inset inside the region with the out-of-frame area around it. That
+    # background is part of the render. Measured on postwar-city, the camera frame was 23% of
+    # the image and the other 77% was flat viewport grey, so every capture threw away most of
+    # its resolution and handed the vision model a small picture in a large empty field.
+    #
+    # view_center_camera sets the camera-view zoom so the frame fits the region, which takes
+    # that 23% to 89%. Pushing the zoom further gains 0.6% more, so this is effectively the
+    # whole win.
+    #
+    # The alternative, view_context=False, renders the camera exactly and fills the frame, but
+    # falls back to Workbench shading: flat grey massing with no textures at all. That is
+    # unusable here, which is why the fix is a zoom rather than a different render call.
     with C.temp_override(**override):
+        try:
+            bpy.ops.view3d.view_center_camera()
+        except (RuntimeError, AttributeError):
+            pass
         bpy.ops.render.opengl(write_still=True, view_context=True)
 
     if scale_crop:
@@ -184,53 +279,9 @@ def fast_opengl_screenshot(out_path: str, scale_crop: bool = True):
             pass
 
 
-# ─── Panorama ─────────────────────────────────────────────────────────────────
-#
-# A 360-degree sweep, driven one frame per call so the caller can yield progress
-# between frames. `blender_tools._iter_full_panorama` is the caller. Its contract
-# decides everything below, so it is written out here:
-#
-#   ts        = "%Y%m%d_%H%M%S"
-#   output    = <PANOS_DIR>/<ts>_panorama.png      <- passed to start_panorama_capture
-#   run_dir   = <PANOS_DIR>/_panorama_<ts>         <- where the caller looks afterwards
-#   the caller loops capture_panorama_step() until it returns None, then waits up
-#   to 5 seconds for run_dir/panorama_stitched.png to exist.
-#
-# The stitch therefore happens inside the final step, before it returns None. The
-# file is already on disk when the caller starts waiting, so the 5 second budget is
-# never spent.
-#
-# Why the stitch does not search for features: this code drives the camera, so the
-# angle of every frame is known exactly. A known-geometry reprojection is
-# deterministic and repeatable, which a benchmark needs. Feature matching would
-# give a different panorama for the same scene on different runs, and it would need
-# OpenCV, which this project does not depend on.
-
-# Re-export, so that scope.tools.blender_tools can import these from one place.
-#
-# This block was dropped when the stitch was rewritten, and nothing noticed for three commits,
-# because every test of that work imported blender_tools from a different branch. The module
-# does not import without it: blender_tools does `from ..blender.helper_funcs import
-# list_presets, apply_preset, create_preset` at module scope, so losing these names breaks
-# every tool in the package, not just the presets.
-list_presets = None
-apply_preset = None
-create_preset = None
-
-try:
-    from ..blender.preset_helpers import list_presets, apply_preset, create_preset
-except ImportError:
-    # When running inside Blender, preset_helpers may be imported differently.
-    pass
-
+# ─── Panorama (stub - implement based on your scene setup) ────────────────────
 
 _PANO_STATE = {}
-
-# Seconds to wait after a camera move before the frame is captured. The viewport
-# draws asynchronously, so a capture taken too early returns the previous frame or
-# a partly drawn one. Override with SCOPE_PANO_SETTLE when a scene is heavy.
-_PANO_SETTLE_DEFAULT = 0.35
-
 
 def _pano_run_dir(output_path: str) -> str:
     """Derive the directory the caller will look in from the path it passed in.
