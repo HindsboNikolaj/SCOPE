@@ -281,6 +281,22 @@ def fast_opengl_screenshot(out_path: str, scale_crop: bool = True):
 
 # ─── Panorama (stub - implement based on your scene setup) ────────────────────
 
+
+# Re-export, so that scope.tools.blender_tools can import these from one place.
+#
+# Deleted twice now, both times as collateral from editing a nearby function, and both times it
+# broke `import scope.tools.blender_tools` outright rather than just the presets. Anything that
+# rewrites a span of this file should check these three names survive.
+list_presets = None
+apply_preset = None
+create_preset = None
+
+try:
+    from ..blender.preset_helpers import list_presets, apply_preset, create_preset
+except ImportError:
+    # When running inside Blender, preset_helpers may be imported differently.
+    pass
+
 _PANO_STATE = {}
 
 def _pano_run_dir(output_path: str) -> str:
