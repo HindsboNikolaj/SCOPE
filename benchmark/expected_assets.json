@@ -1,75 +1,102 @@
 {
   "_comment": [
-    "What a clean install from the internet actually contains, measured rather than assumed.",
+    "What a clean install actually contains, measured rather than assumed.",
     "",
     "This file exists so that a missing texture is not mistaken for a broken install. Somebody",
     "setting SCOPE up for the first time, human or agent, opens a scene, sees that 46 images",
     "cannot be found, and reasonably concludes the download failed. It did not. Those files were",
-    "never published, because they were never recoverable: the scene authors used relative paths",
+    "never published because they were never recoverable: the scene authors used relative paths",
     "pointing outside the scene folder, and in two cases an absolute path into a paid Blender",
-    "addon on somebody's Windows machine.",
+    "addon on the author's own machine.",
     "",
-    "So the state below is the expected state. scripts/06_verify_setup.py checks against it and",
-    "reports three different things rather than one:",
+    "scripts/06_verify_setup.py checks against this and reports three outcomes rather than one:",
     "  matches expected  the install is correct, even where files are absent",
     "  worse             more is missing than should be, so the download or unpack failed",
-    "  better            fewer are missing, which means someone has fixed a scene and this file",
-    "                    is now out of date",
+    "  better            fewer are missing, so a scene has been fixed and this file is stale",
     "",
-    "None of this affects a benchmark run. SCOPE captures the viewport with studio lighting,",
-    "which does not draw the scene world, so a missing sky never reaches the model. The missing",
-    "surface textures in postwar-city show as one magenta door and a few flat panels in a scene",
-    "that is otherwise complete.",
+    "None of it affects a benchmark run. Captures use studio lighting with the scene world off,",
+    "so a missing sky never reaches the model, and the absent surface textures in postwar-city",
+    "show as one magenta door and a few flat panels in a scene that is otherwise complete.",
     "",
-    "Measured on a clean clone of main plus scripts/03_download_scenes.sh, Blender 4.4.3."
+    "Regenerate with: blender <scene>.blend -b --python scripts/measure_assets.py"
   ],
   "measured_on": "2026-09-03",
-  "source": "git clone main + scripts/03_download_scenes.sh",
+  "source": "scripts/03_download_scenes.sh, measured in Blender 4.4.3",
   "affects_benchmark_results": false,
   "scenes": {
     "book-nook": {
       "images": 387,
       "packed": 385,
       "missing": 0,
-      "world_texture": "bethnal_green_entrance_8k.exr",
+      "mesh_objects": 199,
+      "render_resolution": [
+        3240,
+        3240
+      ],
+      "world_texture": "//../../../bethnal_green_entrance_8k.exr",
       "world_usable": true,
-      "note": "Complete. The only scene with a working sky, packed into the .blend."
+      "note": "Complete. The only scene with a working sky, an 8K HDRI packed into the .blend. Captures do not draw it, because they use studio lighting with the scene world off, so it makes no difference to a run."
     },
     "city-street": {
       "images": 127,
       "packed": 126,
       "missing": 0,
+      "mesh_objects": 388,
+      "render_resolution": [
+        2309,
+        1867
+      ],
       "world_texture": null,
       "world_usable": false,
-      "note": "Complete. It has no world environment texture at all, which is how it was authored rather than something absent."
+      "note": "Complete. It has no world environment texture at all, which is how it was authored rather than something absent. This scene is far more expensive to shade under software OpenGL than the other three, and the cost does not fall with resolution; see docs/SETUP.md."
     },
     "postwar-city": {
       "images": 71,
       "packed": 21,
       "missing": 46,
+      "mesh_objects": 82,
+      "render_resolution": [
+        1920,
+        1080
+      ],
       "world_texture": null,
       "world_usable": false,
-      "note": "46 surface textures are absent and not recoverable from any published source. They live under texture/batiment, texture/ciment, texture/route, texture/barriere, texture/plantes and world/masks, by relative paths pointing outside the scene folder. The scene renders usably without them: one magenta door and a few flat panels.",
+      "note": "46 surface textures are absent and not recoverable from any published source. They live under texture/batiment, texture/ciment, texture/route, texture/barriere, texture/plantes and world/masks, by relative paths pointing outside the scene folder. The scene renders usably without them: one magenta door and a few flat panels. Two further images are generated procedurally, so they are neither packed nor missing.",
+      "generated": 2,
       "missing_prefixes": [
-        "//../../texture/batiment/",
-        "//../../texture/ciment/",
-        "//../../texture/route/",
         "//../../texture/barriere/",
+        "//../../texture/batiment/",
+        "//../../texture/cailloux/",
+        "//../../texture/ciment/",
+        "//../../texture/herbe/",
+        "//../../texture/metal/",
+        "//../../texture/mousse/",
         "//../../texture/plantes/",
-        "//world/masks/"
+        "//../../texture/route/",
+        "//../../texture/terre/",
+        "//../../texture/tissu/",
+        "//world/masks/",
+        "C:/Users/Maison/AppData/Roaming/Blender Foundation/Blender/2.77/scripts/addons/pro_lighting_skies_demo/hdris/",
+        "C:/Users/Maison/Documents/Aur\u00e9lien/pro/3D/texture/batiment/",
+        "C:/Users/Maison/Documents/Aur\u00e9lien/pro/3D/texture/portes/"
       ]
     },
     "whitechapel": {
       "images": 193,
       "packed": 187,
       "missing": 5,
+      "mesh_objects": 202,
+      "render_resolution": [
+        1920,
+        1080
+      ],
       "world_texture": "//../../hdr/cloudy/207-free-hdri-skies-com.hdr",
       "world_usable": false,
-      "note": "Five absent. Two are HDRIs from a paid Blender addon on the original author's Windows machine, one is from free-hdri-skies.com which no longer exists, two are scene-author textures. The sky has never worked in this scene; it is the original state rather than a regression. Studio lighting means it is never drawn, so no capture is affected.",
+      "note": "Five absent. Two are HDRIs from a paid Blender addon on the original author's machine, one is from a stock site that no longer exists, two are scene-author textures. The sky has never worked in this scene; that is its original state rather than a regression, and studio lighting means it is never drawn.",
       "missing_files": [
         "//../../hdr/cloudy/207-free-hdri-skies-com.hdr",
-        "//source/textureLow/BarkDecidious0036_10_S_NRML.png",
         "//source/colorMap/tonneau-emit.png",
+        "//source/textureLow/BarkDecidious0036_10_S_NRML.png",
         "C:/Users/Maison/AppData/Roaming/Blender Foundation/Blender/2.79/scripts/addons/pro_lighting_skies_demo/hdris/cloudy08_EXR.exr",
         "C:/Users/Maison/AppData/Roaming/Blender Foundation/Blender/2.79/scripts/addons/pro_lighting_skies_demo/hdris/cloudy08_medium.jpg"
       ]
