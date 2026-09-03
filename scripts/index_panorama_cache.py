@@ -8,10 +8,12 @@ Run it after adding or replacing a panorama by hand. It does not open Blender.
 
     python3 scripts/index_panorama_cache.py [--dir benchmark/panoramas]
 
-Set SCOPE_PRESET_DIR if your presets live somewhere the usual Blender locations do not cover,
-such as a mount inside a container.
+Poses come from benchmark/presets/presets_by_scene.json, which ships with the repository, so
+this works on a fresh clone before anything has been installed into Blender's user directory.
+If that index is missing, run scripts/build_preset_index.py. Installed .py presets are used as
+a fallback, and SCOPE_PRESET_DIR points at them if they live somewhere unusual.
 
-The preset files are the source of truth for the pose. They assign the camera directly, so what
+The preset definitions are the source of truth for the pose. They assign the camera directly, so what
 they declare is exactly what applying them produces, which is why the pose recorded here matches
 what a run will present at lookup time.
 """
@@ -45,6 +47,32 @@ def read_preset(path):
         raw = m.group(1)
         out[key] = (float(raw) if key == "lens"
                     else [float(x) for x in ast.literal_eval("(" + raw + ")")])
+    return out
+
+
+def poses_from_index():
+    """{scene: {preset: {location, rotation, lens}}} from the shipped index.
+
+    Preferred over the installed .py presets because it is in the repository: a fresh clone can
+    index its panoramas before running 04_install_presets.py, and a machine that never installs
+    them at all still gets a working cache.
+    """
+    idx = ROOT / "benchmark" / "presets" / "presets_by_scene.json"
+    if not idx.is_file():
+        return {}
+    try:
+        doc = json.loads(idx.read_text())
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for scene, e in (doc.get("scenes") or {}).items():
+        for name, d in (e.get("presets") or {}).items():
+            if d.get("location") and d.get("rotation_euler") and d.get("lens") is not None:
+                out.setdefault(scene, {})[name] = {
+                    "location": d["location"],
+                    "rotation": d["rotation_euler"],
+                    "lens": d["lens"],
+                }
     return out
 
 
@@ -93,10 +121,14 @@ def main():
     if not d.is_dir():
         raise SystemExit(f"no such directory: {d}")
 
+    index = poses_from_index()
     dirs = preset_dirs()
-    print(f"preset search path: {[str(x) for x in dirs] or 'NONE FOUND'}")
-    if not dirs:
-        raise SystemExit("no preset directory found. Run scripts/04_install_presets.py first.")
+    print(f"poses from the shipped index: "
+          f"{sum(len(v) for v in index.values())} across {len(index)} scenes")
+    print(f"installed preset fallback: {[str(x) for x in dirs] or 'none'}")
+    if not index and not dirs:
+        raise SystemExit("no poses available. Run scripts/build_preset_index.py, or "
+                         "scripts/04_install_presets.py.")
 
     written, skipped = 0, []
     for png in sorted(d.glob("*.png")):
@@ -113,12 +145,17 @@ def main():
         if preset.endswith("__solid"):
             preset, shading = preset[: -len("__solid")], "SOLID+TEXTURE"
 
-        pf = find_preset(preset)
-        if pf is None:
-            skipped.append((png.name, f"preset {preset!r} not found")); continue
-        pose = read_preset(pf)
+        pose = (index.get(scene) or {}).get(preset)
+        source = f"benchmark/presets/presets_by_scene.json ({scene}/{preset})"
         if pose is None:
-            skipped.append((png.name, f"could not read pose from {pf}")); continue
+            pf = find_preset(preset)
+            if pf is None:
+                skipped.append((png.name, f"no pose for {scene}/{preset!r}: not in the index "
+                                          f"and no installed preset file")); continue
+            pose = read_preset(pf)
+            source = f"installed preset {pf.name}"
+            if pose is None:
+                skipped.append((png.name, f"could not read pose from {pf}")); continue
 
         blend = None
         for cand in Path(args.scenes).glob(f"{scene}/*.blend"):
@@ -135,7 +172,7 @@ def main():
                 "lens_mm": round(pose["lens"], 3),
             },
             "shading": shading,
-            "source": f"shipped with the repository, indexed from {pf.name}",
+            "source": f"shipped with the repository, pose from {source}",
             "sha256": sha256(png),
             "written_by_pid": None,
         }

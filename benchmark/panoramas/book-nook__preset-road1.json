@@ -19,7 +19,7 @@
     "lens_mm": 28.9
   },
   "shading": "MATERIAL",
-  "source": "shipped with the repository, indexed from road1.py",
+  "source": "shipped with the repository, pose from benchmark/presets/presets_by_scene.json (book-nook/road1)",
   "sha256": "73d4b297c2fefde8b26e0540377933d0fe14afa6ea24e4d0843e2238a92e0b23",
   "written_by_pid": null
 }

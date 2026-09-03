@@ -19,7 +19,7 @@
     "lens_mm": 28.9
   },
   "shading": "MATERIAL",
-  "source": "shipped with the repository, indexed from store-front.py",
+  "source": "shipped with the repository, pose from benchmark/presets/presets_by_scene.json (book-nook/store-front)",
   "sha256": "b59bba49db970bed72b9de562484a34a7a88bc8ab057ca61731ca1637a3f0888",
   "written_by_pid": null
 }

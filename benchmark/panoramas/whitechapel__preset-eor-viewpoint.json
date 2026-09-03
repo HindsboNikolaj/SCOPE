@@ -19,7 +19,7 @@
     "lens_mm": 28.9
   },
   "shading": "MATERIAL",
-  "source": "shipped with the repository, indexed from eor-viewpoint.py",
+  "source": "shipped with the repository, pose from benchmark/presets/presets_by_scene.json (whitechapel/eor-viewpoint)",
   "sha256": "43a836128a0d1993edae0a03cfe57dcc3dda83165aa7c6dfdc3c453d6b1cb9bc",
   "written_by_pid": null
 }

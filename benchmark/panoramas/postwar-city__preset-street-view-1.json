@@ -19,7 +19,7 @@
     "lens_mm": 23.9
   },
   "shading": "MATERIAL",
-  "source": "shipped with the repository, indexed from street-view-1.py",
+  "source": "shipped with the repository, pose from benchmark/presets/presets_by_scene.json (postwar-city/street-view-1)",
   "sha256": "4245160ca2a8ef7e177345875bd50b2794577537c95721919b9efca7c61fe1fa",
   "written_by_pid": null
 }
