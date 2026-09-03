@@ -175,10 +175,18 @@ from PIL import Image
 log(f"measuring cold start; probing until two captures agree, floor {SETTLE}s")
 probe_dir = os.path.join(OUT, "_settle")
 os.makedirs(probe_dir, exist_ok=True)
+# The ceiling has to be counted in probes rather than seconds. A first version stopped after
+# sixty seconds of wall clock, which is generous on a machine with a GPU where a probe costs
+# well under a second, and useless under software rendering where one Material Preview probe
+# took between twelve and forty seconds. It reported "never stable" for a scene that was
+# perfectly stable, because it only managed two probes before the clock ran out.
+MAX_PROBES = int(os.environ.get("SCOPE_SETTLE_PROBES", "12"))
+MAX_WALL = float(os.environ.get("SCOPE_SETTLE_MAX", "600"))
 t_open = time.time()
-prev, agree, settled_at = None, 0, None
-while time.time() - t_open < 60:
-    p = os.path.join(probe_dir, f"probe_{int(time.time() - t_open):03d}.png")
+prev, agree, settled_at, probes = None, 0, None, 0
+while probes < MAX_PROBES and time.time() - t_open < MAX_WALL:
+    probes += 1
+    p = os.path.join(probe_dir, f"probe_{probes:03d}.png")
     capture(p)
     cur = np.asarray(Image.open(p).convert("L").resize((160, 90)), dtype=float)
     if prev is not None and float(np.abs(cur - prev).mean()) <= 0.4 and cur.std() > 1.0:
@@ -190,9 +198,16 @@ while time.time() - t_open < 60:
         agree = 0
     prev = cur
 report["cold_start_seconds"] = settled_at
-report["checks"].append({"name": "scene reaches a stable image", "ok": settled_at is not None,
-                         "detail": f"{settled_at}s" if settled_at else "not stable within 60s"})
-log(f"cold start: {'stable at ' + str(settled_at) + 's' if settled_at else 'NEVER STABLE'}")
+report["cold_start_probes"] = probes
+report["checks"].append({
+    "name": "scene reaches a stable image", "ok": settled_at is not None,
+    "detail": (f"{settled_at}s after {probes} probes" if settled_at
+               else f"not stable after {probes} probes in {round(time.time()-t_open)}s")})
+if settled_at is not None:
+    log(f"cold start: stable at {settled_at}s, after {probes} probes")
+else:
+    log(f"cold start: NOT STABLE after {probes} probes. On a slow renderer this can mean the "
+        f"probes cost more than the scene needs to settle; raise SCOPE_SETTLE_PROBES.")
 
 stem = os.path.splitext(os.path.basename(bpy.data.filepath))[0].lower().replace(".packed", "")
 presets = []
@@ -265,7 +280,8 @@ warns = sum(1 for v in report["views"] if v["warnings"])
 report["summary"] = {"views": len(report["views"]), "failing": fails, "warning": warns,
                      "cold_start_seconds": settled_at, "missing_images": len(missing)}
 json.dump(report, open(os.path.join(OUT, f"{stem}__verify.json"), "w"), indent=2)
+cold = f"{settled_at}s" if settled_at is not None else "not measured"
 log(f"SUMMARY {len(report['views'])} views, {fails} failing, {warns} with warnings, "
-    f"cold start {settled_at}s, {len(missing)} missing textures")
+    f"cold start {cold}, {len(missing)} missing textures")
 log(f"images and report in {OUT} — look at them")
 bpy.ops.wm.quit_blender()
