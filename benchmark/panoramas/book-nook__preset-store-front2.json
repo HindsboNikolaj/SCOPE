@@ -1,0 +1,25 @@
+{
+  "scene": "book-nook",
+  "blend": "/disk2/nikolaj/SCOPE-repo/benchmark/scenes/book-nook/book-nook.blend",
+  "blend_mtime": null,
+  "pose": {
+    "preset": "store-front2"
+  },
+  "pose_exact": {
+    "location": [
+      4.92861,
+      17.78717,
+      1.81809
+    ],
+    "rotation_deg": [
+      100.27695,
+      0.54872,
+      -173.61819
+    ],
+    "lens_mm": 28.9
+  },
+  "shading": "MATERIAL",
+  "source": "shipped with the repository, indexed from store-front2.py",
+  "sha256": "02afc32c6cad36e30b33cd31b07e9acd5165fd57db9b6d296ad80e4e55ab93e4",
+  "written_by_pid": null
+}

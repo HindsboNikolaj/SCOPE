@@ -206,6 +206,24 @@ def fast_opengl_screenshot(out_path: str, scale_crop: bool = True):
 # give a different panorama for the same scene on different runs, and it would need
 # OpenCV, which this project does not depend on.
 
+# Re-export, so that scope.tools.blender_tools can import these from one place.
+#
+# This block was dropped when the stitch was rewritten, and nothing noticed for three commits,
+# because every test of that work imported blender_tools from a different branch. The module
+# does not import without it: blender_tools does `from ..blender.helper_funcs import
+# list_presets, apply_preset, create_preset` at module scope, so losing these names breaks
+# every tool in the package, not just the presets.
+list_presets = None
+apply_preset = None
+create_preset = None
+
+try:
+    from ..blender.preset_helpers import list_presets, apply_preset, create_preset
+except ImportError:
+    # When running inside Blender, preset_helpers may be imported differently.
+    pass
+
+
 _PANO_STATE = {}
 
 # Seconds to wait after a camera move before the frame is captured. The viewport

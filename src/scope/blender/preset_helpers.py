@@ -66,16 +66,98 @@ def list_presets() -> list[str]:
     return sorted(names)
 
 
+# Which preset this process last applied, and the camera pose it produced.
+#
+# The pose is stored alongside the name because the name on its own is not trustworthy. It is a
+# module global, so it survives a file open: open a second scene without applying a preset and
+# the process still claims the camera is at the previous scene's viewpoint. Anything keyed on
+# that claim, such as the panorama cache, would then serve a picture of somewhere else.
+#
+# So the name is only ever returned when the camera is still where applying it put it. A
+# handler clears the record on file load as well, which covers the common case; the pose check
+# covers the rest, including code that moves the camera directly.
+_LAST_PRESET = None
+_LAST_PRESET_POSE = None
+_LAST_PRESET_BLEND = None
+
+# Tolerance for "the camera has not moved". Five decimals on position and degrees, three on the
+# focal length, which is the precision the preset files themselves are written to.
+_POSE_TOL = 1e-4
+
+
+def _pose_now():
+    cam = bpy.context.scene.camera
+    if cam is None:
+        return None
+    import math
+    return (tuple(round(v, 5) for v in cam.location),
+            tuple(round(math.degrees(v), 5) for v in cam.rotation_euler),
+            round(cam.data.lens, 3))
+
+
+def _same_pose(a, b):
+    if a is None or b is None:
+        return False
+    for x, y in zip(a[0], b[0]):
+        if abs(x - y) > _POSE_TOL:
+            return False
+    for x, y in zip(a[1], b[1]):
+        if abs(x - y) > _POSE_TOL:
+            return False
+    return abs(a[2] - b[2]) <= _POSE_TOL
+
+
+def last_applied_preset():
+    """The most recently applied preset name, or None.
+
+    Returns None if the camera has since moved, or if a different .blend is open than the one
+    the preset was applied in. A caller gets a name only when that name still describes where
+    the camera actually is.
+    """
+    if _LAST_PRESET is None:
+        return None
+    if _LAST_PRESET_BLEND != bpy.data.filepath:
+        return None
+    if not _same_pose(_LAST_PRESET_POSE, _pose_now()):
+        return None
+    return _LAST_PRESET
+
+
+def clear_last_preset():
+    """Forget the last preset. Call after moving the camera deliberately."""
+    global _LAST_PRESET, _LAST_PRESET_POSE, _LAST_PRESET_BLEND
+    _LAST_PRESET = _LAST_PRESET_POSE = _LAST_PRESET_BLEND = None
+
+
+@bpy.app.handlers.persistent
+def _clear_on_load(*_args):
+    clear_last_preset()
+
+
+# Registered once. Opening a file must not leave the previous scene's viewpoint on record.
+if _clear_on_load not in bpy.app.handlers.load_post:
+    bpy.app.handlers.load_post.append(_clear_on_load)
+
+
 def apply_preset(name: str) -> bool:
     """
     Execute the named preset script to set camera data + transform.
     Returns True if applied, False if not found.
+
+    Note that a missing preset returns False rather than raising. That is deliberate for
+    callers that probe, and it has cost real time here: a script that ignores the return value
+    carries on with the camera wherever it happened to be, and every log line afterwards says
+    the preset was applied. If you are not checking the return, raise instead.
     """
+    global _LAST_PRESET, _LAST_PRESET_POSE, _LAST_PRESET_BLEND
     for pd in bpy.utils.preset_paths("camera"):
         path = os.path.join(pd, f"{name}.py")
         if os.path.isfile(path):
             with open(path) as f:
                 code = f.read()
             exec(compile(code, path, 'exec'), { 'bpy': bpy })
+            _LAST_PRESET = name
+            _LAST_PRESET_POSE = _pose_now()
+            _LAST_PRESET_BLEND = bpy.data.filepath
             return True
     return False

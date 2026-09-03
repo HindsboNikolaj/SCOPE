@@ -1,0 +1,26 @@
+{
+  "scene": "city-street",
+  "blend": "/disk2/nikolaj/SCOPE-repo/benchmark/scenes/city-street/city-street.blend",
+  "blend_mtime": null,
+  "pose": {
+    "preset": "hotel-m"
+  },
+  "pose_exact": {
+    "location": [
+      1.83471,
+      2.63802,
+      3.40196
+    ],
+    "rotation_deg": [
+      91.54141,
+      0.0,
+      228.61675
+    ],
+    "lens_mm": 23.68
+  },
+  "shading": "SOLID+TEXTURE",
+  "source": "shipped with the repository, indexed from hotel-m.py",
+  "sha256": "eb2c52faca8248c46b81a9e67675203c3bda46c3c91479b938837bd0859a18ba",
+  "written_by_pid": null,
+  "note": "Captured in Solid with textures, not Material Preview. This scene costs roughly 700 seconds a frame in Material Preview under software OpenGL whatever the resolution, so a ten frame sweep of it is not practical there. A run in Material Preview will refuse this entry and sweep instead, which is correct: recapture it on a machine with a GL driver to replace this."
+}

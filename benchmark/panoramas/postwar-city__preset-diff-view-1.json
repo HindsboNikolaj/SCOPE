@@ -1,0 +1,25 @@
+{
+  "scene": "postwar-city",
+  "blend": "/disk2/nikolaj/SCOPE-repo/benchmark/scenes/postwar-city/postwar-city.blend",
+  "blend_mtime": null,
+  "pose": {
+    "preset": "diff-view-1"
+  },
+  "pose_exact": {
+    "location": [
+      1.66062,
+      -1.96546,
+      3.37959
+    ],
+    "rotation_deg": [
+      48.40021,
+      -6e-05,
+      8295.8354
+    ],
+    "lens_mm": 23.9
+  },
+  "shading": "MATERIAL",
+  "source": "shipped with the repository, indexed from diff-view-1.py",
+  "sha256": "2500dec795a7f6772c1308fb001dea3f7ae7a6a78b92429e87393e7bcd6243f6",
+  "written_by_pid": null
+}

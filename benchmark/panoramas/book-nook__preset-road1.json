@@ -1,0 +1,25 @@
+{
+  "scene": "book-nook",
+  "blend": "/disk2/nikolaj/SCOPE-repo/benchmark/scenes/book-nook/book-nook.blend",
+  "blend_mtime": null,
+  "pose": {
+    "preset": "road1"
+  },
+  "pose_exact": {
+    "location": [
+      -14.38139,
+      6.15716,
+      1.81809
+    ],
+    "rotation_deg": [
+      97.8817,
+      0.54872,
+      -58.44462
+    ],
+    "lens_mm": 28.9
+  },
+  "shading": "MATERIAL",
+  "source": "shipped with the repository, indexed from road1.py",
+  "sha256": "73d4b297c2fefde8b26e0540377933d0fe14afa6ea24e4d0843e2238a92e0b23",
+  "written_by_pid": null
+}
