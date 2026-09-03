@@ -64,7 +64,16 @@ def corrected_persp_area_zoom_fov(cam_obj, u0, v0, u1, v1, margin=1.02, max_zoom
                     -1.0))
     R = cam_obj.rotation_euler.to_matrix()
     look = (R @ d_cam).normalized()
-    cam_obj.rotation_euler = look.to_track_quat('-Z', 'Y').to_euler(cam_obj.rotation_mode)
+    aimed = look.to_track_quat('-Z', 'Y').to_euler(cam_obj.rotation_mode)
+
+    # Wrap each component into (-pi, pi]. Rebuilding the Euler from a quaternion can land on an
+    # equivalent branch many turns away from where the camera started: a preset sitting at a
+    # yaw of 144 radians came back reading -8236 degrees. The orientation is identical, since
+    # each component is 2*pi periodic, but a log or a delta computed from it is not readable,
+    # and anything comparing angles numerically would be misled.
+    for _i in range(3):
+        aimed[_i] = (aimed[_i] + math.pi) % (2.0 * math.pi) - math.pi
+    cam_obj.rotation_euler = aimed
 
     return 1.0 / factor, (delta_pan, delta_tilt)
 
