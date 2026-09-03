@@ -67,13 +67,29 @@ def _active_cam():
         raise RuntimeError("No active scene camera set.")
     return cam
 
+# Where captures are written. Defaults to <project>/output, which is where they have always
+# gone, but SCOPE_OUTPUT_DIR moves it.
+#
+# The override exists because the default assumes the checkout is writable, and increasingly it
+# is not: a container mounting the repo read-only, a shared install under /opt, a checkout on a
+# read-only volume. The failure is confusing when it happens, because import succeeds (the
+# directory usually already exists, so mkdir(exist_ok=True) passes) and the error only surfaces
+# much later as "Could not write image: Invalid argument" from deep inside a Blender operator.
+#
 # src/scope/tools/blender_tools.py -> parents[3] is the project root
 # ([0]=tools, [1]=scope, [2]=src, [3]=project).
-OUTPUT_DIR = Path(__file__).resolve().parents[3] / "output"
+OUTPUT_DIR = Path(os.environ.get("SCOPE_OUTPUT_DIR")
+                  or Path(__file__).resolve().parents[3] / "output")
 PANOS_DIR = OUTPUT_DIR / "panos"
 SCREENSHOTS_DIR = OUTPUT_DIR / "screenshots"
-for d in (OUTPUT_DIR, PANOS_DIR, SCREENSHOTS_DIR):
-    d.mkdir(parents=True, exist_ok=True)
+try:
+    for d in (OUTPUT_DIR, PANOS_DIR, SCREENSHOTS_DIR):
+        d.mkdir(parents=True, exist_ok=True)
+except OSError as e:
+    raise RuntimeError(
+        f"SCOPE cannot write captures to {OUTPUT_DIR} ({e}). Set SCOPE_OUTPUT_DIR to a "
+        f"writable directory. This is the usual symptom of a read-only checkout."
+    ) from e
 
 # Which capture to use. There are two, and they do not work in the same places.
 #

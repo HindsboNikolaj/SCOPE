@@ -62,8 +62,6 @@ Two modes work. They cost very different amounts and they do not show the same t
 
 | | `SCOPE_SHADING=SOLID` + `SCOPE_SHADING_COLOR=TEXTURE` | `SCOPE_SHADING=MATERIAL` |
 |---|---|---|
-| Speed, software OpenGL | 7 to 9 s a frame | 40 to 90 s a frame |
-| Speed, real GPU | well under a second | about a second |
 | Textures, signage, graffiti | yes, legible | yes |
 | Anything behind glass, such as a shop interior | **no, glass renders dark** | yes |
 | Match to a desktop capture, as edge correlation | 0.24 | **0.80** |
@@ -72,12 +70,37 @@ Asked what is inside the bookshop window, a vision model given a Material Previe
 answers "bookshelves filled with books". Given a Solid capture of the same camera it answers
 "a dark interior". Signage and object counts survive both; anything behind glass does not.
 
-**Use MATERIAL when you can.** It is what the scenes are saved as, what produced the published
-numbers, and on a machine with a real GPU it is not meaningfully slower.
+### What each costs
 
-**Use SOLID with TEXTURE when software rendering makes MATERIAL impractical**, which is any
-headless container. Report such a run as its own configuration rather than comparing it
-against the published table.
+Measured per frame at a 640 pixel long edge, under software OpenGL, which is what a headless
+container gets: an Xvfb display has no hardware GL, so a GPU on the box does not accelerate the
+viewport. The first frame of each scene includes shader compilation and is reported separately
+because it is not representative of the rest.
+
+| scene | MATERIAL, first frame | MATERIAL, after | SOLID+TEXTURE |
+|---|---|---|---|
+| `book-nook` | 91 s | 41 to 62 s | 7 to 9 s |
+| `postwar-city` | 32 s | 5 to 9 s | 1.2 to 1.4 s |
+| `whitechapel` | 60 s | 10 to 46 s | not measured |
+| `city-street` | 8500 s | 790 to 4200 s | 1.7 to 13 s |
+
+`city-street` is the outlier and it is not a fluke: its materials are expensive enough to shade
+in software that a nine frame panorama would take most of a day. Halving the capture resolution
+brings it back into range, since software shading cost scales with pixel count.
+
+These are software numbers. No figure here should be read as the cost on a machine with a real
+display and a GPU driver, which was not measured.
+
+**Use MATERIAL when you can.** It is what the scenes are saved as, and what produced the
+published numbers. On three of the four scenes it costs tens of seconds a frame even in the
+worst case, which is affordable.
+
+**Drop the capture resolution before you drop the shading mode.** Resolution costs image
+detail; shading mode costs whole categories of answer. A shop interior that is dark in SOLID is
+dark at every resolution.
+
+**Use SOLID with TEXTURE only when MATERIAL is genuinely impractical.** Report such a run as its
+own configuration rather than comparing it against the published table.
 
 ## Then check that it worked
 

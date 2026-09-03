@@ -8,6 +8,22 @@ display and no GL, and Blender will not start its interface at all.
 This document is what was learned making it work anyway, on a box with eight A100s, driver
 570.148.08, and no graphics stack of any kind.
 
+## This is not the recommended setup
+
+Read this as a way to make SCOPE run where it otherwise could not, not as the way to run it.
+A headless box gives you software OpenGL and nothing else: an Xvfb display has no hardware GL,
+so the GPUs on the machine accelerate the vision model and do not touch the viewport at all.
+
+What that costs, measured at a 640 pixel long edge in Material Preview: 5 to 60 seconds a frame
+on three of the four scenes, and 790 to 8500 seconds a frame on `city-street`, whose materials
+are expensive to shade in software. The same captures on a workstation with a real display and
+a GL driver are not in that range.
+
+So the order of preference is a workstation, then a cloud instance with a virtual workstation
+driver (the GRID and vWS variants do ship OpenGL), and only then this. If you are here because
+a headless box is what you have, the rest of the document works. If you are here because it
+seemed simpler, it is not.
+
 ## What fails, and the exact message
 
 Neither capture function works in `--background` mode. Blender says so itself:
