@@ -140,7 +140,39 @@ def screenshot_camera_view(out_path: str, wait: float = 0.05):
 def fast_opengl_screenshot(out_path: str, scale_crop: bool = True):
     """
     Capture a screenshot via OpenGL render, then crop to camera aspect.
+
+    This is the capture that works without a physical display. `screenshot_camera_view`
+    uses `screen.screenshot_area`, which photographs the window as drawn, and reading
+    that back returns a black image under a virtual X server with software OpenGL.
+    `render.opengl` renders offscreen, so it does not depend on anything having been
+    painted to a screen. See docs/HEADLESS.md.
+
+    Shading follows what the .blend was saved with, unless an environment variable says
+    otherwise. That default matters. This function previously forced
+    `shading.type = 'SOLID'` with no `color_type`, which discards every texture and
+    returns a flat grey massing model, and forced `use_scene_world = True`, which pulls
+    the scene's world into the picture. For a scene whose world texture is missing, that
+    second flag tints the entire frame magenta. whitechapel is saved as MATERIAL preview
+    with STUDIO lighting, and STUDIO deliberately ignores the scene world, which is why
+    the desktop capture of that scene looks correct despite the missing sky.
+
+    Overrides, for when the saved shading is not what a run wants:
+      SCOPE_SHADING       SOLID | MATERIAL | RENDERED
+      SCOPE_SHADING_COLOR MATERIAL | TEXTURE | OBJECT | SINGLE   (SOLID only)
+      SCOPE_SHADING_WORLD  1 or 0 to force the scene world on or off
+      SCOPE_SHADING_LIGHTS 1 or 0 to force the scene's own lamps on or off
+
+    Both lighting flags are left as the .blend saved them when unset. Forcing either one
+    produced a wrong picture on whitechapel: the world flag turned the frame magenta,
+    because that scene's environment map is missing, and the lights flag turned it purple,
+    because it swapped the studio light for the scene's cold lamps.
+
+    On cost: under software OpenGL, MATERIAL preview takes about a minute a frame while
+    SOLID with TEXTURE takes a few seconds and keeps the textures. `SCOPE_SHADING=SOLID`
+    with `SCOPE_SHADING_COLOR=TEXTURE` is the practical choice for a long headless run.
     """
+    import os as _os
+
     C = bpy.context
     win = C.window
     scene = C.scene
@@ -150,9 +182,37 @@ def fast_opengl_screenshot(out_path: str, scale_crop: bool = True):
     space = area.spaces.active
     space.region_3d.view_perspective = 'CAMERA'
     space.camera = scene.camera
-    space.shading.type = 'SOLID'
-    space.shading.use_scene_lights = True
-    space.shading.use_scene_world = True
+
+    _shading = _os.environ.get("SCOPE_SHADING", "").strip().upper()
+    if _shading in ("SOLID", "MATERIAL", "RENDERED", "WIREFRAME"):
+        space.shading.type = _shading
+    _color = _os.environ.get("SCOPE_SHADING_COLOR", "").strip().upper()
+    if _color and space.shading.type == 'SOLID':
+        try:
+            space.shading.color_type = _color
+        except (TypeError, AttributeError):
+            pass
+    # Lighting is left exactly as the .blend saved it unless asked otherwise. Forcing
+    # either of these flags on produced a badly wrong picture on whitechapel:
+    # use_scene_world pulled in a missing environment map and turned the frame magenta,
+    # and use_scene_lights replaced the studio light with the scene's own cold lamps and
+    # turned it purple. Neither is a lighting choice this function should be making on
+    # the author's behalf.
+    def _flag(name):
+        v = _os.environ.get(name, "").strip().lower()
+        if v in ("1", "true", "yes", "on"):
+            return True
+        if v in ("0", "false", "no", "off"):
+            return False
+        return None
+
+    _lights = _flag("SCOPE_SHADING_LIGHTS")
+    if _lights is not None:
+        space.shading.use_scene_lights = _lights
+    _world = _flag("SCOPE_SHADING_WORLD")
+    if _world is not None:
+        space.shading.use_scene_world = _world
+
     scene.render.image_settings.file_format = 'PNG'
     scene.render.filepath = out_path
 

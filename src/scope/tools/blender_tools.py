@@ -21,6 +21,7 @@ from ..blender.helper_funcs import (
     start_panorama_capture,
     capture_panorama_step,
     screenshot_camera_view,
+    fast_opengl_screenshot,
     blender_zoom,
     list_presets,
     apply_preset,
@@ -74,9 +75,28 @@ SCREENSHOTS_DIR = OUTPUT_DIR / "screenshots"
 for d in (OUTPUT_DIR, PANOS_DIR, SCREENSHOTS_DIR):
     d.mkdir(parents=True, exist_ok=True)
 
+# Which capture to use. There are two, and they do not work in the same places.
+#
+#   viewport  screenshot_camera_view -> screen.screenshot_area. Photographs the window as
+#             drawn. This is the default and it is what produced the published results.
+#             On a machine with no physical display it returns a black image, because
+#             nothing paints the window and reading the buffer back yields nothing.
+#
+#   opengl    fast_opengl_screenshot -> render.opengl. Renders offscreen, so it does not
+#             need a painted window. This is the one that works headless, for example in
+#             a container with Xvfb and software OpenGL.
+#
+# The default stays "viewport", so nothing changes for anyone running with a display.
+# docs/HEADLESS.md covers when to switch and what it costs.
+_CAPTURE_BACKEND = os.environ.get("SCOPE_CAPTURE", "viewport").strip().lower()
+
+
 def _capture_frame(prefix: str = "raw") -> str:
     fp = SCREENSHOTS_DIR / f"{_now_ts()}_{prefix}.png"
-    screenshot_camera_view(str(fp))
+    if _CAPTURE_BACKEND in ("opengl", "offscreen", "headless"):
+        fast_opengl_screenshot(str(fp))
+    else:
+        screenshot_camera_view(str(fp))
     return str(fp)
 
 _HOME = None

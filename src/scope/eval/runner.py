@@ -71,17 +71,84 @@ def get_vlm_label() -> str:
     return ""
 
 
+# How the viewport is shaded when a frame is captured.
+#
+# This used to be left to whatever the .blend happened to open with, and that is not stable
+# across machines. Each benchmark scene carries nine or ten workspaces, each with its own
+# shading: book-nook has Shading set to Material Preview, Layout set to Solid with random
+# per-object colours, and Texture Paint set to Solid with textures. Which one is active
+# decides what the model is shown. Blender restores the file's own workspace only while the
+# user's "Load UI" preference is on, which is the default but is a preference, so a user who
+# turns it off silently captures in their own workspace's mode instead and nothing reports it.
+#
+# The difference is not cosmetic. Asked what is inside the bookshop window, a vision model
+# given a Material Preview capture answers "bookshelves filled with books"; given a Solid
+# capture of the same camera it answers "a dark interior", because Solid draws glass opaque.
+# Signage and object counts survive both. Anything behind glass does not.
+#
+# So the mode is set here rather than inherited. Material Preview is the default because it
+# is what the scenes are saved as, what the published results used, and about a second a
+# frame on a machine with a GPU. Override it when software rendering makes that impractical;
+# docs/SETUP.md has the measurements.
+SCOPE_VIEW_SHADING = os.environ.get("SCOPE_SHADING", "MATERIAL").strip().upper()
+SCOPE_VIEW_COLOR = os.environ.get("SCOPE_SHADING_COLOR", "TEXTURE").strip().upper()
+
+
 def prepare_view_for_capture():
-    """Ensure the 3D viewport is ready for screenshot capture."""
+    """Put the 3D viewport into a known state before any frame is captured.
+
+    Sets the camera view, the shading mode, and hides the overlays and gizmos that would
+    otherwise appear in the image. Everything here is deliberate: anything left unset is
+    inherited from the file or from the user, and then two machines disagree.
+    """
     try:
         for area in bpy.context.screen.areas:
-            if area.type == "VIEW_3D":
-                for space in area.spaces:
-                    if space.type == "VIEW_3D":
-                        space.region_3d.view_perspective = "CAMERA"
-                break
-    except Exception:
-        pass
+            if area.type != "VIEW_3D":
+                continue
+            for space in area.spaces:
+                if space.type != "VIEW_3D":
+                    continue
+                space.region_3d.view_perspective = "CAMERA"
+                space.camera = bpy.context.scene.camera
+
+                sh = space.shading
+                if SCOPE_VIEW_SHADING in ("SOLID", "MATERIAL", "RENDERED"):
+                    sh.type = SCOPE_VIEW_SHADING
+                if sh.type == "SOLID" and SCOPE_VIEW_COLOR:
+                    try:
+                        sh.color_type = SCOPE_VIEW_COLOR
+                    except (TypeError, AttributeError):
+                        pass
+                # Studio lighting, and the scene world left out of it. A scene whose world
+                # texture is missing would otherwise tint every frame magenta, which is the
+                # state whitechapel ships in.
+                for attr, val in (("light", "STUDIO"), ("use_scene_lights", False),
+                                  ("use_scene_world", False)):
+                    try:
+                        setattr(sh, attr, val)
+                    except (TypeError, AttributeError):
+                        pass
+
+                # Editor furniture must not reach the model. screenshot_camera_view hides
+                # these too, but setting them here means the state is right for any capture
+                # backend, including the offscreen one used headless.
+                ov = space.overlay
+                for attr in ("show_overlays", "show_floor", "show_axis_x", "show_axis_y",
+                             "show_axis_z", "show_cursor", "show_text", "show_stats",
+                             "show_extras", "show_relationship_lines", "show_outline_selected"):
+                    try:
+                        setattr(ov, attr, False)
+                    except (TypeError, AttributeError):
+                        pass
+                for attr in ("show_gizmo", "show_region_ui", "show_region_toolbar",
+                             "show_region_header"):
+                    try:
+                        setattr(space, attr, False)
+                    except (TypeError, AttributeError):
+                        pass
+            break
+    except Exception as _e:
+        print(f"[runner] WARN: could not standardise the viewport: {_e}")
 
 
 # --- Config via env vars -----------------------------------------------------

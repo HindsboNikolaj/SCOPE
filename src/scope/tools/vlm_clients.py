@@ -221,6 +221,88 @@ class MoondreamLocal(VLMClient):
             except Exception: continue
         return {"points": res}
 
+# ─── Moondream via Photon (local GPU, kestrel runtime) ────────────────────────
+
+class MoondreamPhoton(VLMClient):
+    """Moondream running on Photon, its own inference runtime.
+
+    Why this is separate from MoondreamLocal. That class loads the model through
+    transformers, which works anywhere and is slow. Photon is Moondream's purpose-built
+    runtime, and on an A100 the difference is not incremental:
+
+        transformers path   seconds per call
+        Photon              34 ms for a query, 93 ms for a point call
+
+    That changes what the benchmark is bound by. Across a 541-row run the vision model
+    stops being the dominant cost and the graphics becomes it, which is worth knowing
+    before anyone optimises the wrong half.
+
+    Requirements: `pip install moondream`, a CUDA or Apple Silicon device, and a torch build
+    matching the installed driver. A torch compiled for a newer CUDA than the driver makes
+    `cuda.is_available()` false, and Photon then refuses with a message about finding no
+    accelerator, which reads like missing hardware rather than a version mismatch.
+
+    Configure with:
+        VLM_MODEL=moondream  VLM_MODEL_URL=photon  VLM_MODEL_ID=moondream3.1-9B-A2B
+    """
+
+    def __init__(self, model_id: Optional[str] = None, max_batch_size: int = 1,
+                 device: Optional[str] = None):
+        import moondream as md
+        model = (model_id or os.getenv("VLM_MODEL_ID") or "moondream3.1-9B-A2B").strip()
+        kwargs: Dict[str, Any] = {"local": True, "model": model,
+                                  "max_batch_size": max_batch_size}
+        dev = device or os.getenv("VLM_DEVICE", "").strip()
+        if dev:
+            kwargs["device"] = dev
+        # The first call loads weights and builds kernels, about two minutes on an A100.
+        # Every call after it is in the tens of milliseconds.
+        self.model = md.vl(**kwargs)
+        self.model_id = model
+        self.name = f"Moondream Photon ({model})"
+        self.label = "Moondream(photon)"
+        self.caps = VLMCaps(caption=True, vqa=True, detect=True, point=True)
+
+    def caption(self, image):
+        out = self.model.caption(_to_pil(image))
+        if isinstance(out, dict):
+            return {"caption": out.get("caption") or out.get("text") or ""}
+        return {"caption": str(out)}
+
+    def query(self, image, question: str):
+        out = self.model.query(_to_pil(image), question)
+        if isinstance(out, dict):
+            return {"answer": out.get("answer") or out.get("text") or ""}
+        return {"answer": str(out)}
+
+    def detect(self, image, instruction: str):
+        out = self.model.detect(_to_pil(image), instruction)
+        objs = []
+        if isinstance(out, dict):
+            for o in (out.get("objects") or []):
+                try:
+                    objs.append({
+                        "x_min": _clamp01(o["x_min"]), "y_min": _clamp01(o["y_min"]),
+                        "x_max": _clamp01(o["x_max"]), "y_max": _clamp01(o["y_max"]),
+                    })
+                except Exception:
+                    continue
+        return {"objects": objs}
+
+    def point(self, image, instruction: str):
+        out = self.model.point(_to_pil(image), instruction)
+        pts = out.get("points") if isinstance(out, dict) else None
+        if isinstance(pts, dict):
+            pts = [pts]
+        res = []
+        for p in (pts or []):
+            try:
+                res.append({"x": _clamp01(p["x"]), "y": _clamp01(p["y"])})
+            except Exception:
+                continue
+        return {"points": res}
+
+
 # ─── Qwen VL server (OpenAI-compatible /v1) ───────────────────────────────────
 
 class QwenVLServer(VLMClient):
@@ -368,6 +450,10 @@ def create_vlm(kind: Optional[str], base_url: Optional[str] = None,
     hint = (mode_hint or "").strip().lower() if mode_hint else ""
     if "moondream" in k or k in ("md2","md3"):
         if url.startswith("http"): return MoondreamREST(url)
+        # "photon" selects Moondream's own runtime, roughly two orders of magnitude
+        # faster than the transformers path. See MoondreamPhoton.
+        if hint == "photon" or url.lower() == "photon":
+            return MoondreamPhoton(model_id or None)
         if hint == "local" or url.lower() == "local": return MoondreamLocal(model_id or "vikhyatk/moondream2")
         return MoondreamServer(api_key=api_key)
     if "qwen" in k:
@@ -385,8 +471,9 @@ def create_vlm_from_env() -> VLMClient:
     # as a last-resort fallback (only meaningful for the Qwen-via-vLLM path).
     key  = os.getenv("VLM_API_KEY") or os.getenv("MOONDREAM_API_KEY") or os.getenv("OPENAI_API_KEY") or None
     hint = None
-    if url and url.lower() in ("local","api_key","api-key","apikey","api key"):
-        hint = "local" if "local" in url.lower() else "api_key"
+    if url and url.lower() in ("local","photon","api_key","api-key","apikey","api key"):
+        low = url.lower()
+        hint = "photon" if low == "photon" else ("local" if "local" in low else "api_key")
         url = ""
     return create_vlm(kind, base_url=url, model_id=mid, mode_hint=hint, api_key=key)
 
@@ -397,7 +484,8 @@ def create_vlm_from_config(cfg: Dict[str, Any]) -> VLMClient:
     # Same Moondream-first precedence as create_vlm_from_env.
     key  = cfg.get("vlm_api_key") or os.getenv("VLM_API_KEY") or os.getenv("MOONDREAM_API_KEY") or os.getenv("OPENAI_API_KEY") or None
     hint = None
-    if url and url.lower() in ("local","api_key","api-key","apikey","api key"):
-        hint = "local" if "local" in url.lower() else "api_key"
+    if url and url.lower() in ("local","photon","api_key","api-key","apikey","api key"):
+        low = url.lower()
+        hint = "photon" if low == "photon" else ("local" if "local" in low else "api_key")
         url = ""
     return create_vlm(kind, base_url=url, model_id=mid, mode_hint=hint, api_key=key)
