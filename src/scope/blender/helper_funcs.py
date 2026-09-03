@@ -419,7 +419,18 @@ def _stitch_panorama(st):
             im = im.resize((fw, fh))
         img = np.asarray(im, dtype=np.float64)
 
-        d_az = (az - i * step + math.pi) % (2.0 * math.pi) - math.pi
+        # i * step - az, not az - i * step. The sweep turns the camera by rz0 - i * step, so
+        # the output azimuth runs against the frame index rather than with it. Getting this
+        # backwards mirrors the whole panorama, and nothing about the result looks wrong: the
+        # buildings still join, the seam metric is unchanged, the coverage is unchanged. Only
+        # text gives it away, and most frames contain none.
+        #
+        # It survived a synthetic round trip that scored 0.67 mean absolute error out of 255,
+        # because the frame generator in that test shared this convention. A reference built
+        # by the code under test cannot detect a mirror. The check that settled it was nine
+        # real captures of a scene with a shop sign in it, stitched under each candidate, read
+        # by eye: only this one spells "The Book Nook" forwards.
+        d_az = (i * step - az + math.pi) % (2.0 * math.pi) - math.pi
         # A generous column range. Which pixels are really visible is decided below by the
         # projection itself, not by this bound.
         cols = np.nonzero(np.abs(d_az) < half * 1.30)[0]
