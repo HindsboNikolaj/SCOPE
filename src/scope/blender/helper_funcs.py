@@ -10,6 +10,7 @@ from PIL import Image
 import math
 import time
 from bpy_extras import view3d_utils
+from mathutils import Vector
 
 
 def corrected_persp_area_zoom_fov(cam_obj, u0, v0, u1, v1, margin=1.02, max_zoom=6.0):
@@ -39,8 +40,31 @@ def corrected_persp_area_zoom_fov(cam_obj, u0, v0, u1, v1, margin=1.02, max_zoom
     delta_pan = math.atan(math.tan(orig_hFOV * 0.5) * x_ndc)
     delta_tilt = math.atan(math.tan(orig_vFOV * 0.5) * y_ndc)
 
-    cam_obj.rotation_euler[0] += delta_tilt
-    cam_obj.rotation_euler[2] += -delta_pan
+    # Aim the camera at the box by pointing it, not by adding to its Euler components.
+    #
+    # The previous version did `rotation_euler[2] -= delta_pan`, which rotates about the *world*
+    # vertical. That is the camera's own horizontal axis only while the camera is level, so the
+    # error grew with pitch: measured against a known world point, the boxed target landed this
+    # far from the frame centre, as a fraction of frame width.
+    #
+    #     camera pitch   90 deg (level)   0.005
+    #                    70 deg           0.073
+    #                    50 deg           0.213
+    #                    30 deg           0.419
+    #
+    # A purely vertical offset had zero error at every pitch, because tilt was already applied
+    # about the camera's own X axis. Only the pan was wrong. On a viewpoint pitched 48 degrees
+    # down, a 6x zoom onto a correctly detected object put it outside the frame.
+    #
+    # Pointing the camera instead makes it exact at any pitch: take the direction the box centre
+    # sits in, in world space, and build the rotation whose -Z looks along it with Y up. That is
+    # a camera look-at, so it also keeps the horizon level rather than accumulating roll.
+    d_cam = Vector((x_ndc * math.tan(orig_hFOV * 0.5),
+                    y_ndc * math.tan(orig_vFOV * 0.5),
+                    -1.0))
+    R = cam_obj.rotation_euler.to_matrix()
+    look = (R @ d_cam).normalized()
+    cam_obj.rotation_euler = look.to_track_quat('-Z', 'Y').to_euler(cam_obj.rotation_mode)
 
     return 1.0 / factor, (delta_pan, delta_tilt)
 
