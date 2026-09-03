@@ -90,15 +90,21 @@ mitigation does not work.
 
 Captured at deliberately absurd sizes to find out where the cost lives:
 
-| capture size | pixels | seconds | seconds per megapixel |
-|---|---:|---:|---:|
-| 184x149 | 0.027 Mpx | 1459 | 53,000 (includes shader compilation) |
-| 346x280 | 0.097 Mpx | 729 | 7,500 |
+| capture size | pixels | seconds |
+|---|---:|---:|
+| 184x149 | 0.027 Mpx | 1459 (first frame, includes shader compilation) |
+| 346x280 | 0.097 Mpx | 729 |
+| 484x392 | 0.190 Mpx | 818 |
+| 692x560 | 0.388 Mpx | 658 |
 
-A capture of twenty-seven thousand pixels took twenty-four minutes. Whatever that is, it is not
-pixel-bound, and the second row shows the cost stays near 7,500 seconds per megapixel once
-compilation is done, against roughly 5 for the other three scenes. Dropping the resolution
-recovers almost nothing.
+A capture of twenty-seven thousand pixels took twenty-four minutes. After that, fourteen times
+the pixel count took *less* time, not more. There is no pixel dependence here at all: the cost
+is a flat 660 to 820 seconds **per frame** whatever the resolution, and the spread across those
+three rows is machine contention rather than image size.
+
+So lowering the resolution recovers nothing, which is worth stating plainly because it is the
+first thing anyone will try. Expressing the cost per megapixel, which an earlier version of this
+table did, implies a scaling that does not exist.
 
 The cause is per-material shader compilation under software OpenGL. On a machine with a real GL
 driver it is unremarkable. Here, Material Preview is not a practical mode for it: a ten frame
