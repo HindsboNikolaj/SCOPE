@@ -1,24 +1,21 @@
 ---
-name: scope-setup
-description: Use when getting SCOPE capturing correctly on a new machine, or when captures look wrong (black, grey, magenta, blank, low detail). Covers install, the wait after opening a scene, display vs headless, and verifying against the shipped reference pictures.
+name: scope-verify-capture
+description: Use after installing SCOPE, or whenever captures look wrong (black, grey, magenta, blank, low detail, or the wrong place). Verifies the viewport is producing correct pictures before a run is trusted. For installation itself, follow AGENT_INSTRUCTIONS.md first.
 ---
 
-# Getting SCOPE to capture correctly
+# Is this setup producing correct pictures?
 
-SCOPE grades models on screenshots of a Blender viewport. Almost everything that goes wrong
-here goes wrong *silently*: the capture succeeds, the model answers, and the answer is about a
-picture nobody looked at. So the order of work is: install, then **look at a picture**, then
-run anything long.
+**Install first.** `AGENT_INSTRUCTIONS.md` at the repo root is the end-to-end setup: models,
+environment, scenes, presets, and a five-task smoke run. Follow it, then come back here.
 
-## 1. Install and fetch the scenes
+This covers the part it does not: SCOPE grades models on screenshots of a Blender viewport, and
+almost everything that goes wrong with those goes wrong *silently*. The capture succeeds, the
+model answers, and the answer is about a picture nobody looked at. A run that passes
+`run_eval_pipeline.sh` can still be measuring the wrong image.
 
-```bash
-pip install -r requirements.txt
-bash scripts/03_download_scenes.sh          # scenes are not in git
-blender --background --python scripts/04_install_presets.py
-```
+So before trusting a long run, look at one picture.
 
-## 2. Decide how you are capturing
+## 1. Decide how you are capturing
 
 | you have | use |
 |---|---|
@@ -30,7 +27,7 @@ all. `docs/HEADLESS.md` explains the virtual-display setup. **It is not the reco
 configuration**: without a GL driver the viewport falls back to software rendering, and one
 scene becomes hundreds of times slower. Prefer a machine with a real display.
 
-## 3. Look at a picture before trusting anything
+## 2. Look at a picture before trusting anything
 
 ```bash
 blender <scene.blend> --python scripts/06_verify_setup.py -- verify_out
@@ -49,7 +46,7 @@ numbers about the wrong image.
 | blank or half-drawn | captured too soon after opening the file. See below. |
 | the wrong place | the preset did not apply. Re-run `04_install_presets.py`. |
 
-## 4. Give a scene time to load
+## 3. Give a scene time to load
 
 `open_mainfile` returns before the scene can be drawn. Textures stream in afterwards. A capture
 taken immediately is a blank rectangle, and at four seconds it still looks plausible while a
@@ -61,12 +58,20 @@ a second and does not need raising. `docs/COLD_START.md` has the measured curve.
 
 A resumed run is a cold start too, because it reopens the scene.
 
-## 5. Missing textures are expected
+## 4. Missing textures are expected
 
 Some are absent and unrecoverable, and `benchmark/expected_assets.json` records exactly which.
 The verifier compares against it and distinguishes "as expected" from "worse than expected".
 Absent textures do not affect a run: captures use studio lighting, so a missing sky is never
 drawn.
+
+## Not covered here
+
+- **Installing anything** — `AGENT_INSTRUCTIONS.md`.
+- **The agent's system prompt and the judge rubrics** — `prompts/`. Those are the benchmark's
+  measured apparatus, not configuration: changing one changes what the numbers mean. Treat them
+  as versioned experiment inputs and never edit them to make a run pass.
+- **Adding a scene, or authoring rows** — `docs/creating_scenes.md`.
 
 ## References
 

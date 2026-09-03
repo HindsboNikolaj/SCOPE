@@ -21,6 +21,7 @@ from ..blender.helper_funcs import (
     start_panorama_capture,
     capture_panorama_step,
     screenshot_camera_view,
+    fast_opengl_screenshot,
     blender_zoom,
     list_presets,
     apply_preset,
@@ -97,9 +98,53 @@ except OSError as e:
 #   viewport  screenshot_camera_view -> screen.screenshot_area. Photographs the window as
 
 
+# Which capture to use. There are two, and they do not work in the same places.
+#
+#   viewport  screenshot_camera_view -> screen.screenshot_area. Photographs the window as
+#             drawn. This is the default and it is what produced the published results.
+#             On a machine with no physical display it returns a black image, because
+#             nothing paints the window and reading the buffer back yields nothing.
+#
+#   opengl    fast_opengl_screenshot -> render.opengl. Renders offscreen, so it does not
+#             need a painted window. This is the one that works headless, for example in
+#             a container with Xvfb and software OpenGL.
+#
+# The default stays "viewport", so nothing changes for anyone running with a display.
+# docs/HEADLESS.md covers when to switch and what it costs.
+_CAPTURE_BACKEND = os.environ.get("SCOPE_CAPTURE", "viewport").strip().lower()
+
+
+_BLANK_WARNED = False
+
+
 def _capture_frame(prefix: str = "raw") -> str:
+    global _BLANK_WARNED
     fp = SCREENSHOTS_DIR / f"{_now_ts()}_{prefix}.png"
-    screenshot_camera_view(str(fp))
+    if _CAPTURE_BACKEND in ("opengl", "offscreen", "headless"):
+        fast_opengl_screenshot(str(fp))
+    else:
+        screenshot_camera_view(str(fp))
+
+    # Say something the first time a capture comes back with no variation at all.
+    #
+    # This is the quietest failure in the whole pipeline. screenshot_area returns a solid black
+    # image on a virtual display without raising, and everything downstream carries on: the
+    # detector is shown black, reports the whole frame as its box, and zoom_bounding used to
+    # answer "Zoomed to target". A whole run can complete and be graded on black rectangles.
+    #
+    # A warning rather than an exception, because a legitimately dark frame is possible and
+    # losing a long run to a heuristic would be worse than the heuristic missing something.
+    if not _BLANK_WARNED:
+        try:
+            lo, hi = Image.open(fp).convert("L").getextrema()
+            if hi - lo == 0:
+                _BLANK_WARNED = True
+                print(f"[scope] WARNING: capture {fp.name} is a single flat colour "
+                      f"(value {lo}). Every result from this run will be about a blank image. "
+                      f"With no real display set SCOPE_CAPTURE=opengl; see docs/HEADLESS.md.",
+                      flush=True)
+        except Exception:
+            pass
     return str(fp)
 
 _HOME = None
