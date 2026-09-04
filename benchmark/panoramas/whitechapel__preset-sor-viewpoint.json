@@ -1,0 +1,25 @@
+{
+  "scene": "whitechapel",
+  "blend": "benchmark/scenes/whitechapel/whitechapel.blend",
+  "blend_mtime": null,
+  "pose": {
+    "preset": "sor-viewpoint"
+  },
+  "pose_exact": {
+    "location": [
+      14.21428,
+      -80.35448,
+      8.24318
+    ],
+    "rotation_deg": [
+      73.48069,
+      0.51222,
+      386.94504
+    ],
+    "lens_mm": 28.9
+  },
+  "shading": "MATERIAL",
+  "source": "shipped with the repository, pose from benchmark/presets/presets_by_scene.json (whitechapel/sor-viewpoint)",
+  "sha256": "3d05382a76d6129c648ba1d645f1c56dffb5189205e99781eb79de2b3e7bee09",
+  "written_by_pid": null
+}

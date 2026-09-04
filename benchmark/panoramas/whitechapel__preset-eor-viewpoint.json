@@ -1,0 +1,25 @@
+{
+  "scene": "whitechapel",
+  "blend": "benchmark/scenes/whitechapel/whitechapel.blend",
+  "blend_mtime": null,
+  "pose": {
+    "preset": "eor-viewpoint"
+  },
+  "pose_exact": {
+    "location": [
+      14.21428,
+      -0.26449,
+      8.24318
+    ],
+    "rotation_deg": [
+      74.68075,
+      0.52288,
+      326.94467
+    ],
+    "lens_mm": 28.9
+  },
+  "shading": "MATERIAL",
+  "source": "shipped with the repository, pose from benchmark/presets/presets_by_scene.json (whitechapel/eor-viewpoint)",
+  "sha256": "43a836128a0d1993edae0a03cfe57dcc3dda83165aa7c6dfdc3c453d6b1cb9bc",
+  "written_by_pid": null
+}

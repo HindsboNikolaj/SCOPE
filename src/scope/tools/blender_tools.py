@@ -226,8 +226,106 @@ def _find_stitched_panorama(pano_root_dir: str) -> Optional[str]:
     return None
 
 def _iter_full_panorama():
+    """Produce the full 360 view, from cache where possible and by sweeping when not.
+
+    Read this before you spend an afternoon tuning a sweep.
+
+    A stitched panorama in Blender is fussy in ways that are not obvious from the code. The
+    result depends on the overlap between frames, on the step angle that follows from it, on
+    the camera's pitch, and on the capture resolution, and those interact. Too little overlap
+    and the joins show; too much and you pay for frames that add nothing, because the seam
+    quality stops improving somewhere around forty percent while the frame count keeps rising.
+    Sweeping a camera that is pitched traces a cone rather than a circle, which is right for a
+    street-level view and wrong for one looking down at a courtyard. And a panorama is only as
+    sharp as the frames behind it, so a low resolution capture stitches into something blurry
+    no matter how good the geometry is. See docs/FULL_VIEW.md for the measurements behind all
+    of that.
+
+    The consequence for anyone using this: **do not tune a panorama per question.** A sweep is
+    nine or ten captures and costs 60 to 190 seconds under software OpenGL, and hours on a
+    scene with expensive materials. The scenes do not change between questions, so the same
+    sweep is being recomputed for an answer that cannot differ.
+
+    Capture it once per viewpoint instead, look at the result, and keep it:
+
+        SCOPE_PANO_CACHE=benchmark/panoramas SCOPE_PANO_CACHE_MODE=write \
+          blender <scene>.blend --python scripts/precapture_panoramas.py
+
+    If you are adding a new world, that is an hour of setup and it is worth it. One or two good
+    panoramas per viewpoint, checked by eye, beat a hundred mediocre ones generated on demand.
+    docs/PANORAMA_CACHE.md covers how entries are validated; docs/VISUAL_SMOKE_TEST.md shows
+    what the shipped ones look like.
+    """
     ts = _now_ts()
     base_dir = PANOS_DIR
+
+    # Asking for the full view must leave the camera exactly where it was.
+    #
+    # It is a question about the surroundings, not an instruction to move, and a question that
+    # asked for the full view half way through would otherwise find the camera somewhere else
+    # afterwards. On a cache hit this is free, because nothing is touched. On a sweep the
+    # camera is turned all the way round, and the restore has to survive an exception part way
+    # through, so it is a finally rather than a line at the end.
+    _cam = bpy.context.scene.camera
+    _pose_before = (tuple(_cam.location), tuple(_cam.rotation_euler), _cam.data.lens) if _cam else None
+
+    try:
+        # The path is the generator's return value, not something it yields, so the
+        # `yield from` has to be returned or the caller gets None for the panorama.
+        return (yield from _iter_full_panorama_inner(ts, base_dir))
+    finally:
+        if _pose_before is not None:
+            loc, rot, lens = _pose_before
+            moved = (tuple(_cam.location) != loc or tuple(_cam.rotation_euler) != rot
+                     or _cam.data.lens != lens)
+            if moved:
+                _cam.location = loc
+                _cam.rotation_euler = rot
+                _cam.data.lens = lens
+                bpy.context.view_layer.update()
+
+
+def _iter_full_panorama_inner(ts, base_dir):
+
+    # A panorama for this scene and this camera pose may already exist. Nothing in these scenes
+    # moves between benchmark rows, so a sweep from a given preset produces the same picture
+    # every time, and 93 of the 541 rows ask for one from ten fixed positions. Sweeping is 60
+    # to 190 seconds on most scenes and hours on city-street, so reusing a stored sweep is the
+    # difference between a full-view question costing three minutes and costing nothing.
+    #
+    # This is a generator whose return value is the panorama path, so a hit returns without
+    # yielding any frame steps. Callers that render progress will simply see none.
+    try:
+        from scope.blender import panorama_cache
+        hit = panorama_cache.lookup(root=OUTPUT_DIR)
+    except Exception:
+        hit = None
+    if hit:
+        yield {'panorama': {'cached': True, 'path': hit}}
+        return hit
+
+    # No stored panorama for this viewpoint, so one is about to be built at full cost. Say so
+    # rather than doing it silently: on most scenes this is a minute or three, and on a scene
+    # with expensive materials it can be hours, which is a surprising thing to discover from a
+    # progress bar. A miss is legitimate at a viewpoint nobody has pre-captured, and it is also
+    # what a stale or mismatched cache looks like, so the message names what to run.
+    try:
+        from scope.blender import panorama_cache as _pc
+        _preset = None
+        try:
+            from scope.blender import preset_helpers as _ph
+            _preset = _ph.last_applied_preset()
+        except Exception:
+            pass
+        if _pc.MODE != "off":
+            print(f"[scope] No stored panorama for this viewpoint"
+                  f"{f' (preset {_preset!r})' if _preset else ''}; sweeping now. "
+                  f"This is 9 or 10 captures and can take minutes. "
+                  f"Pre-capture with scripts/precapture_panoramas.py to avoid paying for it "
+                  f"again. Cache: {_pc.cache_dir(OUTPUT_DIR)}", flush=True)
+    except Exception:
+        pass
+
     fake_target = str(base_dir / f"{ts}_panorama.png")
     start_panorama_capture(fake_target, overlap_ratio=0.1)
     yield {'panorama': {'start': True}}
@@ -247,6 +345,14 @@ def _iter_full_panorama():
         if time.time() > deadline:
             raise FileNotFoundError(f"Timed out waiting for stitched panorama in {run_dir}")
         time.sleep(0.01)
+
+    # Store it, so the next question from this viewpoint does not pay for the sweep again.
+    try:
+        from scope.blender import panorama_cache
+        panorama_cache.store(stitched, root=OUTPUT_DIR,
+                             extra={"frames": None, "captured_ts": ts})
+    except Exception:
+        pass
     return stitched
 
 def _capture_for_view(view_type: str) -> str:

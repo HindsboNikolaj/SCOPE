@@ -7,6 +7,7 @@ Provides fast camera screenshots, FOV zoom, and panorama capture.
 
 import bpy
 from PIL import Image
+import numpy as np
 import math
 import time
 from bpy_extras import view3d_utils
@@ -313,24 +314,12 @@ def fast_opengl_screenshot(out_path: str, scale_crop: bool = True):
 
 # ─── Panorama (stub - implement based on your scene setup) ────────────────────
 
-_PANO_STATE = {}
 
-def start_panorama_capture(output_path: str, overlap_ratio: float = 0.1):
-    """Initialize a 360-degree panorama sweep."""
-    _PANO_STATE.clear()
-    _PANO_STATE["output_path"] = output_path
-    _PANO_STATE["overlap"] = overlap_ratio
-    _PANO_STATE["started"] = True
-
-def capture_panorama_step():
-    """Capture the next frame in the panorama sweep. Returns frame path or None when done."""
-    if not _PANO_STATE.get("started"):
-        return None
-    _PANO_STATE["started"] = False
-    return None
-
-
-# Re-export for convenience
+# Re-export, so that scope.tools.blender_tools can import these from one place.
+#
+# Deleted twice now, both times as collateral from editing a nearby function, and both times it
+# broke `import scope.tools.blender_tools` outright rather than just the presets. Anything that
+# rewrites a span of this file should check these three names survive.
 list_presets = None
 apply_preset = None
 create_preset = None
@@ -338,5 +327,311 @@ create_preset = None
 try:
     from ..blender.preset_helpers import list_presets, apply_preset, create_preset
 except ImportError:
-    # When running inside Blender, preset_helpers may be imported differently
+    # When running inside Blender, preset_helpers may be imported differently.
     pass
+
+_PANO_STATE = {}
+
+def _pano_run_dir(output_path: str) -> str:
+    """Derive the directory the caller will look in from the path it passed in.
+
+    The caller passes <dir>/<ts>_panorama.png and then looks in <dir>/_panorama_<ts>.
+    Deriving it here keeps the two in agreement without a second argument.
+    """
+    import os
+    d = os.path.dirname(output_path) or "."
+    base = os.path.basename(output_path)
+    ts = base.split("_panorama")[0] if "_panorama" in base else os.path.splitext(base)[0]
+    return os.path.join(d, f"_panorama_{ts}")
+
+
+def start_panorama_capture(output_path: str, overlap_ratio: float = 0.1):
+    """Initialize a 360-degree panorama sweep.
+
+    overlap_ratio is the fraction of each frame that repeats in the next one. Some
+    overlap is required: it is what the blend uses to hide the seam. Too little
+    leaves a visible edge, too much wastes frames. The step is then rounded so the
+    sweep closes on itself exactly, because a sweep that does not close leaves one
+    seam that no amount of blending can hide.
+
+    Read this before tuning it.
+
+    A benchmark run should not be calling this. The full views the benchmark answers
+    from are captured once and committed under benchmark/panoramas, and a run reads
+    the PNG; see scope.blender.panorama_cache. This function is for authoring, when
+    somebody adds a viewpoint or a world and needs a full view that does not exist
+    yet. Treating it as a per-question operation is what made a question cost two
+    minutes instead of a frame.
+
+    Four things decide whether the result is any good, and only the first is obvious.
+
+    Overlap. Around 0.4 works across every viewpoint here. Below about 0.2 the blend
+    has too little to work with and the joins show; above about 0.6 you are paying
+    for frames that add nothing. It is worth trying two or three values on a new
+    viewpoint rather than assuming, because the right one depends on how close the
+    nearest geometry is: a narrow street needs more overlap than an open plaza.
+
+    Direction. The output azimuth runs against the sweep index, not with it. The
+    camera turns by rz0 - i*step, so a frame captured at step i belongs at
+    i*step - az in the output, and composing those two the other way round produces
+    a panorama that is correct in every local detail and mirrored as a whole. That
+    failure is genuinely hard to see: every building looks right, and only text or a
+    known asymmetry gives it away. Check a sign.
+
+    Pitch. A 360 sweep turns about the world vertical. If the camera is pitched, that
+    traces a cone rather than a circle, and a stitch that assumes a level camera will
+    bend the horizon. Pass the camera's Euler through as orig_rotation so each frame
+    carries its own rotation.
+
+    Whether a panorama is the right answer at all. For a camera above the rooftops
+    looking down, a horizontal band through the view is mostly empty: the sweep
+    returns a long strip of nothing with the scene squeezed into a fraction of it. A
+    single wide frame, or two rows at different pitches, tells a model more. The
+    full view is whatever shows the most of the scene from that position, and that is
+    a per-viewpoint decision. docs/FULL_VIEW.md records which viewpoints chose what.
+    """
+    import os, math
+
+    cam_obj = bpy.context.scene.camera
+    if cam_obj is None:
+        raise RuntimeError("No active scene camera set; cannot capture a panorama.")
+
+    overlap_ratio = min(max(float(overlap_ratio), 0.0), 0.9)
+    h_fov = float(cam_obj.data.angle_x)
+
+    # Round the step down so an integer number of frames covers exactly 360 degrees.
+    # The resulting overlap is >= the requested one, never less.
+    n_frames = int(math.ceil((2.0 * math.pi) / (h_fov * (1.0 - overlap_ratio))))
+    step = (2.0 * math.pi) / n_frames
+
+    run_dir = _pano_run_dir(output_path)
+    os.makedirs(run_dir, exist_ok=True)
+
+    _PANO_STATE.clear()
+    _PANO_STATE.update({
+        "started": True,
+        "output_path": output_path,
+        "run_dir": run_dir,
+        "overlap": overlap_ratio,
+        "cam": cam_obj,
+        "orig_rotation": tuple(cam_obj.rotation_euler),
+        "orig_rotation_mode": cam_obj.rotation_mode,
+        "h_fov": h_fov,
+        "v_fov": float(cam_obj.data.angle_y),
+        "step": step,
+        "n_frames": n_frames,
+        "index": 0,
+        "frames": [],
+        "settle": float(os.environ.get("SCOPE_PANO_SETTLE", _PANO_SETTLE_DEFAULT)),
+    })
+
+
+def capture_panorama_step():
+    """Capture the next frame in the panorama sweep.
+
+    Returns the path of the frame just written, or None when the sweep is finished.
+    The call that returns None has already written panorama_stitched.png and has
+    already put the camera back where it was.
+    """
+    import os
+
+    st = _PANO_STATE
+    if not st.get("started"):
+        return None
+
+    i = st["index"]
+    if i >= st["n_frames"]:
+        try:
+            _stitch_panorama(st)
+        finally:
+            _restore_camera(st)
+            st["started"] = False
+        return None
+
+    cam_obj = st["cam"]
+    cam_obj.rotation_mode = 'XYZ'
+    rx, ry, _rz = st["orig_rotation"]
+    cam_obj.rotation_euler = (rx, ry, st["orig_rotation"][2] + i * st["step"])
+
+    # Push the new transform through the dependency graph before drawing. Without
+    # this the viewport can redraw from the previous transform and the frame is a
+    # duplicate of the last one, which the blend then treats as a real observation.
+    _force_scene_update()
+
+    frame_path = os.path.join(st["run_dir"], f"frame_{i:03d}.png")
+    screenshot_camera_view(frame_path, wait=st["settle"])
+
+    st["frames"].append(frame_path)
+    st["index"] = i + 1
+    return frame_path
+
+
+def _restore_camera(st):
+    cam_obj = st.get("cam")
+    if cam_obj is None:
+        return
+    cam_obj.rotation_mode = st.get("orig_rotation_mode", 'XYZ')
+    cam_obj.rotation_euler = st["orig_rotation"]
+    _force_scene_update()
+
+
+def _force_scene_update():
+    """Make the pending transform visible to whatever draws next.
+
+    view_layer.update() evaluates the dependency graph. tag_redraw marks every 3D
+    viewport dirty. Neither one blocks until the draw has finished, which is why the
+    caller still waits afterwards.
+    """
+    try:
+        bpy.context.view_layer.update()
+    except Exception:
+        pass
+    try:
+        for area in bpy.context.window.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+    except Exception:
+        pass
+
+
+def _rot_z(a):
+    c, s = math.cos(a), math.sin(a)
+    return np.array([[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]])
+
+
+def _euler_xyz_matrix(rx, ry, rz):
+    """Blender's default XYZ Euler order, as a world-from-camera matrix.
+
+    Blender applies X, then Y, then Z, so the composed matrix is Rz . Ry . Rx.
+    """
+    cx, sx = math.cos(rx), math.sin(rx)
+    cy, sy = math.cos(ry), math.sin(ry)
+    cz, sz = math.cos(rz), math.sin(rz)
+    Rx = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
+    Ry = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
+    Rz = np.array([[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]])
+    return Rz @ Ry @ Rx
+
+
+def _stitch_panorama(st):
+    """Reproject and blend a sweep. `st` is the state dict start_panorama_capture builds.
+
+    Required keys: frames, h_fov, v_fov, step, run_dir.
+    Optional: orig_rotation, the camera's Euler at the start of the sweep. Without it the
+    camera is assumed level, which reproduces the old behaviour rather than failing.
+    """
+    # Imported here rather than at module scope, because helper_funcs.py does not import
+    # os or numpy at the top and this function must drop into it without changing that.
+    import os
+    import math
+    import numpy as np
+    from PIL import Image
+
+    frames = st["frames"]
+    if not frames:
+        raise RuntimeError("panorama: no frames were captured")
+
+    h_fov = float(st["h_fov"])
+    v_fov = float(st["v_fov"])
+    step = float(st["step"])
+
+    first = Image.open(frames[0]).convert("RGB")
+    fw, fh = first.size
+
+    rot = st.get("orig_rotation")
+    R0 = _euler_xyz_matrix(*rot) if rot else np.eye(3)
+    R0T = R0.T
+
+    # Vertical span of the output. A frame reaches less elevation away from its centre, so
+    # sizing the cylinder to the full vertical field of view leaves unfilled corners at the
+    # midpoint between two frames. Size it to what every azimuth can supply, which fills the
+    # rectangle completely. The cost is a small crop, which is preferable to a hole: a hole
+    # is indistinguishable from dark scenery to whatever reads the panorama.
+    v_out = 2.0 * math.atan(math.tan(v_fov * 0.5) * math.cos(step * 0.5))
+
+    pano_w = int(round(fw * (2.0 * math.pi) / h_fov))
+    pano_h = fh
+
+    acc = np.zeros((pano_h, pano_w, 3), dtype=np.float64)
+    wsum = np.zeros((pano_h, pano_w, 1), dtype=np.float64)
+
+    az = (np.arange(pano_w) + 0.5) * (2.0 * math.pi / pano_w)
+    el = (0.5 - (np.arange(pano_h) + 0.5) / pano_h) * v_out
+    tan_h = math.tan(h_fov * 0.5)
+    tan_v = math.tan(v_fov * 0.5)
+
+    # Directions in camera space, one per output row, before the sweep rotation.
+    v_e = np.stack([np.zeros_like(el), np.sin(el), -np.cos(el)], axis=1)   # (H, 3)
+    base = v_e @ R0.T                                                      # R0 . v(e)
+
+    half = h_fov * 0.5
+    for i, path in enumerate(frames):
+        im = Image.open(path).convert("RGB")
+        if im.size != (fw, fh):
+            # The frustum crop can land a pixel differently between frames. Normalise
+            # rather than fail; one pixel is not worth losing a panorama over.
+            im = im.resize((fw, fh))
+        img = np.asarray(im, dtype=np.float64)
+
+        # i * step - az, not az - i * step. The sweep turns the camera by rz0 - i * step, so
+        # the output azimuth runs against the frame index rather than with it. Getting this
+        # backwards mirrors the whole panorama, and nothing about the result looks wrong: the
+        # buildings still join, the seam metric is unchanged, the coverage is unchanged. Only
+        # text gives it away, and most frames contain none.
+        #
+        # It survived a synthetic round trip that scored 0.67 mean absolute error out of 255,
+        # because the frame generator in that test shared this convention. A reference built
+        # by the code under test cannot detect a mirror. The check that settled it was nine
+        # real captures of a scene with a shop sign in it, stitched under each candidate, read
+        # by eye: only this one spells "The Book Nook" forwards.
+        d_az = (i * step - az + math.pi) % (2.0 * math.pi) - math.pi
+        # A generous column range. Which pixels are really visible is decided below by the
+        # projection itself, not by this bound.
+        cols = np.nonzero(np.abs(d_az) < half * 1.30)[0]
+        if cols.size == 0:
+            continue
+        dd = d_az[cols]                                                    # (C,)
+
+        # d_cam = R0^T . Rz(dd) . R0 . v(e), for every (row, column) pair.
+        Rz = np.zeros((dd.size, 3, 3))
+        c, s = np.cos(dd), np.sin(dd)
+        Rz[:, 0, 0] = c; Rz[:, 0, 1] = -s
+        Rz[:, 1, 0] = s; Rz[:, 1, 1] = c
+        Rz[:, 2, 2] = 1.0
+        M = np.einsum('ij,cjk->cik', R0T, Rz)          # (C,3,3)
+        d_cam = np.einsum('cij,rj->rci', M, base)      # (H,C,3)
+
+        x, y, z = d_cam[..., 0], d_cam[..., 1], d_cam[..., 2]
+        in_front = z < -1e-9
+        zz = np.where(in_front, -z, 1.0)
+        u = 0.5 + (x / zz) / (2.0 * tan_h)
+        w = 0.5 - (y / zz) / (2.0 * tan_v)
+
+        px = np.rint(u * fw).astype(np.int64)
+        py = np.rint(w * fh).astype(np.int64)
+        valid = in_front & (px >= 0) & (px < fw) & (py >= 0) & (py < fh)
+        if not valid.any():
+            continue
+        px = np.clip(px, 0, fw - 1)
+        py = np.clip(py, 0, fh - 1)
+
+        # Feather across the frame, so no single column carries a join. Weight is measured
+        # from the projected position rather than from the angle, which keeps it correct
+        # when the tilt makes the two differ.
+        wgt = np.cos(np.clip((u - 0.5) * math.pi, -math.pi / 2, math.pi / 2))
+        wgt = np.where(valid, np.clip(wgt, 1e-6, None), 0.0)
+
+        patch = img[py, px]
+        acc[:, cols, :] += patch * wgt[..., None]
+        wsum[:, cols, :] += wgt[..., None]
+
+    covered = wsum[..., 0] > 1e-6
+    out = np.zeros_like(acc)
+    out[covered] = acc[covered] / wsum[covered]
+    pano = Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
+
+    dest = os.path.join(st["run_dir"], "panorama_stitched.png")
+    pano.save(dest)
+    st["stitched"] = dest
+    st["coverage"] = float(covered.mean())
+    return dest
