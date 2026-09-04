@@ -1,6 +1,6 @@
 {
   "scene": "whitechapel",
-  "blend": "/disk2/nikolaj/SCOPE-repo/benchmark/scenes/whitechapel/whitechapel.blend",
+  "blend": "benchmark/scenes/whitechapel/whitechapel.blend",
   "blend_mtime": null,
   "pose": {
     "preset": "sor-viewpoint"

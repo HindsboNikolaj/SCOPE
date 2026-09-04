@@ -1,6 +1,6 @@
 {
   "scene": "book-nook",
-  "blend": "/disk2/nikolaj/SCOPE-repo/benchmark/scenes/book-nook/book-nook.blend",
+  "blend": "benchmark/scenes/book-nook/book-nook.blend",
   "blend_mtime": null,
   "pose": {
     "preset": "store-front"

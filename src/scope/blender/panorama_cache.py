@@ -98,13 +98,45 @@ def _shading():
     return "unknown"
 
 
+def shipped_dir():
+    """The panoramas committed to the repository.
+
+    A full view costs a sweep of nine or ten captures plus a stitch. Doing that at question
+    time, once per question, is the wrong shape: the answer does not depend on when the sweep
+    ran, only on where the camera is, and the camera is at a preset. So the sweeps are done
+    once by whoever adds a viewpoint, and the results are committed. A benchmark run reads a
+    PNG.
+
+    The sweep code stays, and stays supported, because it is what you run when you add a
+    viewpoint or a world. It is authoring, not serving.
+    """
+    return Path(__file__).resolve().parents[3] / "benchmark" / "panoramas"
+
+
+def search_dirs(root=None):
+    """Where to look for a panorama, in order.
+
+    The writable cache first, so that a sweep taken during this run supersedes a shipped one
+    for the rest of it. The repository second, which is what a fresh clone reads.
+    """
+    return [cache_dir(root), shipped_dir()]
+
+
 def entry_paths(root=None):
-    """(image, metadata) paths for the current scene and camera pose."""
+    """(image, metadata) paths in the writable cache, for the current scene and camera pose."""
     cam = bpy.context.scene.camera
     key, _ = _pose_key(cam)
     d = cache_dir(root)
     base = f"{_scene_stem()}__{key}"
     return d / f"{base}.png", d / f"{base}.json"
+
+
+def _candidate_entries(root=None):
+    cam = bpy.context.scene.camera
+    key, _ = _pose_key(cam)
+    base = f"{_scene_stem()}__{key}"
+    for d in search_dirs(root):
+        yield d / f"{base}.png", d / f"{base}.json"
 
 
 POSE_TOL_LOC = 1e-4      # metres
@@ -152,7 +184,29 @@ def lookup(root=None, require_shading=True):
     """
     if MODE in ("off", "write"):
         return None
-    img, meta = entry_paths(root)
+
+    # Exact key first. This is the common case and it costs one stat.
+    for img, meta in _candidate_entries(root):
+        hit = _try_entry(img, meta, require_shading)
+        if hit:
+            return hit
+
+    # Then by position, ignoring which way the camera is currently turned.
+    #
+    # A 360 sweep from a position covers every heading from that position, so the panorama
+    # does not stop being the right one when a question pans the camera. Requiring the yaw to
+    # match as well is what made a question that turned 30 degrees and then asked for the full
+    # view pay for a fresh sweep, having a correct answer already on disk.
+    #
+    # The stitched image is anchored at the yaw it was captured from, so the match is followed
+    # by a roll that puts the current heading back in the middle of the frame. Everything else
+    # about the pose still has to agree: a different position sees different things, and a
+    # different pitch sweeps a different band of the scene.
+    return _lookup_by_position(root, require_shading)
+
+
+def _try_entry(img, meta, require_shading):
+    """Validate one candidate entry. Returns its path on a hit, None on any miss."""
     if not (img.exists() and meta.exists()):
         return None
     try:
@@ -181,12 +235,108 @@ def lookup(root=None, require_shading=True):
     # Modification time only means something on the machine that wrote the entry. A shipped
     # cache is checked out with whatever mtime git gives it, which is not the mtime the scene
     # had when the panorama was captured, so comparing them would reject every shipped entry.
-    same_machine = m.get("blend") == bpy.data.filepath
+    # Only an entry written on this machine records an absolute path; a shipped one records a
+    # repository-relative path precisely so that it does not carry somebody's home directory
+    # into a public checkout. That difference is also what tells the two apart here.
+    same_machine = os.path.isabs(m.get("blend") or "") and m.get("blend") == bpy.data.filepath
     if same_machine and m.get("blend_mtime") and os.path.exists(bpy.data.filepath):
         if abs(m["blend_mtime"] - os.path.getmtime(bpy.data.filepath)) > 1.0:
             return None
     _record(str(img), m, hit=True)
     return str(img)
+
+
+YAW_INDEX = 2            # rotation_euler[2] is the turn about the world vertical
+
+
+def _lookup_by_position(root, require_shading):
+    cam = bpy.context.scene.camera
+    now = _actual_pose()
+    if cam is None or not now:
+        return None
+    stem = _scene_stem()
+    for d in search_dirs(root):
+        if not d.exists():
+            continue
+        for meta_path in sorted(d.glob(f"{stem}__*.json")):
+            try:
+                m = json.loads(meta_path.read_text())
+            except (OSError, ValueError):
+                continue
+            img = meta_path.with_suffix(".png")
+            if not img.exists():
+                continue
+            stored = m.get("pose_exact") or {}
+            if not _same_position(stored, now):
+                continue
+            if require_shading and m.get("shading") and m["shading"] != _shading():
+                continue
+            delta = _yaw_delta(stored, now)
+            if abs(delta) < 1e-3:
+                _record(str(img), m, hit=True)
+                return str(img)
+            rolled = _rolled_copy(img, delta, root)
+            if rolled:
+                _record(rolled, dict(m, rolled_deg=round(delta, 3)), hit=True)
+                return rolled
+    return None
+
+
+def _same_position(stored, now):
+    """Same place, same pitch, same lens. Yaw is deliberately not compared."""
+    try:
+        for a, b in zip(stored["location"], now["location"]):
+            if abs(a - b) > POSE_TOL_LOC:
+                return False
+        for i, (a, b) in enumerate(zip(stored["rotation_deg"], now["rotation_deg"])):
+            if i == YAW_INDEX:
+                continue
+            if abs(((a - b) + 180.0) % 360.0 - 180.0) > POSE_TOL_ROT:
+                return False
+        return abs(stored["lens_mm"] - now["lens_mm"]) <= POSE_TOL_LENS
+    except (KeyError, TypeError):
+        return False
+
+
+def _yaw_delta(stored, now):
+    """Degrees the camera has turned since the sweep, wrapped to (-180, 180]."""
+    try:
+        d = now["rotation_deg"][YAW_INDEX] - stored["rotation_deg"][YAW_INDEX]
+    except (KeyError, IndexError, TypeError):
+        return 0.0
+    return (d + 180.0) % 360.0 - 180.0
+
+
+def _rolled_copy(img_path, delta_deg, root):
+    """The panorama with its horizontal origin moved to the camera's current heading.
+
+    The stitched image spans a full turn, with the capture-time heading in the middle. Turning
+    the camera by delta moves what is straight ahead to the column delta/360 of the way further
+    right, so the image rolls left by that much to put it back in the middle. A roll is exact
+    here rather than an approximation, because the sweep closes on itself: the column that
+    leaves one edge is the column that belongs at the other.
+    """
+    try:
+        import numpy as np
+        from PIL import Image
+    except ImportError:
+        return None
+    try:
+        im = Image.open(img_path).convert("RGB")
+        a = np.asarray(im)
+        shift = int(round(a.shape[1] * (delta_deg / 360.0)))
+        if shift == 0:
+            return str(img_path)
+        out = np.roll(a, -shift, axis=1)
+        d = cache_dir(root)
+        d.mkdir(parents=True, exist_ok=True)
+        dest = d / f"{img_path.stem}__rolled{int(round(delta_deg))}.png"
+        tmp = d / f".{os.getpid()}_{dest.name}"
+        Image.fromarray(out).save(tmp)
+        os.replace(tmp, dest)
+        return str(dest)
+    except Exception:
+        return None
 
 
 def store(stitched_path, root=None, extra=None):

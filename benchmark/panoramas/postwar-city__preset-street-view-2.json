@@ -1,6 +1,6 @@
 {
   "scene": "postwar-city",
-  "blend": "/disk2/nikolaj/SCOPE-repo/benchmark/scenes/postwar-city/postwar-city.blend",
+  "blend": "benchmark/scenes/postwar-city/postwar-city.blend",
   "blend_mtime": null,
   "pose": {
     "preset": "street-view-2"

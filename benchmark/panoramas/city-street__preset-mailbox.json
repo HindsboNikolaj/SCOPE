@@ -1,6 +1,6 @@
 {
   "scene": "city-street",
-  "blend": "/disk2/nikolaj/SCOPE-repo/benchmark/scenes/city-street/city-street.blend",
+  "blend": "benchmark/scenes/city-street/city-street.blend",
   "blend_mtime": null,
   "pose": {
     "preset": "mailbox"
@@ -18,9 +18,9 @@
     ],
     "lens_mm": 23.68
   },
-  "shading": "SOLID+TEXTURE",
+  "shading": "MATERIAL",
   "source": "shipped with the repository, pose from benchmark/presets/presets_by_scene.json (city-street/mailbox)",
-  "sha256": "81bed1d7e2d19c1c263621dac326a0f1cbe5164ad183d90164a7dcfea4c07ceb",
+  "sha256": "fec7196ff0061c3c30fea4ebf2d3d4e1ebbe40b8d8445b00f904d1035d8cc0b0",
   "written_by_pid": null,
-  "note": "Captured in Solid with textures, not Material Preview. This scene costs roughly 700 seconds a frame in Material Preview under software OpenGL whatever the resolution, so a ten frame sweep of it is not practical there. A run in Material Preview will refuse this entry and sweep instead, which is correct: recapture it on a machine with a GL driver to replace this."
+  "note": "Captured in Material Preview with the scene world off, on hardware OpenGL. The earlier copy of this entry was taken in Solid with textures because software rasterisation made a Material sweep of this scene impractical; that constraint was the renderer, not the scene."
 }

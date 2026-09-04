@@ -320,6 +320,42 @@ def start_panorama_capture(output_path: str, overlap_ratio: float = 0.1):
     leaves a visible edge, too much wastes frames. The step is then rounded so the
     sweep closes on itself exactly, because a sweep that does not close leaves one
     seam that no amount of blending can hide.
+
+    Read this before tuning it.
+
+    A benchmark run should not be calling this. The full views the benchmark answers
+    from are captured once and committed under benchmark/panoramas, and a run reads
+    the PNG; see scope.blender.panorama_cache. This function is for authoring, when
+    somebody adds a viewpoint or a world and needs a full view that does not exist
+    yet. Treating it as a per-question operation is what made a question cost two
+    minutes instead of a frame.
+
+    Four things decide whether the result is any good, and only the first is obvious.
+
+    Overlap. Around 0.4 works across every viewpoint here. Below about 0.2 the blend
+    has too little to work with and the joins show; above about 0.6 you are paying
+    for frames that add nothing. It is worth trying two or three values on a new
+    viewpoint rather than assuming, because the right one depends on how close the
+    nearest geometry is: a narrow street needs more overlap than an open plaza.
+
+    Direction. The output azimuth runs against the sweep index, not with it. The
+    camera turns by rz0 - i*step, so a frame captured at step i belongs at
+    i*step - az in the output, and composing those two the other way round produces
+    a panorama that is correct in every local detail and mirrored as a whole. That
+    failure is genuinely hard to see: every building looks right, and only text or a
+    known asymmetry gives it away. Check a sign.
+
+    Pitch. A 360 sweep turns about the world vertical. If the camera is pitched, that
+    traces a cone rather than a circle, and a stitch that assumes a level camera will
+    bend the horizon. Pass the camera's Euler through as orig_rotation so each frame
+    carries its own rotation.
+
+    Whether a panorama is the right answer at all. For a camera above the rooftops
+    looking down, a horizontal band through the view is mostly empty: the sweep
+    returns a long strip of nothing with the scene squeezed into a fraction of it. A
+    single wide frame, or two rows at different pitches, tells a model more. The
+    full view is whatever shows the most of the scene from that position, and that is
+    a per-viewpoint decision. docs/FULL_VIEW.md records which viewpoints chose what.
     """
     import os, math
 
