@@ -71,6 +71,21 @@ def get_vlm_label() -> str:
     return ""
 
 
+def _take_panorama_provenance():
+    """Provenance of the panorama served to the row just finished, or None.
+
+    Read-and-clear, so a row that never asked for a full view cannot inherit the record of one
+    that did. A stale provenance attached to the wrong row is worse than none, because it reads
+    as evidence.
+    """
+    try:
+        from ..blender import panorama_cache
+        p = panorama_cache.take_provenance()
+        return p or None
+    except Exception:
+        return None
+
+
 def prepare_view_for_capture():
     """Ensure the 3D viewport is ready for screenshot capture."""
     try:
@@ -683,9 +698,21 @@ def _batch_step():
             preset = author_fields["preset_start"]
             if preset:
                 print(f"[runner] Applying preset: {preset}")
-                apply_preset(preset)
+                # apply_preset returns False when the preset file is not found, and ignoring
+                # that return is a quiet way to grade the wrong picture: the camera stays
+                # wherever the previous row left it and every line after this claims the
+                # preset was applied. Say so loudly, and record it on the row so it shows up
+                # in the results rather than only in a log nobody reads.
+                if not apply_preset(preset):
+                    print(f"[runner] WARNING: preset {preset!r} not found. The camera has NOT "
+                          f"moved and this row is being answered from the previous view. "
+                          f"Check scripts/04_install_presets.py has been run.")
+                    author_fields["preset_applied"] = False
+                else:
+                    author_fields["preset_applied"] = True
             else:
                 print("[runner] No preset in row; continuing from current view.")
+                author_fields["preset_applied"] = None
 
             prepare_view_for_capture()
 
@@ -746,6 +773,16 @@ def _batch_step():
                 "question_id": author_fields["question_id"],
                 "file_location": author_fields["file_location"],
                 "preset_start": author_fields["preset_start"],
+                "preset_applied": author_fields.get("preset_applied"),
+                # Which panorama answered this row, if it asked for the full view.
+                #
+                # A path alone is not identification. Cache entries are shared between
+                # concurrent runs and can be replaced by a run using
+                # SCOPE_PANO_CACHE_MODE=write, so a result citing only a path can come to refer
+                # to a different picture than the one that produced it. The digest, the pose
+                # and the preset make the row self-describing: it can be checked later without
+                # trusting that the cache directory still holds what it held at the time.
+                "panorama": _take_panorama_provenance(),
                 "presets_available": author_fields["presets_available"],
                 "question": author_fields["question"],
                 "expected_answer": author_fields["expected_answer"],

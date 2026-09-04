@@ -133,8 +133,10 @@ requires:
 4. **`presets_available`** -- JSON array of all presets in the scene.
 5. **`question`** -- The natural-language question for the agent.
 6. **`expected_answer`** -- The ground-truth answer.
-7. **`eval_category`** -- One of: `counting`, `descriptor`, `location`, `ocr`,
-   `single_call`, `multi_cmd`, `multi_reason`, `comparative`.
+7. **`eval_category`** -- One of: `counting`, `descriptor`, `location_spatial`,
+   `ocr_identification`, `single_call`, `multi_step_command`, `multi_step_reasoning`,
+   `comparative_relational`. (These are the values the shipped CSV actually uses; five of them
+   were previously listed here in an abbreviated form that no row uses.)
 8. **`expected_tool_order_json`** -- The expected sequence of tool calls.
 
 See [`benchmark/README.md`](../benchmark/README.md) for the complete column
@@ -206,3 +208,74 @@ print(timings)
 
 If the agent produces reasonable answers and the timing breakdown shows
 non-zero VLM time, the scene is ready for benchmark integration.
+
+---
+
+## Full views, and why to capture them once
+
+A question whose `answer_view` is `full` needs the agent to look around before answering. About
+one row in six is like that, and every viewpoint in the shipped scenes carries some.
+
+### The shape of a full view is not always a 360 sweep
+
+A sweep is the obvious implementation and it is the wrong shape at some viewpoints. Which ones
+is not guessable from the camera height, so measure two things for each candidate:
+
+- **content** -- how much of the output is scene rather than flat viewport background
+- **scene coverage** -- how many of the scene's mesh objects fall inside the captured frames
+
+Coverage decides first, because a full-view question has to see the thing at all. Among the
+candidates that see everything, keep the sweep if it is also a good picture; otherwise take the
+cheapest candidate that sees comparably much.
+
+Across the four shipped scenes this came out roughly half and half. From a camera above a
+bounded scene, a single 90-degree frame contained every object a nine-frame sweep did, in a
+tenth of the time. And levelling a pitched camera before sweeping, which is the right correction
+at street level, was the *worst* option for an elevated one, because it aims the camera at empty
+sky. `docs/FULL_VIEW.md` has the measurements.
+
+Note also that scenes are often modelled to be seen from one side. Turning right round may show
+nothing. That is a property of the asset, and it is a good reason to prefer a wide frame at that
+viewpoint.
+
+### Capture them once, not per question
+
+Stitched panoramas are sensitive to frame overlap, step angle, camera pitch and capture
+resolution, and those interact: seam quality stops improving somewhere around forty percent
+overlap while the frame count keeps climbing, and a low-resolution capture stitches into
+something blurry however good the geometry is.
+
+Nothing in a scene moves between rows, so the same sweep is otherwise recomputed for an answer
+that cannot differ. Capture once per viewpoint, look at the result, and store it:
+
+```bash
+SCOPE_PANO_CACHE=benchmark/panoramas SCOPE_PANO_CACHE_MODE=write \
+  blender benchmark/scenes/<scene>/<scene>.blend \
+    --python scripts/precapture_panoramas.py
+python3 scripts/index_panorama_cache.py    # writes the metadata a lookup validates
+```
+
+`docs/PANORAMA_CACHE.md` explains how an entry is validated. The short version: entries are
+named after the scene and preset, but served only when the live camera pose matches, so a stale
+or mislabelled entry cannot answer the wrong question.
+
+## After adding a scene
+
+1. **Pack the textures** (`File > External Data > Pack Resources`). Unpacked textures use paths
+   relative to wherever the author had them, and those do not survive being shared. Every
+   missing texture in the shipped scenes is this.
+2. **Record what is still missing** in `benchmark/expected_assets.json`, so absent files are
+   reported as expected rather than as a broken download.
+3. **Re-run `scripts/build_preset_index.py`**, which writes
+   `benchmark/presets/presets_by_scene.json`. Presets are exported keyed by each scene's
+   original asset filename, which does not match the name the CSV uses and cannot be derived
+   from it; the index records the correspondence so tools do not have to guess.
+4. **Add the scene's pictures to `docs/VISUAL_SMOKE_TEST.md`**, so the next person can check
+   their setup against them by eye.
+
+### Watch out for expensive materials
+
+One of the shipped scenes costs hundreds of times more per frame than the others under software
+rendering, and the cost does not fall with resolution, because it is per-material shader
+compilation rather than per pixel. If a new scene is unexpectedly slow, time a capture at two
+resolutions before trying to optimise. If the time barely changes, resolution is not the lever.
