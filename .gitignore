@@ -34,3 +34,4 @@ blender_temp/
 
 # Logs
 *.log
+.gpu-build/

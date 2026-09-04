@@ -30,13 +30,41 @@ Two symptoms that look like something else:
   "this scene is heavy". The cost is also roughly flat in resolution, because what dominates is
   submitting draw calls rather than filling pixels, so lowering the resolution does not help and
   that in turn looks like evidence that the scene is the problem.
-- **One CPU core is pinned.** On a 256-core machine a capture at 102% CPU looks like a small
-  job. It is one thread doing the work of a GPU.
+- **One CPU core is pinned.** On a many-core machine a capture sitting at 102% CPU looks
+  like a small job. It is one thread doing the work of a GPU.
 
 ## Getting onto the fast path
 
-The rest of this page is for a headless Linux machine with NVIDIA hardware. If you have a
-desktop with a working driver, you are already on the fast path.
+If your machine has a desktop and a working driver, you are already on it and there is nothing
+to do here. The rest of this page is for a headless Linux server with NVIDIA hardware.
+
+### One command
+
+```bash
+./docker/build-gpu.sh --check     # does this host need it?
+./docker/build-gpu.sh             # build and verify
+```
+
+It reads the driver version off `nvidia-smi`, downloads that exact `.run` installer, extracts
+it **without installing anything on the host**, stages the graphics libraries into an image,
+adds VirtualGL, builds, and then proves the result by asking OpenGL its renderer name from
+inside the container it just built. It exits non-zero unless a GPU name comes back.
+
+That last step is not ceremony. Every failure here is quiet: the wrong library version loads
+and falls back, the vendor JSON is missing so EGL finds no device, the download returns an HTML
+error page and `dpkg` is told to ignore it. In each case you get a working image that draws on
+the CPU and says nothing about it.
+
+### Running a capture with it
+
+```bash
+docker run --rm --gpus '"device=0"' --entrypoint bash scope-blender:gpu -c '
+  Xvfb :99 -screen 0 1920x1080x24 & sleep 3; export DISPLAY=:99
+  vglrun -d egl0 blender /scenes/<scene>.blend --python <script>.py'
+```
+
+Only two things differ from the CPU image: a virtual display, and `vglrun -d egl0` in front of
+Blender. Everything downstream is unchanged.
 
 ### Why it is not simply a matter of passing the GPU through
 
@@ -46,60 +74,26 @@ Three things have to be true, and on a compute-configured host the third usually
 2. **The graphics libraries are present.** `NVIDIA_DRIVER_CAPABILITIES=all` asks the container
    toolkit to inject them, but it can only inject what the host has. A datacentre driver
    installed for compute ships CUDA and no `libEGL_nvidia`, `libGLX_nvidia` or
-   `libnvidia-glcore`. The request succeeds and nothing graphical arrives, which is a confusing
-   way to fail.
+   `libnvidia-glcore`. The request succeeds and nothing graphical arrives.
 3. **Blender can reach them.** Blender links `libGL.so.1` and `libGLX.so.0`. Under a virtual X
    server, GLX resolves to Mesa, and there is no way to point it at NVIDIA without an NVIDIA X
-   server. EGL does not have this problem, but Blender does not offer an EGL backend.
+   server. EGL does not have this problem, but Blender offers no EGL backend. VirtualGL
+   interposes the GLX calls onto the EGL device, which does work.
 
-### The two pieces
+### If you would rather do it by hand
 
-**The libraries.** Download the `.run` installer matching the host driver version
-(`nvidia-smi --query-gpu=driver_version --format=csv,noheader`) and extract it without
-installing, so nothing on the host changes:
+The script is readable and each step says why it exists. Two things in it were learned the hard
+way and are easy to get wrong:
 
-```bash
-sh NVIDIA-Linux-x86_64-<version>.run --extract-only
-mkdir -p nvidia-gl/lib nvidia-gl/egl_vendor.d
-cp NVIDIA-Linux-x86_64-<version>/libEGL_nvidia.so.<version>      nvidia-gl/lib/
-cp NVIDIA-Linux-x86_64-<version>/libGLX_nvidia.so.<version>      nvidia-gl/lib/
-cp NVIDIA-Linux-x86_64-<version>/libnvidia-glcore.so.<version>   nvidia-gl/lib/
-cp NVIDIA-Linux-x86_64-<version>/libnvidia-eglcore.so.<version>  nvidia-gl/lib/
-cp NVIDIA-Linux-x86_64-<version>/libnvidia-glsi.so.<version>     nvidia-gl/lib/
-# then create the sonames each one expects, e.g. libEGL_nvidia.so.0 -> libEGL_nvidia.so.<version>
-```
+**The library list cannot be derived from `ldd`.** `libEGL_nvidia` declares one dependency and
+`libGLX_nvidia` three; the rest are opened with `dlopen` at runtime and appear in no link
+table. An image built from what `ldd` reports loads, finds no device, and silently falls back.
+`libnvidia-allocator` and `libnvidia-gpucomp` are the two easiest to omit and hardest to
+diagnose.
 
-`nvidia-gl/egl_vendor.d/10_nvidia.json` tells libglvnd where the EGL driver is:
-
-```json
-{ "file_format_version": "1.0.0", "ICD": { "library_path": "/opt/nvgl/lib/libEGL_nvidia.so.0" } }
-```
-
-**The bridge.** [VirtualGL](https://github.com/VirtualGL/virtualgl/releases) interposes
-Blender's GLX calls onto the EGL device. Take the `.deb` from the GitHub releases page; the
-SourceForge URL returns an HTML page rather than a package, and `dpkg -i ... || apt-get -f
-install` will swallow that failure and leave you with an image that has no `vglrun` in it.
-
-Then build `docker/Dockerfile.hardware-gl` with `nvidia-gl/` and `vgl.deb` in the build context.
-
-### Check it worked
-
-```bash
-docker run --rm --gpus '"device=0"' --entrypoint bash scope-blender:gpu -c '
-  Xvfb :99 -screen 0 1280x1024x24 & sleep 3; export DISPLAY=:99
-  vglrun -d egl0 /opt/VirtualGL/bin/glxspheres64 -n 40 | grep -i "OpenGL Renderer"'
-```
-
-Expected: the name of your GPU. If it says `llvmpipe`, the bridge is not engaged.
-
-### Running a capture
-
-Prefix the Blender command. Everything else is unchanged.
-
-```bash
-Xvfb :99 -screen 0 1920x1080x24 & sleep 3; export DISPLAY=:99
-vglrun -d egl0 blender <scene>.blend --python <script>.py
-```
+**Take VirtualGL from its GitHub release.** The SourceForge URL returns an HTML page. Paired
+with the common `dpkg -i pkg.deb || apt-get -f install -y`, that produces an image with no
+`vglrun` in it and no error anywhere in the build log.
 
 ## What this changes about the benchmark
 
@@ -113,4 +107,5 @@ comparable. What changes is what is practical.
 - A demo recorded at the frame rate the viewport actually runs at becomes possible.
 
 The claim that a capture costs fifteen seconds appears in older revisions of `docs/SETUP.md`.
-It was a measurement of this machine's fallback, stated as a property of the method.
+It was a measurement of a machine without a graphics driver, stated as a property of the
+method.

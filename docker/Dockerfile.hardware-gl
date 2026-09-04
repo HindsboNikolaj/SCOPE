@@ -1,4 +1,5 @@
-FROM scope-blender:4.4.3
+ARG BASE=scope-blender:4.4.3
+FROM ${BASE}
 
 # The NVIDIA userspace GL/EGL libraries. The host driver here was installed compute-only, so
 # the container toolkit injects nothing graphical no matter what NVIDIA_DRIVER_CAPABILITIES
@@ -15,6 +16,8 @@ RUN apt-get update \
  && test -x /opt/VirtualGL/bin/vglrun \
  && ldconfig /opt/nvgl/lib
 
-ENV LD_LIBRARY_PATH=/opt/nvgl/lib:${LD_LIBRARY_PATH}
+# Set rather than appended: the base image leaves LD_LIBRARY_PATH unset, and
+# referencing an undefined variable here is a build warning.
+ENV LD_LIBRARY_PATH=/opt/nvgl/lib
 ENV PATH=/opt/VirtualGL/bin:${PATH}
 ENV VGL_DISPLAY=egl0
