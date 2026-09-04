@@ -224,14 +224,43 @@ zoom on the detected region.
 ```json
 {
   "result": "Zoomed to target: the stop sign",
+  "found": true,
   "bbox": [0.35, 0.22, 0.68, 0.71],
+  "zoom": 2.94,
   "path": "/path/to/postzoom_screenshot.png",
   "timings": { "vlm": 0.51, "script": 0.09 }
 }
 ```
 
 The `bbox` field contains normalized coordinates `[x1, y1, x2, y2]` in the
-range `[0, 1]`.
+range `[0, 1]`. `zoom` is the factor actually applied, which is capped at 6x:
+a target occupying one percent of the frame is not magnified a hundredfold.
+
+**When the target is not found**, the camera is left where it is and the call says so:
+
+```json
+{
+  "result": "Could not locate 'the stop sign' in the current view. The camera has not moved.",
+  "found": false,
+  "bbox": null,
+  "error": "RuntimeError: VLM is not initialized (call set_vlm(...) or set VLM_* env vars).",
+  "path": "/path/to/postzoom_screenshot.png"
+}
+```
+
+Check `found` rather than inferring success from the camera. Earlier versions fell back to the
+whole frame when detection returned nothing, which zoomed 2 percent *out*, re-aimed nowhere,
+and still reported "Zoomed to target". Three quite different faults reached that same path and
+were indistinguishable from each other and from success:
+
+- the model cannot see the object, which is a real answer,
+- the model is unreachable or misconfigured, which is a setup problem,
+- the capture came back black, which is also a setup problem.
+
+The last one is the easiest to hit and the hardest to spot. `screenshot_area` returns a black
+image with no error on a virtual display, and a detector shown a black image reports the whole
+frame as its bounding box. Set `SCOPE_CAPTURE=opengl` where there is no real display, and see
+`docs/HEADLESS.md`.
 
 ---
 

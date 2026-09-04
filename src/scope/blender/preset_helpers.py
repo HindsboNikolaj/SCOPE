@@ -61,6 +61,13 @@ def list_presets() -> list[str]:
     for pd in preset_dirs:
         if os.path.isdir(pd):
             for fn in os.listdir(pd):
+                # Skip dotfiles. A preset directory that has ever been copied through a
+                # macOS archive carries a binary AppleDouble side file named ._<name>.py
+                # beside every real preset. Those end in .py, so a plain suffix test
+                # returns them as presets and apply_preset then fails on the first one
+                # with a UnicodeDecodeError that names no preset.
+                if fn.startswith("."):
+                    continue
                 if fn.lower().endswith(".py"):
                     names.add(os.path.splitext(fn)[0])
     return sorted(names)
@@ -153,7 +160,11 @@ def apply_preset(name: str) -> bool:
     for pd in bpy.utils.preset_paths("camera"):
         path = os.path.join(pd, f"{name}.py")
         if os.path.isfile(path):
-            with open(path) as f:
+            # errors="replace" rather than a bare open. Any unreadable byte then becomes a
+            # replacement character and the compile fails with a message naming this file,
+            # instead of the decode raising somewhere inside the codecs module with no
+            # indication of which preset caused it.
+            with open(path, encoding="utf-8", errors="replace") as f:
                 code = f.read()
             exec(compile(code, path, 'exec'), { 'bpy': bpy })
             _LAST_PRESET = name
