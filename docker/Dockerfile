@@ -6,9 +6,10 @@
 # library, no libGL at all. So Blender refuses, with "Cannot use OpenGL render in background
 # mode (no opengl context)", and the benchmark cannot run there.
 #
-# The host could be fixed with `apt install xvfb libgl1-mesa-dri libglx-mesa0`, but it is a
-# shared box under somebody else's update policy. A container gets the same result, changes
-# nothing outside itself, and is thrown away by deleting an image.
+# The host could be fixed with `apt install xvfb libgl1-mesa-dri libglx-mesa0`, but on a
+# shared machine you may not own the update policy, and on a managed one you may not have
+# root. A container gets the same result, changes nothing outside itself, and is thrown away
+# by deleting an image.
 #
 # The earlier attempt used a CentOS 7 era X server from conda, whose GLX cannot create a
 # modern context: Blender reported "GLX_ARB_create_context not available" and quit. Ubuntu
