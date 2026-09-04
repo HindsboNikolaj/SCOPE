@@ -75,6 +75,13 @@ After step 3, the smoke run should:
 - Run the LLM-as-Judge on that CSV and emit `judged_results.csv`.
 - Print a numeric accuracy report broken down by category.
 
+**Then check the pictures, not just the exit codes.** A run can complete, produce a full set of
+numbers and a category breakdown, and be graded entirely on blank or wrong images: a capture
+that came back black raises nothing, and the model will answer whatever it was shown. Compare
+one capture against [`docs/VISUAL_SMOKE_TEST.md`](docs/VISUAL_SMOKE_TEST.md), which shows what
+every camera position should look like. The `scope-verify-capture` skill in `.claude/skills/`
+walks through it and lists the symptoms.
+
 If the runner errors out because `benchmark/scenes/` is empty, re-run
 `bash scripts/03_download_scenes.sh`. The primary mirror is Hugging Face Hub
 (`HindsboNikolaj/scope-benchmark`); Google Drive is a fallback.
@@ -105,7 +112,21 @@ The 9 skills and their JSON schema live at:
 Implementations: `src/scope/tools/blender_tools.py` (camera) and
 `src/scope/tools/vlm_clients.py` (perception).
 
-## 8. If anything fails
+## 8. Where the pieces live
+
+| you want | look at |
+| --- | --- |
+| set up and run end to end | this file |
+| check the captures are correct | `.claude/skills/scope-verify-capture/`, `docs/VISUAL_SMOKE_TEST.md` |
+| verify tools, or use an LLM/VLM as a judge | `.claude/skills/scope-smoke-test/` |
+| add a scene, or author rows | `docs/creating_scenes.md` |
+| what the agent is told, and how answers are graded | `prompts/` |
+
+`prompts/` is the benchmark's measured apparatus rather than configuration. The system prompt
+and the per-category judge rubrics are inputs to the measurement, so changing one changes what
+the numbers mean. Version them deliberately; never edit one to make a run pass.
+
+## 9. If anything fails
 
 1. Read [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) for the hosting-specific config that matches the SLM/VLM you're using.
 2. Surface the failing command and the last 20 lines of stderr verbatim.

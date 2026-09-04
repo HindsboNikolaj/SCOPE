@@ -1,0 +1,25 @@
+{
+  "scene": "postwar-city",
+  "blend": "benchmark/scenes/postwar-city/postwar-city.blend",
+  "blend_mtime": null,
+  "pose": {
+    "preset": "street-view-1"
+  },
+  "pose_exact": {
+    "location": [
+      0.34062,
+      -0.94546,
+      0.10959
+    ],
+    "rotation_deg": [
+      89.99998,
+      0.0,
+      -8.9637
+    ],
+    "lens_mm": 23.9
+  },
+  "shading": "MATERIAL",
+  "source": "shipped with the repository, pose from benchmark/presets/presets_by_scene.json (postwar-city/street-view-1)",
+  "sha256": "4245160ca2a8ef7e177345875bd50b2794577537c95721919b9efca7c61fe1fa",
+  "written_by_pid": null
+}
