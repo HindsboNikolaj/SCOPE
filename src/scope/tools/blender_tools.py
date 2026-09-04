@@ -91,29 +91,82 @@ except OSError as e:
         f"writable directory. This is the usual symptom of a read-only checkout."
     ) from e
 
-# Which capture to use. There are two, and they do not work in the same places.
+# Which capture to use. There are two, neither of them a render, and they do not work in the
+# same places.
 #
 #   viewport  screenshot_camera_view -> screen.screenshot_area. Photographs the window as
-#             drawn. This is the default and it is what produced the published results.
-#             On a machine with no physical display it returns a black image, because
-#             nothing paints the window and reading the buffer back yields nothing.
+#             drawn. Costs essentially nothing, and it is what produced the published
+#             results. On a machine with no physical display it returns a black image,
+#             because nothing paints the window and reading the buffer back yields nothing.
 #
-#   opengl    fast_opengl_screenshot -> render.opengl. Renders offscreen, so it does not
-#             need a painted window. This is the one that works headless, for example in
-#             a container with Xvfb and software OpenGL.
+#   opengl    fast_opengl_screenshot -> render.opengl(view_context=True). Draws the 3D view
+#             offscreen, so it does not need a painted window. Despite the operator's name
+#             this is not a render: it is the viewport's own draw, and on hardware OpenGL it
+#             costs about 0.2s a frame. Where that figure has been quoted at ten or fifteen
+#             seconds, the machine was falling back to software rasterisation.
 #
-# The default stays "viewport", so nothing changes for anyone running with a display.
-# docs/HEADLESS.md covers when to switch and what it costs.
-_CAPTURE_BACKEND = os.environ.get("SCOPE_CAPTURE", "viewport").strip().lower()
+# Neither path ever invokes Cycles or EEVEE, and neither should be made to. A benchmark run
+# photographs the viewport, and that is a property of the dataset rather than a performance
+# choice: the ground truth was labelled from viewport captures, so a rendered frame would be
+# a different image of the same scene and would not be answering the same question. Rendering
+# is available to anyone who wants it through Blender's own operators; it is not a capture
+# backend here.
+#
+# The default is "auto": take the cheap window grab, and if the first frame comes back a
+# single flat colour, latch to the offscreen path for the rest of the run. That decision is
+# made once and reused, so it costs one extra capture at startup and nothing after. Set
+# SCOPE_CAPTURE=viewport or =opengl to force one; docs/HEADLESS.md covers why you might.
+_CAPTURE_BACKEND = os.environ.get("SCOPE_CAPTURE", "auto").strip().lower()
+_RESOLVED_BACKEND = None if _CAPTURE_BACKEND in ("auto", "") else _CAPTURE_BACKEND
 
 
 _BLANK_WARNED = False
 
 
+def _is_flat(path) -> bool:
+    """True if the image has no variation at all, which is what a dead capture looks like."""
+    try:
+        lo, hi = Image.open(path).convert("L").getextrema()
+        return hi - lo == 0
+    except Exception:
+        return False
+
+
 def _capture_frame(prefix: str = "raw") -> str:
-    global _BLANK_WARNED
+    global _BLANK_WARNED, _RESOLVED_BACKEND
     fp = SCREENSHOTS_DIR / f"{_now_ts()}_{prefix}.png"
-    if _CAPTURE_BACKEND in ("opengl", "offscreen", "headless"):
+
+    if _RESOLVED_BACKEND is None:
+        # First capture of the run, and nobody said which path to take. Try the cheap one and
+        # look at what came back, because a black frame is the only symptom this failure has.
+        screenshot_camera_view(str(fp))
+        if not _is_flat(fp):
+            _RESOLVED_BACKEND = "viewport"
+            return str(fp)
+
+        fast_opengl_screenshot(str(fp))
+        if _is_flat(fp):
+            # Both paths returned a single flat colour. Stop here.
+            #
+            # Everything downstream will accept this image without complaint: the detector
+            # will report the whole frame as its bounding box, the model will describe an
+            # empty room, and the run will finish and be graded. A benchmark that scores a
+            # model on blank rectangles is worse than one that does not run, because the
+            # number it produces looks like a result.
+            raise RuntimeError(
+                f"SCOPE cannot capture the viewport: both the window grab and the offscreen "
+                f"draw returned a single flat colour ({Image.open(fp).convert('L').getextrema()[0]}). "
+                f"Nothing is being drawn. Usual causes: no OpenGL at all (check that a GL "
+                f"driver is present, or start a virtual display), the .blend opened with no "
+                f"3D viewport, or the scene camera is unset. See docs/HEADLESS.md. "
+                f"Last frame written to {fp} if you want to look at it."
+            )
+        _RESOLVED_BACKEND = "opengl"
+        print("[scope] capture: window grab came back blank, using the offscreen viewport "
+              "draw for this run (SCOPE_CAPTURE=opengl to make it explicit).", flush=True)
+        return str(fp)
+
+    if _RESOLVED_BACKEND in ("opengl", "offscreen", "headless"):
         fast_opengl_screenshot(str(fp))
     else:
         screenshot_camera_view(str(fp))
@@ -134,7 +187,8 @@ def _capture_frame(prefix: str = "raw") -> str:
                 _BLANK_WARNED = True
                 print(f"[scope] WARNING: capture {fp.name} is a single flat colour "
                       f"(value {lo}). Every result from this run will be about a blank image. "
-                      f"With no real display set SCOPE_CAPTURE=opengl; see docs/HEADLESS.md.",
+                      f"SCOPE_CAPTURE is set to {_CAPTURE_BACKEND!r}; unset it to let SCOPE "
+                      f"pick, or set it to 'opengl'. See docs/HEADLESS.md.",
                       flush=True)
         except Exception:
             pass
