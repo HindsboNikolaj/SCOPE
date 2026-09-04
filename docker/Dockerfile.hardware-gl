@@ -1,0 +1,20 @@
+FROM scope-blender:4.4.3
+
+# The NVIDIA userspace GL/EGL libraries. The host driver here was installed compute-only, so
+# the container toolkit injects nothing graphical no matter what NVIDIA_DRIVER_CAPABILITIES
+# says; these come from the matching .run archive, extracted rather than installed.
+COPY nvidia-gl/lib/ /opt/nvgl/lib/
+COPY nvidia-gl/egl_vendor.d/ /usr/share/glvnd/egl_vendor.d/
+
+# VirtualGL bridges the gap: Blender only speaks GLX, and there is no NVIDIA GLX here, but
+# there is a working NVIDIA EGL device. vglrun interposes the GLX calls onto it.
+COPY vgl.deb /tmp/vgl.deb
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends /tmp/vgl.deb \
+ && rm -rf /var/lib/apt/lists/* /tmp/vgl.deb \
+ && test -x /opt/VirtualGL/bin/vglrun \
+ && ldconfig /opt/nvgl/lib
+
+ENV LD_LIBRARY_PATH=/opt/nvgl/lib:${LD_LIBRARY_PATH}
+ENV PATH=/opt/VirtualGL/bin:${PATH}
+ENV VGL_DISPLAY=egl0
