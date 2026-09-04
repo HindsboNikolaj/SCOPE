@@ -1,0 +1,3 @@
+# build-gpu.sh unpacks a driver archive and stages libraries here. Several hundred megabytes
+# of vendor binaries that are re-downloadable, so they are never committed.
+.gpu-build/

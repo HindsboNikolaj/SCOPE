@@ -41,7 +41,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TAG="${SCOPE_GPU_TAG:-scope-blender:gpu}"
 BASE="${SCOPE_BASE_IMAGE:-scope-blender:4.4.3}"
 VGL_VERSION="${VGL_VERSION:-3.1.1}"
-WORK="${SCOPE_GPU_WORKDIR:-${HERE}/../.gpu-build}"
+WORK="${SCOPE_GPU_WORKDIR:-${HERE}/.gpu-build}"
 CHECK_ONLY=0
 [ "${1:-}" = "--check" ] && CHECK_ONLY=1
 
@@ -189,5 +189,5 @@ cat <<EOF
       Xvfb :99 -screen 0 1920x1080x24 & sleep 3; export DISPLAY=:99
       vglrun -d egl0 blender /scenes/<scene>.blend --python <script>.py'
 
-  Build artefacts are in $WORK and can be deleted.
+  Build artefacts are in $WORK (about 600 MB) and can be deleted.
 EOF
