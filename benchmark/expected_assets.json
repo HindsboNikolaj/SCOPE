@@ -7,7 +7,7 @@
     "cannot be found, and reasonably concludes the download failed. It did not. Those files were",
     "never published because they were never recoverable: the scene authors used relative paths",
     "pointing outside the scene folder, and in two cases an absolute path into a paid Blender",
-    "addon on the author's own machine.",
+    "addon on the original author's own machine.",
     "",
     "scripts/06_verify_setup.py checks against this and reports three outcomes rather than one:",
     "  matches expected  the install is correct, even where files are absent",
@@ -76,9 +76,9 @@
         "//../../texture/terre/",
         "//../../texture/tissu/",
         "//world/masks/",
-        "C:/Users/Maison/AppData/Roaming/Blender Foundation/Blender/2.77/scripts/addons/pro_lighting_skies_demo/hdris/",
-        "C:/Users/Maison/Documents/Aur\u00e9lien/pro/3D/texture/batiment/",
-        "C:/Users/Maison/Documents/Aur\u00e9lien/pro/3D/texture/portes/"
+        "<original author's machine>/.../addons/pro_lighting_skies_demo/hdris/",
+        "<original author's machine>/.../3D/texture/batiment/",
+        "<original author's machine>/.../3D/texture/portes/"
       ]
     },
     "whitechapel": {
@@ -97,8 +97,8 @@
         "//../../hdr/cloudy/207-free-hdri-skies-com.hdr",
         "//source/colorMap/tonneau-emit.png",
         "//source/textureLow/BarkDecidious0036_10_S_NRML.png",
-        "C:/Users/Maison/AppData/Roaming/Blender Foundation/Blender/2.79/scripts/addons/pro_lighting_skies_demo/hdris/cloudy08_EXR.exr",
-        "C:/Users/Maison/AppData/Roaming/Blender Foundation/Blender/2.79/scripts/addons/pro_lighting_skies_demo/hdris/cloudy08_medium.jpg"
+        "<original author's machine>/.../pro_lighting_skies_demo/hdris/cloudy08_EXR.exr",
+        "<original author's machine>/.../pro_lighting_skies_demo/hdris/cloudy08_medium.jpg"
       ]
     }
   }

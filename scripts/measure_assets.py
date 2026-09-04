@@ -3,7 +3,31 @@
 Written to be run per scene in background Blender, printing one JSON line, so the results can
 be collected without trusting anything remembered from a previous run.
 """
-import bpy, os, json
+import bpy, os, json, re
+
+
+def anonymise(path):
+    """Strip personal names out of a texture path that points off this machine.
+
+    Two of these scenes were authored on somebody else's Windows machine and reference
+    textures under that person's home directory, their own documents folder, and a paid
+    Blender addon installed there. The paths matter, because they are why those files are
+    absent and unrecoverable, and which addon a reader would need to buy. The names do not,
+    and this repository is public.
+
+    Relative paths are left exactly as they are: they point inside the scene folder and
+    contain nothing personal. Absolute ones are reduced to their last few segments, which is
+    the part that says what the file was.
+    """
+    if not path:
+        return path
+    # "//" is Blender's own prefix for "relative to this .blend", not an absolute path.
+    if path.startswith("//") or not re.match(r"^([A-Za-z]:[\\/]|/)", path):
+        return path                                    # relative, e.g. //../../texture/route/
+    parts = [q for q in re.split(r"[\\/]+", path) if q and not re.match(r"^[A-Za-z]:$", q)]
+    tail = "/".join(parts[-3:])
+    return "<original author's machine>/.../" + tail + ("/" if path.endswith(("/", "\\")) else "")
+
 
 tot = len(bpy.data.images)
 packed, missing, generated = 0, [], 0
