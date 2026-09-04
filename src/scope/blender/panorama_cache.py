@@ -304,7 +304,12 @@ def _same_position(stored, now):
 
 
 def _yaw_delta(stored, now):
-    """Degrees the camera has turned since the sweep, wrapped to (-180, 180]."""
+    """Degrees the camera has turned since the sweep, wrapped to [-180, 180).
+
+    Exactly half a turn comes back as -180 rather than +180. That is the interval this
+    arithmetic produces, and it does not matter here: rolling a panorama by -180 and by +180
+    land on the same image, because the sweep closes on itself.
+    """
     try:
         d = now["rotation_deg"][YAW_INDEX] - stored["rotation_deg"][YAW_INDEX]
     except (KeyError, IndexError, TypeError):
