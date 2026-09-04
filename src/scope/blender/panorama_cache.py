@@ -191,17 +191,16 @@ def lookup(root=None, require_shading=True):
         if hit:
             return hit
 
-    # Then by position, ignoring which way the camera is currently turned.
+    # Then by position alone.
     #
-    # A 360 sweep from a position covers every heading from that position, so the panorama
-    # does not stop being the right one when a question pans the camera. Requiring the yaw to
-    # match as well is what made a question that turned 30 degrees and then asked for the full
-    # view pay for a fresh sweep, having a correct answer already on disk.
+    # The full view is a property of where the camera is mounted. A PTZ camera pans, tilts and
+    # zooms from a fixed point, so a panorama swept from that point stays the right answer no
+    # matter which way the camera has since been turned or how far it has zoomed in. Requiring
+    # the whole pose to match made a question that panned thirty degrees pay for a fresh sweep
+    # with the correct answer already on disk.
     #
-    # The stitched image is anchored at the yaw it was captured from, so the match is followed
-    # by a roll that puts the current heading back in the middle of the frame. Everything else
-    # about the pose still has to agree: a different position sees different things, and a
-    # different pitch sweeps a different band of the scene.
+    # The stitched image is anchored at the heading it was swept from, so a match is followed
+    # by a roll that puts what the camera is facing back in the middle of the frame.
     return _lookup_by_position(root, require_shading)
 
 
@@ -283,17 +282,23 @@ def _lookup_by_position(root, require_shading):
 
 
 def _same_position(stored, now):
-    """Same place, same pitch, same lens. Yaw is deliberately not compared."""
+    """Same place. Nothing else is compared, and that is the point.
+
+    A PTZ camera is bolted to a wall. It pans, it tilts, it zooms; it does not move. So the
+    full view belongs to the position, not to the pose: it is a property of where the camera
+    is mounted, and it does not stop being true because the operator turned the camera or
+    zoomed in. Matching on the full pose modelled a camera that teleports, which is not the
+    thing being simulated.
+
+    This is also what makes the answer stable. Ask for the full view twice during one question,
+    once before panning and once after, and you get the same panorama both times, because the
+    camera has not gone anywhere.
+    """
     try:
         for a, b in zip(stored["location"], now["location"]):
             if abs(a - b) > POSE_TOL_LOC:
                 return False
-        for i, (a, b) in enumerate(zip(stored["rotation_deg"], now["rotation_deg"])):
-            if i == YAW_INDEX:
-                continue
-            if abs(((a - b) + 180.0) % 360.0 - 180.0) > POSE_TOL_ROT:
-                return False
-        return abs(stored["lens_mm"] - now["lens_mm"]) <= POSE_TOL_LENS
+        return True
     except (KeyError, TypeError):
         return False
 

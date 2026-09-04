@@ -212,6 +212,34 @@ def _iter_full_panorama():
     ts = _now_ts()
     base_dir = PANOS_DIR
 
+    # Asking for the full view must leave the camera exactly where it was.
+    #
+    # It is a question about the surroundings, not an instruction to move, and a question that
+    # asked for the full view half way through would otherwise find the camera somewhere else
+    # afterwards. On a cache hit this is free, because nothing is touched. On a sweep the
+    # camera is turned all the way round, and the restore has to survive an exception part way
+    # through, so it is a finally rather than a line at the end.
+    _cam = bpy.context.scene.camera
+    _pose_before = (tuple(_cam.location), tuple(_cam.rotation_euler), _cam.data.lens) if _cam else None
+
+    try:
+        # The path is the generator's return value, not something it yields, so the
+        # `yield from` has to be returned or the caller gets None for the panorama.
+        return (yield from _iter_full_panorama_inner(ts, base_dir))
+    finally:
+        if _pose_before is not None:
+            loc, rot, lens = _pose_before
+            moved = (tuple(_cam.location) != loc or tuple(_cam.rotation_euler) != rot
+                     or _cam.data.lens != lens)
+            if moved:
+                _cam.location = loc
+                _cam.rotation_euler = rot
+                _cam.data.lens = lens
+                bpy.context.view_layer.update()
+
+
+def _iter_full_panorama_inner(ts, base_dir):
+
     # A panorama for this scene and this camera pose may already exist. Nothing in these scenes
     # moves between benchmark rows, so a sweep from a given preset produces the same picture
     # every time, and 93 of the 541 rows ask for one from ten fixed positions. Sweeping is 60
