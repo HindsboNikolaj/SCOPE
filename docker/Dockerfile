@@ -2,9 +2,9 @@
 #
 # Why this image exists. SCOPE captures by photographing a real Blender viewport, through
 # `screenshot_area` or `render.opengl`. Both need an OpenGL context, which needs a display.
-# hyperplane has CUDA and nothing else: no GLX, no EGL vendor library, no libGL at all. So
-# Blender refuses, with "Cannot use OpenGL render in background mode (no opengl context)",
-# and the benchmark cannot run there.
+# A GPU box provisioned for compute typically has CUDA and nothing else: no GLX, no EGL vendor
+# library, no libGL at all. So Blender refuses, with "Cannot use OpenGL render in background
+# mode (no opengl context)", and the benchmark cannot run there.
 #
 # The host could be fixed with `apt install xvfb libgl1-mesa-dri libglx-mesa0`, but it is a
 # shared box under somebody else's update policy. A container gets the same result, changes
