@@ -1,0 +1,86 @@
+{
+  "planner": "qwen3:4b",
+  "vlm": "moondream (hosted)",
+  "turns": [
+    {
+      "prompt": "Pan the camera 10 degrees to the right.",
+      "answer": "The camera has been panned 10 degrees to the right.",
+      "calls": [
+        {
+          "name": "ptz_adjust",
+          "args": "{\"pan_deg\":10}",
+          "result": "PTZ adjusted"
+        }
+      ],
+      "llm_s": 4.72,
+      "vlm_s": 0.0,
+      "total_s": 5.48
+    },
+    {
+      "prompt": "Now pan 20 degrees to the left.",
+      "answer": "The camera has been panned 20 degrees to the left.",
+      "calls": [
+        {
+          "name": "ptz_adjust",
+          "args": "{\"pan_deg\":-20}",
+          "result": "PTZ adjusted"
+        }
+      ],
+      "llm_s": 3.6,
+      "vlm_s": 0.0,
+      "total_s": 4.18
+    },
+    {
+      "prompt": "How many hanging plants are outside the bookshop?",
+      "answer": "There are 2 hanging plants visible in the current camera view (which is positioned at the store-front area).",
+      "calls": [
+        {
+          "name": "count_pointing",
+          "args": "{\"instruction\":\"hanging plants\",\"view_type\":\"current\"}",
+          "result": "Counted 2 'hanging plants' in current view."
+        }
+      ],
+      "llm_s": 8.97,
+      "vlm_s": 1.25,
+      "total_s": 10.88
+    },
+    {
+      "prompt": "Zoom in on the bookstore. What is the name of it?",
+      "answer": "The name of the bookstore is The Book Nook.",
+      "calls": [
+        {
+          "name": "zoom_bounding",
+          "args": "{\"instruction\":\"bookstore\"}",
+          "result": "Zoomed to target: bookstore"
+        },
+        {
+          "name": "query_answer",
+          "args": "{\"instruction\":\"what does the sign say?\",\"view_type\":\"current\"}",
+          "result": "The Book Nook"
+        }
+      ],
+      "llm_s": 20.25,
+      "vlm_s": 1.61,
+      "total_s": 23.13
+    },
+    {
+      "prompt": "Go to the store-front2 viewpoint and zoom in on the bank.",
+      "answer": "The camera has been moved to the store-front2 viewpoint and zoomed in on the bank.",
+      "calls": [
+        {
+          "name": "go_to_preset",
+          "args": "{\"name\":\"store-front2\"}",
+          "result": "Moved to preset 'store-front2'"
+        },
+        {
+          "name": "zoom_bounding",
+          "args": "{\"instruction\":\"bank\"}",
+          "result": "Zoomed to target: bank"
+        }
+      ],
+      "llm_s": 11.98,
+      "vlm_s": 0.92,
+      "total_s": 13.81
+    }
+  ]
+}
