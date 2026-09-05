@@ -1,6 +1,7 @@
 {
-  "planner": "qwen3:4b",
-  "vlm": "moondream (hosted)",
+  "planner": "Qwen3-4B on vLLM",
+  "vlm": "Moondream 3.1 on Photon, served over HTTP",
+  "note": "Measured on one machine, both models local. Times are seconds per turn.",
   "turns": [
     {
       "prompt": "Pan the camera 10 degrees to the right.",
@@ -8,13 +9,13 @@
       "calls": [
         {
           "name": "ptz_adjust",
-          "args": "{\"pan_deg\":10}",
+          "args": "{\"pan_deg\": 10}",
           "result": "PTZ adjusted"
         }
       ],
-      "llm_s": 4.72,
+      "llm_s": 0.98,
       "vlm_s": 0.0,
-      "total_s": 5.48
+      "total_s": 1.7
     },
     {
       "prompt": "Now pan 20 degrees to the left.",
@@ -22,46 +23,46 @@
       "calls": [
         {
           "name": "ptz_adjust",
-          "args": "{\"pan_deg\":-20}",
+          "args": "{\"pan_deg\": -20}",
           "result": "PTZ adjusted"
         }
       ],
-      "llm_s": 3.6,
+      "llm_s": 1.48,
       "vlm_s": 0.0,
-      "total_s": 4.18
+      "total_s": 2.12
     },
     {
       "prompt": "How many hanging plants are outside the bookshop?",
-      "answer": "There are 2 hanging plants visible in the current camera view (which is positioned at the store-front area).",
+      "answer": "There are 2 hanging plants outside the bookshop in the current view.",
       "calls": [
         {
           "name": "count_pointing",
-          "args": "{\"instruction\":\"hanging plants\",\"view_type\":\"current\"}",
+          "args": "{\"instruction\": \"hanging plants\", \"view_type\": \"current\"}",
           "result": "Counted 2 'hanging plants' in current view."
         }
       ],
-      "llm_s": 8.97,
-      "vlm_s": 1.25,
-      "total_s": 10.88
+      "llm_s": 4.62,
+      "vlm_s": 0.75,
+      "total_s": 6.08
     },
     {
       "prompt": "Zoom in on the bookstore. What is the name of it?",
-      "answer": "The name of the bookstore is The Book Nook.",
+      "answer": "The bookstore is named The Book Nook.",
       "calls": [
         {
           "name": "zoom_bounding",
-          "args": "{\"instruction\":\"bookstore\"}",
+          "args": "{\"instruction\": \"bookstore\"}",
           "result": "Zoomed to target: bookstore"
         },
         {
           "name": "query_answer",
-          "args": "{\"instruction\":\"what does the sign say?\",\"view_type\":\"current\"}",
+          "args": "{\"instruction\": \"what is the name of the bookstore?\", \"view_type\": \"current\"}",
           "result": "The Book Nook"
         }
       ],
-      "llm_s": 20.25,
-      "vlm_s": 1.61,
-      "total_s": 23.13
+      "llm_s": 2.92,
+      "vlm_s": 1.28,
+      "total_s": 5.64
     },
     {
       "prompt": "Go to the store-front2 viewpoint and zoom in on the bank.",
@@ -69,18 +70,18 @@
       "calls": [
         {
           "name": "go_to_preset",
-          "args": "{\"name\":\"store-front2\"}",
+          "args": "{\"name\": \"store-front2\"}",
           "result": "Moved to preset 'store-front2'"
         },
         {
           "name": "zoom_bounding",
-          "args": "{\"instruction\":\"bank\"}",
+          "args": "{\"instruction\": \"bank\"}",
           "result": "Zoomed to target: bank"
         }
       ],
-      "llm_s": 11.98,
-      "vlm_s": 0.92,
-      "total_s": 13.81
+      "llm_s": 2.72,
+      "vlm_s": 0.76,
+      "total_s": 4.55
     }
   ]
 }
