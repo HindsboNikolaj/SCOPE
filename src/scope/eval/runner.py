@@ -60,6 +60,28 @@ from scope.blender.preset_helpers import (
 )
 
 
+
+def _window():
+    """The window, resolved without relying on a context Blender only fills from its event loop."""
+    win = getattr(bpy.context, "window", None)
+    if win is not None:
+        return win
+    wm = getattr(bpy.context, "window_manager", None)
+    return wm.windows[0] if wm and wm.windows else None
+
+
+def _screen():
+    """The screen, for the same reason."""
+    try:
+        from ..blender.helper_funcs import active_screen
+        return active_screen()
+    except Exception:
+        win = getattr(bpy.context, "window", None)
+        if win is not None:
+            return win.screen
+        wm = getattr(bpy.context, "window_manager", None)
+        return wm.windows[0].screen if wm and wm.windows else None
+
 def get_vlm_label() -> str:
     """Return a human-readable label for the active VLM, or empty string."""
     try:
@@ -117,7 +139,7 @@ def prepare_view_for_capture():
     inherited from the file or from the user, and then two machines disagree.
     """
     try:
-        for area in bpy.context.screen.areas:
+        for area in _screen().areas:
             if area.type != "VIEW_3D":
                 continue
             for space in area.spaces:
@@ -134,7 +156,7 @@ def prepare_view_for_capture():
                 try:
                     region = next(r for r in area.regions if r.type == "WINDOW")
                     with bpy.context.temp_override(
-                            window=bpy.context.window, screen=bpy.context.screen,
+                            window=_window(), screen=_screen(),
                             area=area, region=region, space=space):
                         bpy.ops.view3d.view_center_camera()
                 except (RuntimeError, AttributeError, StopIteration):
@@ -177,12 +199,17 @@ def prepare_view_for_capture():
                         setattr(ov, attr, False)
                     except (TypeError, AttributeError):
                         pass
-                for attr in ("show_gizmo", "show_region_ui", "show_region_toolbar",
-                             "show_region_header"):
-                    try:
-                        setattr(space, attr, False)
-                    except (TypeError, AttributeError):
-                        pass
+                # Gizmos are drawn inside the 3D region, so they can reach a capture and are
+                # turned off. The editor chrome flags that used to be set alongside them,
+                # show_region_ui, show_region_toolbar and show_region_header, are deliberately
+                # not: they resize the editor's regions, and doing that from outside Blender's
+                # event loop segfaults the process rather than raising, so the try/except around
+                # them caught nothing. They were never needed either. Both capture paths
+                # photograph the 3D region alone and no chrome has ever appeared in a frame.
+                try:
+                    space.show_gizmo = False
+                except (TypeError, AttributeError):
+                    pass
             break
     except Exception as _e:
         print(f"[runner] WARN: could not standardise the viewport: {_e}")
@@ -559,6 +586,10 @@ RUNTIME_COLS = [
     "repeat_idx", "start_ts", "end_ts", "llm_model", "vlm_model",
     "wall_total", "llm_total", "vlm_total", "camera_total", "script_total",
     "final_answer", "tool_call_order", "actual_tool_calls_json", "llm_raw", "llm_readable",
+    # Provenance. Both are written into every row, so both have to be declared here: csv's
+    # DictWriter raises on a key it was not told about, which took the whole run down on its
+    # first row rather than dropping a column.
+    "preset_applied", "panorama",
 ]
 
 JUDGE_COLS = ["judge_error_mode", "judge_reason"]
@@ -948,6 +979,42 @@ def _batch_step():
         return None
 
 
-# Entrypoint: register timer
-print("=== Starting SCOPE Batch Evaluation Runner ===")
-bpy.app.timers.register(_batch_step, first_interval=0.2)
+# Entrypoint.
+#
+# The batch runs on bpy.app.timers, which needs Blender's event loop to be ticking. On a
+# machine with no window manager it does not tick, and the failure is silent in the worst way:
+# the timer registers, Blender sits in its event loop, and the run produces no output, no error
+# and no CSV. It looks like a very slow benchmark. It never finishes.
+#
+# So the timer is tested rather than assumed. Register a probe, give the event loop a moment to
+# call it, and if it never does, drive the same step function from a plain loop here instead.
+# The step function is identical either way; only who calls it changes.
+print("=== Starting SCOPE Batch Evaluation Runner ===", flush=True)
+
+_TIMER_ALIVE = [False]
+
+
+def _timer_probe():
+    _TIMER_ALIVE[0] = True
+    return None
+
+
+def _drive_by_loop():
+    print("[runner] Blender's timers are not firing, which is normal with no window manager. "
+          "Driving the batch from the script instead.", flush=True)
+    while True:
+        delay = _batch_step()
+        if delay is None:
+            return
+        _time.sleep(max(float(delay), 0.0))
+
+
+bpy.app.timers.register(_timer_probe, first_interval=0.0)
+_deadline = _time.time() + float(os.environ.get("SCOPE_TIMER_PROBE_SECONDS", "5"))
+while not _TIMER_ALIVE[0] and _time.time() < _deadline:
+    _time.sleep(0.05)
+
+if _TIMER_ALIVE[0]:
+    bpy.app.timers.register(_batch_step, first_interval=0.2)
+else:
+    _drive_by_loop()
