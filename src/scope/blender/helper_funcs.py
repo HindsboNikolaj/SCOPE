@@ -14,6 +14,32 @@ from bpy_extras import view3d_utils
 from mathutils import Vector
 
 
+def active_window():
+    """The window to drive viewport operators through.
+
+    bpy.context.window and bpy.context.screen are only populated when Blender calls into Python
+    from its own event loop: a timer, an operator, a handler. Code running in the body of a
+    --python script sees both as None, and every capture then fails with
+    "'NoneType' object has no attribute 'areas'", which reads as a broken install rather than a
+    missing context. The window manager knows regardless of who is asking, so ask it.
+    """
+    win = getattr(bpy.context, "window", None)
+    if win is not None:
+        return win
+    wm = getattr(bpy.context, "window_manager", None)
+    if wm and wm.windows:
+        return wm.windows[0]
+    raise RuntimeError(
+        "Blender has no window. Captures photograph a 3D viewport, so SCOPE cannot run under "
+        "`blender --background`. Start Blender with a window, on a virtual display if the "
+        "machine has no screen; see docs/HEADLESS.md.")
+
+
+def active_screen():
+    """The screen of active_window(), for the same reason."""
+    return active_window().screen
+
+
 def corrected_persp_area_zoom_fov(cam_obj, u0, v0, u1, v1, margin=1.02, max_zoom=6.0):
     """
     Perspective-aware area zoom with cosine correction.
@@ -90,7 +116,7 @@ def screenshot_camera_view(out_path: str, wait: float = 0.05):
     C     = bpy.context
     scene = C.scene
 
-    area   = next(a for a in C.window.screen.areas if a.type == 'VIEW_3D')
+    area   = next(a for a in active_screen().areas if a.type == 'VIEW_3D')
     region = next(r for r in area.regions if r.type == 'WINDOW')
     space  = area.spaces.active
     rv3d   = space.region_3d
@@ -128,14 +154,15 @@ def screenshot_camera_view(out_path: str, wait: float = 0.05):
         space.show_region_toolbar   = False
         space.show_region_header    = False
 
-        for a in C.window.screen.areas:
+        for a in active_screen().areas:
             if a.type == 'VIEW_3D':
                 a.tag_redraw()
         region.tag_redraw()
         time.sleep(wait)
 
         raw_path = out_path.replace(".png", "_raw.png")
-        override = {'window':C.window, 'screen':C.screen, 'area':area, 'region':region}
+        override = {'window': active_window(), 'screen': active_screen(),
+                    'area': area, 'region': region}
         with C.temp_override(**override):
             bpy.ops.screen.screenshot_area(filepath=raw_path, hide_props_region=False)
 
@@ -166,7 +193,7 @@ def screenshot_camera_view(out_path: str, wait: float = 0.05):
         space.show_region_ui        = orig_region_ui
         space.show_region_toolbar   = orig_region_toolbar
         space.show_region_header    = orig_region_header
-        for a in C.window.screen.areas:
+        for a in active_screen().areas:
             if a.type == 'VIEW_3D':
                 a.tag_redraw()
 
@@ -208,10 +235,10 @@ def fast_opengl_screenshot(out_path: str, scale_crop: bool = True):
     import os as _os
 
     C = bpy.context
-    win = C.window
+    win = active_window()
     scene = C.scene
 
-    area = next(a for a in C.screen.areas if a.type == 'VIEW_3D')
+    area = next(a for a in active_screen().areas if a.type == 'VIEW_3D')
     region = next(r for r in area.regions if r.type == 'WINDOW')
     space = area.spaces.active
     space.region_3d.view_perspective = 'CAMERA'
@@ -487,7 +514,7 @@ def _force_scene_update():
     except Exception:
         pass
     try:
-        for area in bpy.context.window.screen.areas:
+        for area in active_screen().areas:
             if area.type == 'VIEW_3D':
                 area.tag_redraw()
     except Exception:

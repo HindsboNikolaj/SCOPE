@@ -122,6 +122,34 @@ _RESOLVED_BACKEND = None if _CAPTURE_BACKEND in ("auto", "") else _CAPTURE_BACKE
 
 _BLANK_WARNED = False
 
+# Whether captures survive the run.
+#
+# Every capture used to be kept. At the benchmark's native resolution a frame is about 15 MB,
+# and a 541 row run takes several per row, so a single pairing left tens of gigabytes of PNGs
+# that nothing read again. They are worth keeping while debugging a scene, annotating evidence
+# or building a demo, and worth nothing otherwise.
+#
+# So the default is a small ring: the most recent frames stay on disk, older ones are removed
+# as new ones arrive. A ring rather than delete-immediately because a tool hands back a path
+# and something downstream may still open it, and because the last few frames are exactly what
+# you want when a row goes wrong.
+KEEP_CAPTURES = os.environ.get("SCOPE_KEEP_CAPTURES", "0").strip().lower() in ("1", "true", "yes")
+CAPTURE_RING = max(1, int(os.environ.get("SCOPE_CAPTURE_RING", "8") or 8))
+_RECENT_CAPTURES: List[str] = []
+
+
+def _retire_old_captures(path: str) -> None:
+    """Keep the ring bounded. Never raises: losing a capture must not lose a run."""
+    _RECENT_CAPTURES.append(path)
+    if KEEP_CAPTURES:
+        return
+    while len(_RECENT_CAPTURES) > CAPTURE_RING:
+        old = _RECENT_CAPTURES.pop(0)
+        try:
+            os.remove(old)
+        except OSError:
+            pass
+
 
 def _is_flat(path) -> bool:
     """True if the image has no variation at all, which is what a dead capture looks like."""
@@ -142,6 +170,7 @@ def _capture_frame(prefix: str = "raw") -> str:
         screenshot_camera_view(str(fp))
         if not _is_flat(fp):
             _RESOLVED_BACKEND = "viewport"
+            _retire_old_captures(str(fp))
             return str(fp)
 
         fast_opengl_screenshot(str(fp))
@@ -164,12 +193,14 @@ def _capture_frame(prefix: str = "raw") -> str:
         _RESOLVED_BACKEND = "opengl"
         print("[scope] capture: window grab came back blank, using the offscreen viewport "
               "draw for this run (SCOPE_CAPTURE=opengl to make it explicit).", flush=True)
+        _retire_old_captures(str(fp))
         return str(fp)
 
     if _RESOLVED_BACKEND in ("opengl", "offscreen", "headless"):
         fast_opengl_screenshot(str(fp))
     else:
         screenshot_camera_view(str(fp))
+    _retire_old_captures(str(fp))
 
     # Say something the first time a capture comes back with no variation at all.
     #

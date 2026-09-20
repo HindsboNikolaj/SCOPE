@@ -34,13 +34,35 @@ class VLMClient:
 
 # ─── utils ────────────────────────────────────────────────────────────────────
 
+# Longest edge of an image handed to a vision model.
+#
+# The scenes render at very different sizes: book-nook is 3240x3240, ten and a half megapixels,
+# where whitechapel is 1920x1080. Sending the native frame made the vision model the dominant
+# cost on the large scenes and not on the small ones, which reads as one scene being hard when
+# it is only being photographed bigger. Measured against the served Moondream, one point call
+# was 0.38s at 3240x3240 and 0.07s at 1000x1000.
+#
+# The models resize internally anyway, so above their own input size the extra pixels buy
+# nothing and cost encode, transfer and decode. 1536 is comfortably above what Moondream and
+# Qwen-VL consume. Set SCOPE_VLM_MAX_EDGE=0 to send frames untouched.
+VLM_MAX_EDGE = int(os.environ.get("SCOPE_VLM_MAX_EDGE", "1536") or 0)
+
+
+def _fit_for_vlm(im: Image.Image) -> Image.Image:
+    if not VLM_MAX_EDGE or max(im.size) <= VLM_MAX_EDGE:
+        return im
+    scale = VLM_MAX_EDGE / max(im.size)
+    return im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))),
+                     Image.LANCZOS)
+
+
 def _to_pil(img) -> Image.Image:
     if isinstance(img, Image.Image):
-        return img
+        return _fit_for_vlm(img)
     try:
         import numpy as np
         if isinstance(img, np.ndarray):
-            return Image.fromarray(img)
+            return _fit_for_vlm(Image.fromarray(img))
     except Exception:
         pass
     raise TypeError("Unsupported image type for VLM")

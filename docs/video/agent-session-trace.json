@@ -1,0 +1,87 @@
+{
+  "planner": "Qwen3-4B on vLLM",
+  "vlm": "Moondream 3.1 on Photon, served over HTTP",
+  "note": "Measured on one machine, both models local. Times are seconds per turn.",
+  "turns": [
+    {
+      "prompt": "Pan the camera 10 degrees to the right.",
+      "answer": "The camera has been panned 10 degrees to the right.",
+      "calls": [
+        {
+          "name": "ptz_adjust",
+          "args": "{\"pan_deg\": 10}",
+          "result": "PTZ adjusted"
+        }
+      ],
+      "llm_s": 0.98,
+      "vlm_s": 0.0,
+      "total_s": 1.7
+    },
+    {
+      "prompt": "Now pan 20 degrees to the left.",
+      "answer": "The camera has been panned 20 degrees to the left.",
+      "calls": [
+        {
+          "name": "ptz_adjust",
+          "args": "{\"pan_deg\": -20}",
+          "result": "PTZ adjusted"
+        }
+      ],
+      "llm_s": 1.48,
+      "vlm_s": 0.0,
+      "total_s": 2.12
+    },
+    {
+      "prompt": "How many hanging plants are outside the bookshop?",
+      "answer": "There are 2 hanging plants outside the bookshop in the current view.",
+      "calls": [
+        {
+          "name": "count_pointing",
+          "args": "{\"instruction\": \"hanging plants\", \"view_type\": \"current\"}",
+          "result": "Counted 2 'hanging plants' in current view."
+        }
+      ],
+      "llm_s": 4.62,
+      "vlm_s": 0.75,
+      "total_s": 6.08
+    },
+    {
+      "prompt": "Zoom in on the bookstore. What is the name of it?",
+      "answer": "The bookstore is named The Book Nook.",
+      "calls": [
+        {
+          "name": "zoom_bounding",
+          "args": "{\"instruction\": \"bookstore\"}",
+          "result": "Zoomed to target: bookstore"
+        },
+        {
+          "name": "query_answer",
+          "args": "{\"instruction\": \"what is the name of the bookstore?\", \"view_type\": \"current\"}",
+          "result": "The Book Nook"
+        }
+      ],
+      "llm_s": 2.92,
+      "vlm_s": 1.28,
+      "total_s": 5.64
+    },
+    {
+      "prompt": "Go to the store-front2 viewpoint and zoom in on the bank.",
+      "answer": "The camera has been moved to the store-front2 viewpoint and zoomed in on the bank.",
+      "calls": [
+        {
+          "name": "go_to_preset",
+          "args": "{\"name\": \"store-front2\"}",
+          "result": "Moved to preset 'store-front2'"
+        },
+        {
+          "name": "zoom_bounding",
+          "args": "{\"instruction\": \"bank\"}",
+          "result": "Zoomed to target: bank"
+        }
+      ],
+      "llm_s": 2.72,
+      "vlm_s": 0.76,
+      "total_s": 4.55
+    }
+  ]
+}
