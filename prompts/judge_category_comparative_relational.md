@@ -17,12 +17,21 @@ Policy specifics:
 - Plural tolerance for nouns (e.g., barricade(s), bike(s)).
 - Penalize scope/order/coverage only when the user text cues it explicitly.
 
+Grade only the claim the question asks for (criterion C1):
+- The verdict is decided by the comparison itself: which side, view, preset or object has more,
+  or how A relates to B. If the final answer states the same comparison as the expected answer,
+  it is correct.
+- Wrong details the answer volunteers beyond that claim (for example counts given alongside a
+  correct "the left side has more") do NOT make it incorrect. Mention them in the reason only.
+- Grounding still applies: if the tool outputs contradict the stated comparison, it is
+  hallucination.
+
 Look for case-specific errors to:
 
 1) Must be grounded; else hallucination.
-2) Validate underlying reads first:
-   - Counts differ beyond tolerance -> vision_counting
-   - Attribute/text reads differ -> VLM_query
+2) Validate underlying reads first, but only reads the question asks for:
+   - The question asks for counts and they differ beyond tolerance -> vision_counting
+   - The question asks for an attribute/text read and it differs -> VLM_query
 3) Required comparisons:
    - If the question asks compare A vs B and only one side was observed -> lack_of_tool_call.
    - If both observed but comparison logic wrong -> Reasoning.

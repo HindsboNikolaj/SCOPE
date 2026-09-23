@@ -20,7 +20,10 @@ LOCAL JUDGE SUPPORT:
     JUDGE_API_BASE=http://localhost:11434/v1 JUDGE_MODEL_ID=llama3 python -m scope.eval.judge -i results.csv -o judged.csv
 """
 
-import os, sys, json, csv, re, argparse, difflib, hashlib
+import os
+import shutil, sys, json, csv, re, argparse, difflib, hashlib
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -228,13 +231,30 @@ def build_category_key(eval_category: str, multi_step_mode: str) -> str:
 # Message builder                                                              #
 # --------------------------------------------------------------------------- #
 
+# The raw conversation is pasted into the judge prompt whole. On a verbose planner that is
+# tens of thousands of tokens and the judge returns a 400 before grading anything -- tA02
+# failed this way on every seat, every attempt, from Sep 6, and produced only header-sized
+# partials. Keep the head and the tail: the setup and the final answer carry the verdict, the
+# middle is repeated tool chatter.
+TRANSCRIPT_CAP = int(os.environ.get("JUDGE_TRANSCRIPT_CAP", "24000"))
+
+
+def _cap(text: str) -> str:
+    if not text or len(text) <= TRANSCRIPT_CAP:
+        return text
+    head = TRANSCRIPT_CAP * 2 // 3
+    tail = TRANSCRIPT_CAP - head
+    return (f"{text[:head]}\n\n... [{len(text) - TRANSCRIPT_CAP} characters of tool chatter "
+            f"elided by the harness] ...\n\n{text[-tail:]}")
+
+
 def build_messages(row: Dict[str, Any]) -> List[Dict[str, str]]:
     eval_category = jget(row, "eval_category")
     multi_step_mode = jget(row, "multi_step_mode")
     key = build_category_key(eval_category, multi_step_mode)
     tmpl = TEMPLATES.get(key) or TEMPLATES["descriptor"]
 
-    full_conversation = jget(row, "llm_raw") or jget(row, "llm_readable")
+    full_conversation = _cap(jget(row, "llm_raw") or jget(row, "llm_readable"))
     question = jget(row, "question")
     expected_answer = jget(row, "expected_answer")
     final_answer = jget(row, "final_answer")
@@ -277,14 +297,32 @@ def call_judge(messages: List[Dict[str, str]], base: str, model: str, api_key: s
     try:
         return json.loads(text)
     except Exception:
-        m = re.search(r"\{.*\}", text, re.S)
-        if not m:
-            return {"is_correct": False, "reason": f"Judge returned non-JSON: {text[:200]!r}", "error_mode": "format"}
-        raw = m.group(0)
+        pass
+
+    # Take the first complete JSON object and ignore whatever follows.
+    #
+    # This used to be re.search(r"\{.*\}", text, re.S), which is greedy: it spans from the first
+    # brace to the *last* one, so a judge that emits its verdict and then explains itself
+    # produces "Extra data: line 6 column 1" and the row is scored wrong for a formatting
+    # reason. Measured on ERNIE-4.5 that was 36% of rows -- a judge that was answering
+    # perfectly well, marked down for punctuation.
+    dec = json.JSONDecoder()
+    last_err = None
+    for i, ch in enumerate(text):
+        if ch != "{":
+            continue
         try:
-            return json.loads(raw)
-        except Exception as e:
-            return {"is_correct": False, "reason": f"Judge JSON decode error: {e}", "error_mode": "format"}
+            obj, _ = dec.raw_decode(text[i:])
+        except ValueError as e:
+            last_err = e
+            continue
+        if isinstance(obj, dict) and ("is_correct" in obj or "reason" in obj):
+            return obj
+    if last_err is None:
+        return {"is_correct": False, "reason": f"Judge returned non-JSON: {text[:200]!r}",
+                "error_mode": "format"}
+    return {"is_correct": False, "reason": f"Judge JSON decode error: {last_err}",
+            "error_mode": "format"}
 
 
 # --------------------------------------------------------------------------- #
@@ -338,6 +376,12 @@ def main():
                     help="Judge API key (overrides JUDGE_API_KEY env var).")
     ap.add_argument("--no-resume", action="store_true",
                     help="Do not resume; overwrite output instead of appending remaining rows.")
+    ap.add_argument("--concurrency", type=int,
+                    default=int(os.getenv("JUDGE_CONCURRENCY", "8")),
+                    help="Judge calls in flight at once. One at a time is fine for a single "
+                         "run and hopeless for a sweep: 25 pairings x 536 rows x 3 judges is "
+                         "40k calls, and a slow judge at 5 rows a minute turns that into days. "
+                         "The server batches them; 1 restores the old serial behaviour.")
     args = ap.parse_args()
 
     in_path = args.in_path
@@ -367,37 +411,104 @@ def main():
             out_header.append(col)
             lower.append(col.lower())
 
-    # RESUME: read existing judged file (if any) to collect row keys we should skip
+    # RESUME: collect the row keys we should skip.
+    #
+    # A row is skippable when it carries a USABLE VERDICT, not merely when it is present. A row
+    # the judge could not grade is still written, with judge_error in its error mode and an empty
+    # judge_is_correct, so keying resume on presence made a failed row permanently unjudgeable:
+    # tA06's muse seat held 536 rows of which 385 were errors, and every rerun reported "done
+    # (151 graded)" without attempting one of them. Any tool that asks "is this row graded?" (a
+    # resume gate, a completeness check, a report) must use this same predicate: in the
+    # campaign two gates that each wrote their own disagreed silently, and both reported success.
+    GRADED = {"true", "1", "yes", "false", "0", "no"}
+
+    def _is_graded(row):
+        return (row.get("judge_is_correct") or "").strip().lower() in GRADED
+
     existing_keys = set()
     out_exists = os.path.exists(out_path)
     if out_exists and not args.no_resume:
         try:
             with open(out_path, "r", encoding="utf-8", errors="ignore") as f:
                 r = csv.DictReader(f)
+                total = 0
                 for row in r:
-                    existing_keys.add(_row_key(row))
-            print(f"[resume] {len(existing_keys)} rows already judged in {out_path}; will skip them.")
+                    total += 1
+                    if _is_graded(row):
+                        existing_keys.add(_row_key(row))
+            skipped = total - len(existing_keys)
+            print(f"[resume] {len(existing_keys)} of {total} rows already judged in {out_path}; "
+                  f"will skip them"
+                  + (f" and re-judge {skipped} that carry no verdict." if skipped else "."))
         except Exception as e:
             print(f"[resume] Failed to read existing output (will rewrite): {e}")
             existing_keys.clear()
             out_exists = False
 
-    # Open output for append (resume) or write (fresh)
+    # Resume by rewriting, not by appending.
+    #
+    # Appending assumes every row already in the file was recognised as already judged. When
+    # that fails, for any reason, the run adds a second copy of rows that are already there and
+    # nothing complains: the file has one header, the counts in the log add up, and the only
+    # symptom is more rows out than went in. It happened here across three restarts and
+    # produced 792 rows from a 541 row input, 251 of them duplicated, with the accuracy
+    # computed over the duplicates.
+    #
+    # So the previously judged rows are carried forward explicitly and the file is written
+    # whole. The output then cannot contain a key twice however many times a run is restarted,
+    # and a crash mid-write costs the temporary file rather than the results.
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    mode = "a" if out_exists and not args.no_resume else "w"
+    carried = {}
+    if out_exists and not args.no_resume:
+        try:
+            with open(out_path, "r", encoding="utf-8", errors="ignore") as f:
+                for row in csv.DictReader(f):
+                    carried[_row_key(row)] = row
+        except Exception as e:
+            print(f"[resume] could not read {out_path}, judging everything again: {e}")
+            carried.clear()
+            existing_keys.clear()
+    concurrency = max(1, int(args.concurrency))
+    block_size = max(1, concurrency * 4)
+    pending = deque(i for i, r in enumerate(in_rows)
+                    if not (existing_keys and _row_key(r) in existing_keys))
+    results: Dict[int, Dict[str, Any]] = {}
+
+    def judge_one(i: int) -> Dict[str, Any]:
+        """A row the judge refuses must cost that row, not the whole tag.
+
+        Before this, one over-long row raised out of the worker and the run died with nothing
+        written, so a tag could fail for two days while the batch script reported it done.
+        """
+        try:
+            return call_judge(build_messages(in_rows[i]), base, model, key)
+        except Exception as exc:
+            msg = f"{type(exc).__name__}: {exc}"
+            print(f"[judge] row {i} ungradeable — {msg[:200]}", flush=True)
+            return {"is_correct": None, "reason": f"judge failed: {msg[:500]}",
+                    "error_mode": "judge_error"}
+
+    if concurrency > 1:
+        print(f"[judge] {len(pending)} rows to judge, {concurrency} calls in flight")
+
+    mode = "w"
+    tmp_path = out_path + f".partial.{os.getpid()}"
     judged_count = 0
     skipped_count = 0
 
-    with open(out_path, mode, encoding="utf-8", newline="") as f:
+    with open(tmp_path, mode, encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=out_header, extrasaction="ignore")
 
         if mode == "w":
             w.writeheader()
 
-        for row in in_rows:
+        for idx, row in enumerate(in_rows):
             row_key = _row_key(row)
             if existing_keys and row_key in existing_keys:
                 skipped_count += 1
+                prev = carried.get(row_key)
+                if prev:
+                    w.writerow(prev)
                 continue
 
             # Carry judge endpoint info (for provenance)
@@ -410,9 +521,26 @@ def main():
             if "scope_satisfied" not in row or str(row["scope_satisfied"]).strip() == "":
                 row["scope_satisfied"] = ""
 
-            # Build messages & call judge
-            messages = build_messages(row)
-            judge_obj = call_judge(messages, base, model, key)
+            # Judge in blocks, write in order.
+            #
+            # The calls go out concurrently because the serving side batches them happily and
+            # the round trip, not the GPU, is what a serial loop spends its time on. The write
+            # loop still walks in_rows in order, so the output file and its checkpoints are
+            # exactly what they were before.
+            if idx not in results:
+                block = [idx]
+                while pending and pending[0] <= idx:
+                    pending.popleft()
+                while pending and len(block) < block_size:
+                    block.append(pending.popleft())
+                if concurrency > 1 and len(block) > 1:
+                    with ThreadPoolExecutor(max_workers=concurrency) as ex:
+                        for k, obj in zip(block, ex.map(judge_one, block)):
+                            results[k] = obj
+                else:
+                    for k in block:
+                        results[k] = judge_one(k)
+            judge_obj = results.pop(idx)
 
             row["judge_is_correct"] = judge_obj.get("is_correct", False)
             row["judge_reason"] = judge_obj.get("reason", "")
@@ -423,10 +551,24 @@ def main():
 
             w.writerow(row)
             judged_count += 1
+            # Publish progress without disturbing the open handle. The file is built at a
+            # temporary path and swapped into place at the end, so a crash cannot leave a
+            # half-written results file. On a 541 row run that also meant nothing was visible
+            # until the very end, so every 25 rows the partial file is copied over the real
+            # one: progress can be watched, and an interrupted run keeps nearly all its work.
+            if judged_count % 25 == 0:
+                try:
+                    f.flush()
+                    shutil.copyfile(tmp_path, out_path)
+                except Exception:
+                    pass
 
             if judged_count % 10 == 0:
                 print(f"[judge] Processed {judged_count} rows...")
 
+    # Swap the finished file into place in one step, so an interrupted run never leaves a
+    # half-written results file where a complete one used to be.
+    os.replace(tmp_path, out_path)
     print(f"[judge] Done. Judged {judged_count} rows, skipped {skipped_count} (already judged).")
     print(f"[judge] Output: {out_path}")
 

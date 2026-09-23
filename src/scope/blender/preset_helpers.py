@@ -52,11 +52,32 @@ def create_preset(name: str, include_transform: bool = True, include_focal_lengt
         """ % '\n'.join(lines)))
 
 
+def _preset_dirs():
+    """Where to look for camera presets, widest first.
+
+    SCOPE_PRESET_DIR comes first because it is an explicit instruction. Blender's own preset
+    paths follow, which is where scripts/04_install_presets.py puts them on a normal install.
+
+    This exists because the two disagreed. scripts/07_smoke_test.py and the capture scripts read
+    SCOPE_PRESET_DIR, apply_preset did not, and nothing reconciled them. In a container with the
+    presets mounted somewhere other than Blender's user directory, the scripts found them and
+    the tool did not: go_to_preset returned "Preset not found" for a preset sitting on disk, and
+    the planner, reasonably, told the user it did not exist.
+    """
+    import os as _os
+    dirs = []
+    d = _os.environ.get("SCOPE_PRESET_DIR")
+    if d:
+        dirs.append(d)
+    dirs.extend(bpy.utils.preset_paths("camera"))
+    return dirs
+
+
 def list_presets() -> list[str]:
     """
     Return a sorted list of all camera preset names (without .py) found in system+user dirs.
     """
-    preset_dirs = bpy.utils.preset_paths("camera")
+    preset_dirs = _preset_dirs()
     names = set()
     for pd in preset_dirs:
         if os.path.isdir(pd):
@@ -157,7 +178,7 @@ def apply_preset(name: str) -> bool:
     the preset was applied. If you are not checking the return, raise instead.
     """
     global _LAST_PRESET, _LAST_PRESET_POSE, _LAST_PRESET_BLEND
-    for pd in bpy.utils.preset_paths("camera"):
+    for pd in _preset_dirs():
         path = os.path.join(pd, f"{name}.py")
         if os.path.isfile(path):
             # errors="replace" rather than a bare open. Any unreadable byte then becomes a

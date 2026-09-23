@@ -10,20 +10,18 @@ SCOPE turns a plain-language camera request into a closed loop: a small language
 [![Space](https://img.shields.io/badge/Space-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/spaces/HindsboNikolaj/scope)
 [![Collection](https://img.shields.io/badge/Collection-HuggingFace-yellow?logo=huggingface)](https://huggingface.co/collections/HindsboNikolaj/scope-hri-26-6a1626e0b8e9b9205c09fffc)
 
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <img src="docs/images/demo-real-camera.gif" alt="Research demonstration of SCOPE driving a physical PTZ camera" width="100%" />
-      <strong>Physical camera — research demonstration.</strong><br />
-      The same high-level agent design and exposed tool contract drive the AXIS PTZ camera. The planner differs between the Qwen3-30B-A3B MoE and dense Qwen3-32B runs, so the visible difference is speed. The public repository does not include AXIS driver code.
-    </td>
-    <td width="50%" valign="top">
-      <img src="docs/images/demo-blender-sim.gif" alt="SCOPE running in the Blender simulation across three urban scenes" width="100%" />
-      <strong>Blender simulation — runnable here.</strong><br />
-      The agent runs across three urban scenes. The trace logs each planner step, tool call, and VLM observation as the loop unfolds.
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="docs/images/demo-agent-session.gif" alt="SCOPE answering questions about a scene by driving a camera" width="720" />
+</p>
+
+<p align="center">
+  <em>One session, unedited. The agent counts hanging plants, zooms onto the shop sign, reads it,
+  then switches viewpoint and frames the bank. Every tool call and result on screen is from the
+  run's own message log
+  (<a href="docs/video/agent-session-trace.json"><code>agent-session-trace.json</code></a>);
+  the footage is composited from captured frames.
+  <a href="docs/video/scope-agent-session.mp4">Full 26s clip &rarr;</a></em>
+</p>
 
 ## What it is
 
@@ -32,7 +30,7 @@ A small language model picks actions; a vision-language model handles perception
 This repository also exposes the recipes for agentic control of a camera object in Blender via that Python API. It ships:
 
 - The full agent loop and nine-tool action surface.
-- A 541-row task CSV and the supported 536-task subset used for the published results.
+- The 536-task benchmark CSV: the set the paper's numbers were computed on, plus the corrections from a September 2026 audit ([`benchmark/CHANGELOG.md`](benchmark/CHANGELOG.md)).
 - An LLM-as-judge evaluation harness with per-category metrics.
 - A repack-safe Blender simulation environment with shared scene presets.
 - Per-category judge prompts and the SLM planner system prompt.
@@ -46,6 +44,10 @@ This repository also exposes the recipes for agentic control of a camera object 
 | Add a camera or perception capability | [Add a tool](#add-a-tool) | A runnable Blender tutorial and the persistent extension points |
 | Compare planner and vision choices | [Published results](#published-results) | Paper numbers with their exact 536-task scope and planner types |
 | Change serving backends | [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) | Ollama, vLLM, hosted planner, and VLM configuration details |
+| Set up a machine to capture correctly | [`docs/SETUP.md`](docs/SETUP.md) | Which shading mode to capture in, and what each costs |
+| Run on a server with no display | [`docs/HEADLESS.md`](docs/HEADLESS.md) | A container that gives Blender a viewport without one |
+| Make captures fast on a GPU box | [`docs/HARDWARE_GL.md`](docs/HARDWARE_GL.md) | One command to a 0.2s capture instead of 15s |
+| Check your install matches a working one | [`docs/VISUAL_SMOKE_TEST.md`](docs/VISUAL_SMOKE_TEST.md) | Every preset and full view, pictured, with what to compare |
 | Hand setup to Claude Code or Codex | [`AGENT_INSTRUCTIONS.md`](AGENT_INSTRUCTIONS.md) | A prerequisite-first install brief that stops at the first failure |
 
 ## Architecture: plan, act, observe, answer
@@ -85,7 +87,7 @@ Static image benchmarks cannot measure whether a model made the right second loo
 | Did a configuration improve the actual task? | Replay tasks against known scenes, presets, and expected answers | Per-task output, judge decision, aggregate metrics |
 | Can I safely change one part of the system? | Keep planner, perception, and camera execution separate | A focused rerun instead of a rewrite of the agent loop |
 
-The repository ships the agent loop, nine Blender-facing tool definitions, VLM adapters, a **541-row** benchmark CSV, and an LLM-as-judge evaluation harness. The published HRI scorecard is a separate **536-task** subset; its relationship to the five additional shipped rows is not established by the public Git history.
+The repository ships the agent loop, nine Blender-facing tool definitions, VLM adapters, the **536-task** benchmark CSV, and an LLM-as-judge evaluation harness. Earlier releases shipped a 541-row pre-correction file under the same name; it has been replaced by the corrected set the paper used, and every row that moved is listed in [`benchmark/changelog_541_to_536.csv`](benchmark/changelog_541_to_536.csv).
 
 ## Quick start
 
@@ -142,7 +144,7 @@ To attach a physical camera, implement and validate an adapter for the device/ve
 
 ## Published results
 
-**Scope of these numbers:** the HRI paper reports GPT-4o-judged results on a supported **536-task published subset**. The historical [`benchmark/scope_536.csv`](benchmark/scope_536.csv) filename now contains **541 shipped rows**; five shipped rows fall outside the published subset. Public Git history begins with the 541-row CSV, so it does not establish a task-by-task provenance story for those rows. Report a fresh 541-task run separately rather than comparing it directly with the paper values below.
+**Scope of these numbers:** the HRI paper reports GPT-4o-judged results on the 536 tasks in [`benchmark/scope_536_paper.csv`](benchmark/scope_536_paper.csv). The default [`benchmark/scope_536.csv`](benchmark/scope_536.csv) is that set with 15 audit corrections applied (13 answers, 2 questions), and the judge prompts now carry two criteria changes, so a fresh run is not directly comparable with the paper values below. Use `scope_536_paper.csv` with the pre-September prompts to reproduce the paper.
 
 The paper evaluates 19 planner–perception pairings. This selected view makes the architectural comparison legible; the full published matrix is in [`docs/RESULTS_FULL.md`](docs/RESULTS_FULL.md).
 
@@ -156,6 +158,15 @@ The paper evaluates 19 planner–perception pairings. This selected view makes t
 
 `MoE` and `Dense` are the planner architectures reported in the paper. The paper’s interpretation is not that one model answers every PTZ question by itself: stronger planners improve tool selection and sequencing, while perception becomes the dominant remaining limitation for stronger planner pairings.
 
+## September 2026 pre-release
+
+| Area | What changed | Read |
+| --- | --- | --- |
+| Dataset | `scope_536.csv` is now the 536-task set the paper was scored on, plus 15 audit corrections. The old file was a 541-row pre-correction lineage with different ids | [`benchmark/CHANGELOG.md`](benchmark/CHANGELOG.md) |
+| Judging | Two criteria changes (C1 comparative, C2 descriptor), a judge script that no longer loses rows silently, and a panel vote | [`docs/JUDGING.md`](docs/JUDGING.md) |
+| Capture | Headless runs, a capture ring instead of keeping every frame, a pixel budget for the VLM, a per-frame blank probe and a run-level colour check | [`docs/CAPTURE_GUARDS.md`](docs/CAPTURE_GUARDS.md) |
+| Results | 29 runs of current planners and vision models, **preliminary**, with what each needs re-run or re-graded | [`docs/PRELIMINARY_RESULTS.md`](docs/PRELIMINARY_RESULTS.md) |
+
 ## Run the benchmark
 
 ```bash
@@ -167,7 +178,7 @@ The paper evaluates 19 planner–perception pairings. This selected view makes t
 | `BENCH_LIMIT` | `0` | You want a smoke test; set `5` before committing to a full run |
 | `SCOPE_RESUME` | `1` | You want to continue a partial run; set `0` for a clean run |
 | `REPEATS` | `1` | You need repeated executions per question |
-| `QUESTIONS_CSV` | `benchmark/scope_536.csv` | You want a different input; the default file currently contains 541 rows |
+| `QUESTIONS_CSV` | `benchmark/scope_536.csv` | You want a different input, e.g. `benchmark/scope_536_paper.csv` to reproduce the paper |
 | `OUT_CSV` | `results/run_<timestamp>/raw_results.csv` | You want to retain or resume a particular raw-results file |
 
 The pipeline runs the Blender runner, judges the trace and final response, and prints aggregate metrics. See [`benchmark/README.md`](benchmark/README.md) for the CSV schema and task categories, [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) for backend setup, and [`docs/architecture.md`](docs/architecture.md) for the complete loop and extension points.
@@ -177,11 +188,53 @@ The pipeline runs the Blender runner, judges the trace and final response, and p
 | Location | Contents |
 | --- | --- |
 | [`src/scope/`](src/scope/) | Agent loop, Blender helpers, tools, VLM clients, runner, and judge |
-| [`benchmark/`](benchmark/) | The 541-row CSV and camera presets; scene downloads stay out of Git for size |
+| [`benchmark/`](benchmark/) | The 536-task CSVs, corrections, preliminary results and camera presets; scene downloads stay out of Git for size |
 | [`configs/`](configs/) | Planner/VLM configurations and paper pairing presets |
 | [`prompts/`](prompts/) | The live planner system prompt and judge prompts |
 | [`examples/`](examples/) | Quick start, custom model, and custom tool tutorials |
 | [`docs/`](docs/) | Configuration, architecture, tool reference, results, and scene-authoring detail |
+
+## Documentation
+
+| | |
+| --- | --- |
+| **Getting it running** | |
+| [`SETUP.md`](docs/SETUP.md) | Shading modes, capture costs, what a correct install looks like |
+| [`HEADLESS.md`](docs/HEADLESS.md) | Running with no display, in a container |
+| [`HARDWARE_GL.md`](docs/HARDWARE_GL.md) | Getting Blender onto the GPU; a capture costs 0.2s, not 15s |
+| [`COLD_START.md`](docs/COLD_START.md) | Why a scene needs time before a capture means anything |
+| [`MISSING_TEXTURES.md`](docs/MISSING_TEXTURES.md) | Which textures are absent, why, and what is recoverable |
+| **Checking it is right** | |
+| [`VISUAL_SMOKE_TEST.md`](docs/VISUAL_SMOKE_TEST.md) | Every preset and full view, pictured |
+| [`SCENES_AT_A_GLANCE.md`](docs/SCENES_AT_A_GLANCE.md) | Each viewpoint, how many questions start there |
+| [`TOOL_DEMO.md`](docs/TOOL_DEMO.md) | Every tool called for real, photographed before and after |
+| [`ZOOM_EVIDENCE.md`](docs/ZOOM_EVIDENCE.md) | `zoom_bounding` end to end, and what the aim fix changed |
+| **Reference** | |
+| [`architecture.md`](docs/architecture.md) | The plan, act, observe, answer loop |
+| [`tool_reference.md`](docs/tool_reference.md) | Signature and return shape of each tool |
+| [`CONFIGURATION.md`](docs/CONFIGURATION.md) | Planner and VLM backends |
+| [`FULL_VIEW.md`](docs/FULL_VIEW.md) | What the full view is per viewpoint, and why it differs |
+| [`PANORAMA_CACHE.md`](docs/PANORAMA_CACHE.md) | How a stored panorama is matched to a camera position |
+| [`adding_models.md`](docs/adding_models.md) | Adding a planner or vision model |
+| [`creating_scenes.md`](docs/creating_scenes.md) | Authoring a new scene |
+| [`RESULTS_FULL.md`](docs/RESULTS_FULL.md) | The full published results matrix |
+
+## Demonstrations
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/images/demo-real-camera.gif" alt="Research demonstration of SCOPE driving a physical PTZ camera" width="100%" />
+      <strong>Physical camera — research demonstration.</strong><br />
+      The same high-level agent design and exposed tool contract drive the AXIS PTZ camera. The planner differs between the Qwen3-30B-A3B MoE and dense Qwen3-32B runs, so the visible difference is speed. The public repository does not include AXIS driver code.
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/images/demo-blender-sim.gif" alt="SCOPE running in the Blender simulation across three urban scenes" width="100%" />
+      <strong>Blender simulation — runnable here.</strong><br />
+      The agent runs across three urban scenes. The trace logs each planner step, tool call, and VLM observation as the loop unfolds.
+    </td>
+  </tr>
+</table>
 
 ## Citation
 

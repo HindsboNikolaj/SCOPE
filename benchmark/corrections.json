@@ -1,0 +1,331 @@
+{
+  "version": "1.1",
+  "base": "benchmark/scope_536_paper.csv",
+  "description": "Adjudicated corrections from the September 2026 question audit. 'keep' entries were examined and confirmed sound; they change nothing and are recorded so the audit is complete. Apply with scripts/apply_corrections.py.",
+  "judging_criteria": [
+    {
+      "id": "C1",
+      "applies_to": "comparative_relational",
+      "rule": "Grade only the claim the question asks for. Wrong volunteered extras (for example a count offered alongside a correct comparison) no longer count against the answer.",
+      "implemented_in": "prompts/judge_category_comparative_relational.md"
+    },
+    {
+      "id": "C2",
+      "applies_to": "descriptor",
+      "rule": "Open descriptions accept any fair, grounded description of the scene, not one reference phrasing. 'Also accept:' in an expected answer lists alternates. Not applied to ocr_identification (stays exact) or location_spatial (stays tight).",
+      "implemented_in": "prompts/judge_category_descriptor.md"
+    }
+  ],
+  "corrections": [
+    {
+      "question_id": "Q_001",
+      "action": "replace-answer",
+      "scene": "whitechapel",
+      "preset": "eor-viewpoint",
+      "eval_category": "comparative_relational",
+      "question": "After panning left 180°, which view has more street lamps—before or after?",
+      "expected_answer": "The view after panning left has more street lamps.",
+      "new_expected_answer": "The original view has more street lamps.",
+      "rationale": "Q_009 asks this at sor-viewpoint and answers 'the original', scoring 39%; Q_001 answers the opposite at 44%. Both cannot hold. The post-turn view measured as a single flat colour, so it contains no lamps."
+    },
+    {
+      "question_id": "Q_002",
+      "action": "replace-answer",
+      "scene": "whitechapel",
+      "preset": "sor-viewpoint",
+      "eval_category": "comparative_relational",
+      "question": "After a 180 degree turn to the left, which view shows more street lamps – before or after?",
+      "expected_answer": "The view after the half-turn shows more buildings.",
+      "new_expected_answer": "The original view has more street lamps.",
+      "rationale": "The question asks about street lamps and the answer talks about buildings, so the pair does not line up. Aligned rather than retired. The direction is not in doubt: the view after the half-turn has fewer of everything."
+    },
+    {
+      "question_id": "Q_004",
+      "action": "keep",
+      "scene": "whitechapel",
+      "preset": "sor-viewpoint",
+      "eval_category": "comparative_relational",
+      "question": "Which side of the road has more trees, left or right?",
+      "expected_answer": "The left side has more trees.",
+      "rationale": "Correct; 43% against the contradicting pair's 11%."
+    },
+    {
+      "question_id": "Q_005",
+      "action": "keep",
+      "scene": "whitechapel",
+      "preset": "sor-viewpoint",
+      "eval_category": "comparative_relational",
+      "question": "Which side of the road has more trees?",
+      "expected_answer": "The Left side has more trees.",
+      "rationale": "Correct; same cluster as Q_004."
+    },
+    {
+      "question_id": "Q_006",
+      "action": "replace-answer",
+      "scene": "whitechapel",
+      "preset": "sor-viewpoint",
+      "eval_category": "comparative_relational",
+      "question": "Which side of the road has more trees, left or right?",
+      "expected_answer": "There are no trees on either side of the road",
+      "new_expected_answer": "There are more trees on the left side of the road.",
+      "rationale": "Q_004 and Q_005 ask the same thing at the same scene and preset and answer 'the left side has more trees'; they score 43%. Q_006 and Q_007 answer 'no trees' and score 11%. Models overwhelmingly report trees, so the 'no trees' pair is the wrong one."
+    },
+    {
+      "question_id": "Q_007",
+      "action": "replace-answer",
+      "scene": "whitechapel",
+      "preset": "sor-viewpoint",
+      "eval_category": "comparative_relational",
+      "question": "Which side has more trees?",
+      "expected_answer": "There are no trees on either side",
+      "new_expected_answer": "The left side has more trees.",
+      "rationale": "Same claim as Q_006 and the same 11% pass rate. Correcting Q_006 alone would leave the benchmark still asserting both things at once."
+    },
+    {
+      "question_id": "Q_009",
+      "action": "keep",
+      "scene": "whitechapel",
+      "preset": "sor-viewpoint",
+      "eval_category": "comparative_relational",
+      "question": "After panning left 180 degrees, which view has more street lamps – the original or the after?",
+      "expected_answer": "The original view had more street lamps.",
+      "rationale": "Correct as written. 39% is genuine model failure, not a grading fault."
+    },
+    {
+      "question_id": "Q_010",
+      "action": "replace-answer",
+      "scene": "whitechapel",
+      "preset": "eor-viewpoint",
+      "eval_category": "comparative_relational",
+      "question": "After a half-turn, which view shows more buildings—before or after?",
+      "expected_answer": "The view after the half-turn shows more buildings.",
+      "new_expected_answer": "The view before the half-turn shows more buildings.",
+      "rationale": "Q_015 asks this at sor-viewpoint and already answers 'before'. The two contradict; the post-turn view has no buildings in it."
+    },
+    {
+      "question_id": "Q_014",
+      "action": "replace-question",
+      "scene": "whitechapel",
+      "preset": "eor-viewpoint",
+      "eval_category": "comparative_relational",
+      "question": "After panning left 180°, which view has more street lamps—before or after?",
+      "expected_answer": "The view after panning left has more street lamps.",
+      "new_question": "After panning left 180deg, which view has more windows - before or after?",
+      "new_expected_answer": "The original view has more windows.",
+      "rationale": "Was a verbatim duplicate of Q_001. Rather than drop it, ask about windows instead - the original view has more either way, so the answer holds and the duplication is gone.",
+      "set_fields": {
+        "scene_objects_mentioned": "window"
+      }
+    },
+    {
+      "question_id": "Q_015",
+      "action": "keep",
+      "scene": "whitechapel",
+      "preset": "sor-viewpoint",
+      "eval_category": "comparative_relational",
+      "question": "After a half-turn, which view shows more buildings—before or after?",
+      "expected_answer": "The view before the half-turn shows more buildings",
+      "rationale": "Correct as written. 32% is genuine model failure."
+    },
+    {
+      "question_id": "Q_051",
+      "action": "keep",
+      "scene": "city-street",
+      "preset": "hotel-m",
+      "eval_category": "descriptor",
+      "question": "Describe the intersection area.",
+      "expected_answer": "Two street lamps flank the intersection near the buildings.",
+      "rationale": "Reference is fair. Fails on grading, not content - see criteria change C2."
+    },
+    {
+      "question_id": "Q_098",
+      "action": "replace-answer",
+      "scene": "whitechapel",
+      "preset": "eor-viewpoint",
+      "eval_category": "multi_step_reasoning",
+      "question": "Turn around (pan 180°) and tell me if the road behind you is also wet.",
+      "expected_answer": "Yes, the road behind also appears wet.",
+      "new_expected_answer": "I don't see a road behind - the view after turning is open sky.",
+      "rationale": "Kept, not dropped. whitechapel has geometry on one side only, so the honest answer is that there is no road back there. That makes it a fair test of whether a model reports absence instead of inventing a road."
+    },
+    {
+      "question_id": "Q_099",
+      "action": "replace-answer",
+      "scene": "whitechapel",
+      "preset": "sor-viewpoint",
+      "eval_category": "multi_step_reasoning",
+      "question": "Turn around (pan 180°) and tell me if the road behind you is also wet.",
+      "expected_answer": "Yes, the road behind also appears wet.",
+      "new_expected_answer": "I don't see a road behind - the view after turning is open sky.",
+      "rationale": "Same fix as Q_098; both kept."
+    },
+    {
+      "question_id": "Q_165",
+      "action": "keep",
+      "scene": "book-nook",
+      "preset": "store-front",
+      "eval_category": "counting",
+      "question": "After zooming in on the bike racks, how many bikes do you see?",
+      "expected_answer": "I count five bikes.",
+      "rationale": "Sound. 4% is genuine counting failure."
+    },
+    {
+      "question_id": "Q_169",
+      "action": "keep",
+      "scene": "book-nook",
+      "preset": "store-front2",
+      "eval_category": "counting",
+      "question": "Count bikes in the left half of the frame.",
+      "expected_answer": "There are about six bikes in the left half",
+      "rationale": "Sound. 2% is genuine counting failure."
+    },
+    {
+      "question_id": "Q_236",
+      "action": "replace-question",
+      "scene": "book-nook",
+      "preset": "store-front",
+      "eval_category": "multi_step_command",
+      "question": "Go to the store-front preset, then zoom in on the bank sign, then read it out loud.",
+      "expected_answer": "I don't see a bank sign in this view.",
+      "new_question": "What's the name of the bank by the book nook store?",
+      "new_expected_answer": "Banque Strechnitz.",
+      "rationale": "As written it instructs the model to zoom in on a sign and read it, then grades it correct only for reporting the sign is absent. 9% pass across 163 gradings. The instruction and the answer are pulling opposite ways, which is why almost everything fails it."
+    },
+    {
+      "question_id": "Q_239",
+      "action": "keep",
+      "scene": "book-nook",
+      "preset": "store-front",
+      "eval_category": "multi_step_command",
+      "question": "Zoom in on the bank sign, then read it aloud.",
+      "expected_answer": "I have executed the steps in order.",
+      "rationale": "Sound as a command-following check."
+    },
+    {
+      "question_id": "Q_274",
+      "action": "keep",
+      "scene": "book-nook",
+      "preset": "store-front",
+      "eval_category": "ocr_identification",
+      "question": "Is there any graffiti on the Book Nook store?",
+      "expected_answer": "No, I don't see any graffiti on the store.",
+      "rationale": "Sound."
+    },
+    {
+      "question_id": "Q_315",
+      "action": "replace-answer",
+      "scene": "city-street",
+      "preset": "hotel-m",
+      "eval_category": "comparative_relational",
+      "question": "Across the full view, which are more, trees or street lamps?",
+      "expected_answer": "There are more trees than street lamps (8 vs 4).",
+      "new_expected_answer": "There are more trees than street lamps.",
+      "rationale": "The question asks which is greater; the parenthetical counts invite the judge to demand exact numbers as well, and 90% of answers fail on the counts while getting the comparison right."
+    },
+    {
+      "question_id": "Q_323",
+      "action": "keep",
+      "scene": "city-street",
+      "preset": "hotel-m",
+      "eval_category": "counting",
+      "question": "Across the full view, how many street lamps are present?",
+      "expected_answer": "There are four street lamps.",
+      "rationale": "Sound as written. 2% across 163 gradings is genuine model failure: counting over a full 360 view is simply hard, and the question is fair."
+    },
+    {
+      "question_id": "Q_347",
+      "action": "keep",
+      "scene": "city-street",
+      "preset": "hotel-m",
+      "eval_category": "descriptor",
+      "question": "Describe what’s in front of the hotel.",
+      "expected_answer": "Two garbage cans, a mailbox, and a street lamp stand in front of the hotel.",
+      "rationale": "Reference is fair. Fails on grading - see C2."
+    },
+    {
+      "question_id": "Q_356",
+      "action": "replace-answer",
+      "scene": "city-street",
+      "preset": "hotel-m",
+      "eval_category": "descriptor",
+      "question": "Describe the sidewalks in this view.",
+      "expected_answer": "The sidewalks appear to be made of brick and are well maintained.",
+      "new_expected_answer": "Grey rectangular stone slabs. Also accept: concrete.",
+      "rationale": "The reference says brick; the sidewalks are stone slabs."
+    },
+    {
+      "question_id": "Q_412",
+      "action": "replace-answer",
+      "scene": "city-street",
+      "preset": "hotel-m",
+      "eval_category": "ocr_identification",
+      "question": "Is there any brand logo visible near the hotel entrance?",
+      "expected_answer": "No brand logo is clearly visible near the entrance.",
+      "new_expected_answer": "Yes - the sign above the entrance reads “Moonlight”.",
+      "rationale": "The sign is legible in the render. Models that said yes were marked wrong."
+    },
+    {
+      "question_id": "Q_462",
+      "action": "replace-answer",
+      "scene": "postwar-city",
+      "preset": "street-view-1",
+      "eval_category": "descriptor",
+      "question": "Describe the town from this vantage point.",
+      "expected_answer": "It is a medium-sized town with low-rise buildings, visible barricades, and overgrown areas.",
+      "new_expected_answer": "A dense urban area of mixed heights and modern styles - taller buildings with balconies alongside shorter boxy structures, ranging from low-rise blocks to taller towers. Shrubbery and barricades are present.",
+      "rationale": "The reference said low-rise; the buildings vary in height, from low-rise blocks to taller towers with balconies. Reference rewritten from the render."
+    },
+    {
+      "question_id": "Q_463",
+      "action": "keep",
+      "scene": "postwar-city",
+      "preset": "street-view-1",
+      "eval_category": "descriptor",
+      "question": "What notable features stand out in the current view?",
+      "expected_answer": "Notable features include barricades, rocks, and aged buildings.",
+      "rationale": "Reference is fair. Fails on grading - see C2."
+    },
+    {
+      "question_id": "Q_465",
+      "action": "replace-answer",
+      "scene": "postwar-city",
+      "preset": "street-view-1",
+      "eval_category": "descriptor",
+      "question": "Describe the town from this vantage point.",
+      "expected_answer": "It is a medium-sized town with low-rise buildings, visible barricades, and overgrown areas.",
+      "new_expected_answer": "A dense urban area of mixed heights and modern styles - taller buildings with balconies alongside shorter boxy structures. Shrubbery and barricades are present.",
+      "rationale": "Carries Q_462's reference word for word, so it takes the same correction. Kept rather than dropped."
+    },
+    {
+      "question_id": "Q_466",
+      "action": "keep",
+      "scene": "postwar-city",
+      "preset": "street-view-1",
+      "eval_category": "descriptor",
+      "question": "What notable features stand out in the current view?",
+      "expected_answer": "Notable features include barricades, rocks, and aged buildings.",
+      "rationale": "Duplicate of Q_463, same reference. Fair; fails on grading - see C2."
+    },
+    {
+      "question_id": "Q_485",
+      "action": "keep",
+      "scene": "postwar-city",
+      "preset": "street-view-1",
+      "eval_category": "location_spatial",
+      "question": "Pan right 20°; what notable feature appears near the center afterward?",
+      "expected_answer": "After panning right 20°, the notable feature in the center is a high-rise apartment or a small building with a brown roof.",
+      "rationale": "Sound."
+    },
+    {
+      "question_id": "Q_523",
+      "action": "replace-answer",
+      "scene": "postwar-city",
+      "preset": "street-view-1",
+      "eval_category": "ocr_identification",
+      "question": "Identify the type of vehicles visible here.",
+      "expected_answer": "I see two cars.",
+      "new_expected_answer": "The vehicles are cars; there are two.",
+      "rationale": "Names the type, which is what the question asks for."
+    }
+  ]
+}

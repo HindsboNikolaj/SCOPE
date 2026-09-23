@@ -57,10 +57,44 @@ except Exception:
 # ─── Utilities ────────────────────────────────────────────────────────────────
 
 _REASONING_TAGS = (
-    (r"<think>.*?</think>", re.S|re.I),
-    (r"<analysis>.*?</analysis>", re.S|re.I),
-    (r"<reasoning>.*?</reasoning>", re.S|re.I),
+    (r"<think>.*?</think>", re.S | re.I),
+    (r"<analysis>.*?</analysis>", re.S | re.I),
+    (r"<reasoning>.*?</reasoning>", re.S | re.I),
 )
+
+# Harmony channel markers, which several families leak into the recorded answer.
+#
+# gpt-oss writes <|channel|>analysis<|message|>...<|channel|>final<|message|>answer, and
+# gemma-4 writes the pipes reversed, <|channel>thought ... <channel|>answer. tA09's tool calls
+# were perfect while every answer began "<|channel>thought\n<channel|>", so the run looked
+# healthy and would have been judged on the marker.
+#
+# Order matters and a flat list of substitutions is not enough: when a `final` channel exists
+# the answer is what FOLLOWS it, so deleting the markers in place leaves the analysis text
+# concatenated onto the answer.
+_FINAL_CHANNEL = re.compile(r"<\|channel\|>\s*final\s*<\|message\|>", re.I)
+_ANALYSIS_BLOCK = (
+    re.compile(r"<\|channel\|>\s*(?:analysis|thought|commentary)\b.*?<\|message\|>", re.S | re.I),
+    re.compile(r"<\|channel>\s*(?:analysis|thought|commentary)\b.*?<channel\|>", re.S | re.I),
+)
+_BARE_MARKER = re.compile(r"</?\|?(?:channel|message|start|end|return)\|?>", re.I)
+# The recipient marker only ever appears immediately before a channel marker. Requiring that
+# lookahead is what keeps it from eating ordinary prose: "The tomato is to=the left of the
+# bowl" is a legitimate answer, and a looser pattern rewrote it to "is  left of the bowl".
+_RECIPIENT = re.compile(r"\bto=[A-Za-z_][\w.]*\s*(?=<\|)", re.I)
+
+
+def _strip_channels(text: str) -> str:
+    m = None
+    for m in _FINAL_CHANNEL.finditer(text):
+        pass                      # keep the last final-channel marker
+    if m:
+        text = text[m.end():]
+    for pat in _ANALYSIS_BLOCK:
+        text = pat.sub("", text)
+    text = _RECIPIENT.sub("", text)
+    return _BARE_MARKER.sub("", text)
+
 
 def _strip_reasoning(text: str | None) -> str:
     if not text:
@@ -68,12 +102,33 @@ def _strip_reasoning(text: str | None) -> str:
     out = text
     for pattern, flags in _REASONING_TAGS:
         out = re.sub(pattern, "", out, flags=flags)
-    return out.strip()
+    return _strip_channels(out).strip()
+
 
 def _is_gen_like(x):
     return hasattr(x, "__iter__") and not isinstance(x, (dict, str, bytes))
 
 # ─── AgentClient ──────────────────────────────────────────────────────────────
+
+# Hard cap on planner turns for one question.
+#
+# There was none. Both agent loops were `while True`, so the only thing that could stop a
+# planner that kept calling tools was running out of context -- about 150 turns and half an
+# hour on a 24k model. tA04's city-street shard sat on one question for 143 turns while the
+# other three waited. A capped episode is also the honest measurement: "did not converge in N
+# turns" is a result, an unbounded loop is a hang.
+MAX_TURNS = int(os.environ.get("SCOPE_MAX_TURNS", "40"))
+
+
+class TurnLimitExceeded(RuntimeError):
+    """The planner kept calling tools past MAX_TURNS without producing an answer.
+
+    Raised rather than broken out of: both loops assemble their timings and final text inside
+    the "no more tool calls" branch, so falling out of the loop would end the generator with no
+    answer and no timings. The runner already records a per-row failure and advances, so this
+    reuses that path and the row lands as a real, gradeable non-answer."""
+
+
 
 class AgentClient:
     """SCOPE agent with synchronous tool execution for Blender simulation."""
@@ -88,6 +143,8 @@ class AgentClient:
         presets: Optional[list[str]] = None,
     ):
         self.last_timings: dict | None = None
+        # Set by _seed once the thinking mode for this model is known.
+        self._thinking_kwargs: dict | None = None
         self.last_messages: list[dict] | None = None
         self.last_model_id: str | None = None
 
@@ -173,22 +230,42 @@ class AgentClient:
             raise RuntimeError(f"Failed to resolve model id: {e}") from e
 
     def _seed(self, enable_thinking: bool = False, reasoning_level: Optional[str] = None):
+        """Seed exactly one system message.
+
+        The thinking directive and the system prompt used to be appended as two separate system
+        messages. Most chat templates tolerate that. The Qwen3.5 family does not: it rejects the
+        whole conversation with "System message must be at the beginning", which names the
+        position and means the *count*. Served by vLLM that is a 400 on every request, so the
+        shard produced zero rows for forty-five minutes and looked like a hang.
+
+        Merging them changes no content and no ordering -- the directive still leads.
+        """
         mode = thinking_mode_for_model(self.model_id)
 
+        directive = None
         if mode == ThinkingMode.TOGGLE:
-            self.messages.append({"role": "system", "content": ("/think" if enable_thinking else "/no_think")})
+            directive = "/think" if enable_thinking else "/no_think"
         elif mode == ThinkingMode.ALWAYS:
-            self.messages.append({"role": "system", "content": "/think"})
+            directive = "/think"
         elif mode == ThinkingMode.NEVER:
-            self.messages.append({"role": "system", "content": "/no_think"})
+            directive = "/no_think"
         elif mode == ThinkingMode.LEVELS:
             lvl = (reasoning_level or "").strip().lower()
-            if lvl in {"off","low","medium","high"}:
-                self.messages.append({"role": "system", "content": f"Reasoning: {lvl}"})
+            if lvl in {"off", "low", "medium", "high"}:
+                directive = f"Reasoning: {lvl}"
             elif enable_thinking:
-                self.messages.append({"role": "system", "content": "Reasoning: medium"})
+                directive = "Reasoning: medium"
 
-        self.messages.append({"role": "system", "content": self.system_prompt})
+        content = f"{directive}\n\n{self.system_prompt}" if directive else self.system_prompt
+        self.messages.append({"role": "system", "content": content})
+
+        # The per-request half of the same switch. `enable_thinking` is what the Qwen3 and
+        # Qwen3.5 templates read; a model without it ignores the field.
+        want = enable_thinking if mode in (ThinkingMode.TOGGLE, ThinkingMode.ALWAYS) else False
+        if mode == ThinkingMode.ALWAYS:
+            want = True
+        self._thinking_kwargs = {"enable_thinking": bool(want)}
+
         self._seeded = True
 
     def warmup_once(self):
@@ -201,10 +278,44 @@ class AgentClient:
         except Exception:
             pass
 
+    @staticmethod
+    def _reasoned(resp) -> bool:
+        """Did this reply carry real reasoning?
+
+        A `/no_think` Qwen3 still emits an empty `<think></think>`, so the tags alone prove
+        nothing -- the content between them is the measurement. Some servers put it in a
+        separate `reasoning_content` field instead.
+        """
+        try:
+            msg = resp.choices[0].message
+        except Exception:
+            return False
+        rc = getattr(msg, "reasoning_content", None)
+        if rc and rc.strip():
+            return True
+        m = re.search(r"<think>(.*?)</think>", getattr(msg, "content", "") or "", re.S)
+        return bool(m and len(m.group(1).strip()) > 8)
+
     def _chat_create(self, messages: list[dict], *, temperature: float):
         kwargs = dict(model=self.model_id, messages=messages, tools=TOOL_DEFS, temperature=temperature)
         if self._tool_choice_pref == "auto":
             kwargs["tool_choice"] = "auto"
+
+        # Assert the thinking setting on *every* request, not once at the start.
+        #
+        # `/no_think` in the system message works -- measured on Qwen3-4B, the think block comes
+        # back empty on turn one whether the directive sits in its own system message, merged
+        # into the system prompt, or appended to the user turn. But it is applied per turn from
+        # the recent conversation, and after a few tool results the model starts reasoning again:
+        # 99 of 1134 turns in tA01 carried real reasoning, the worst 15,108 characters, always on
+        # a later assistant turn. The directive does not decay because the model ignores it; it
+        # decays because nothing re-states it.
+        #
+        # `chat_template_kwargs` is applied by the template at render time on every request, so
+        # it cannot lapse. On the same probe it removed the block entirely rather than emptying
+        # it. Models whose template has no such flag ignore the field.
+        if self._thinking_kwargs:
+            kwargs["extra_body"] = {"chat_template_kwargs": dict(self._thinking_kwargs)}
         try:
             return self.client.chat.completions.create(**kwargs)
         except Exception as e:
@@ -234,12 +345,30 @@ class AgentClient:
 
         self.messages.append({"role": "user", "content": prompt})
         llm_time = vlm_time = script_time = camera_time = 0.0
+        # Per-turn detail. The scalars above are the sums; these keep the shape of the
+        # conversation, so a report can say "the planner took 1.2 s on turn 1 and 6.4 s on
+        # turn 3" instead of only "8.5 s for the answer".
+        llm_turns: list[float] = []
+        thinking_turns: list[int] = []   # 1 per turn whose reply carried a non-empty <think>
+        vlm_calls: list[float] = []
+        script_calls: list[float] = []
+        tool_names: list[str] = []
         children = []
 
         while True:
+            if len(llm_turns) >= MAX_TURNS:
+                raise TurnLimitExceeded(
+                    f"planner made {len(llm_turns)} turns without answering "
+                    f"(cap {MAX_TURNS}, set SCOPE_MAX_TURNS to change)")
             t0 = time.time()
             resp = self._chat_create(self.messages, temperature=self.temperature)
-            llm_time += (time.time() - t0)
+            _dt = time.time() - t0
+            llm_time += _dt
+            llm_turns.append(round(_dt, 3))
+            # Whether the directive actually held on *this* turn. It is asserted per request
+            # now, but "asked for" and "obeyed" are different columns and only one is measured
+            # by reading the reply.
+            thinking_turns.append(1 if self._reasoned(resp) else 0)
             msg = resp.choices[0].message.model_dump()
             self.messages.append(msg)
 
@@ -251,12 +380,19 @@ class AgentClient:
                     text,
                     self.messages,
                     {"total": total, "llm": round(llm_time, 3), "vlm": round(vlm_time, 3),
-                     "script": round(script_time, 3), "camera": round(camera_time, 3)},
+                     "script": round(script_time, 3), "camera": round(camera_time, 3),
+                     "llm_turns": llm_turns, "vlm_calls": vlm_calls,
+                     "script_calls": script_calls, "tools": tool_names,
+                     "thinking_turns": thinking_turns},
                     {"name": "session", "duration": total, "children": children},
                 )
 
             for call in calls:
-                name = call["function"]["name"]
+                # vLLM's harmony parser sometimes leaves a channel marker glued to the tool
+                # name -- `query_answer<|channel|>commentary`. The model asked for the right
+                # tool; the parser leaked a control token. Trimming it is faithful to what was
+                # requested, where treating it as an unknown tool is not.
+                name = call["function"]["name"].split("<|", 1)[0].strip()
                 args = json.loads(call["function"].get("arguments") or "{}")
                 tool_fn = TOOL_FUNCTIONS.get(name)
                 if not tool_fn:
@@ -267,7 +403,17 @@ class AgentClient:
                     })
                     continue
 
-                out = tool_fn(**args)
+                # A planner can call a tool with arguments the tool cannot take:
+                # `pan_deg="in"`, `pan_deg="-50%"`, or a nested `arguments={}`. Those raise out
+                # of the tool and, before this, out of the whole batch -- one malformed call
+                # from a weak planner killed the shard and every remaining question in it went
+                # unrun. The model is told what went wrong instead, which is both what a real
+                # agent would do and the only way a weak planner can be measured at all.
+                try:
+                    out = tool_fn(**args)
+                except Exception as exc:
+                    out = {"result": f"Error: {type(exc).__name__}: {exc}",
+                           "timings": {"vlm": 0.0, "script": 0.0}}
 
                 if _is_gen_like(out):
                     gen = out
@@ -284,6 +430,9 @@ class AgentClient:
                 vlm_time    += float(t.get("vlm", 0.0))
                 script_time += float(t.get("script", 0.0))
                 camera_time += float(t.get("camera", 0.0))
+                vlm_calls.append(round(float(t.get("vlm", 0.0)), 3))
+                script_calls.append(round(float(t.get("script", 0.0)), 3))
+                tool_names.append(name)
 
                 self.messages.append({
                     "role": "tool",
@@ -311,11 +460,29 @@ class AgentClient:
         self.messages.append({"role": "user", "content": prompt})
 
         llm_time = vlm_time = script_time = camera_time = 0.0
+        # Per-turn detail. The scalars above are the sums; these keep the shape of the
+        # conversation, so a report can say "the planner took 1.2 s on turn 1 and 6.4 s on
+        # turn 3" instead of only "8.5 s for the answer".
+        llm_turns: list[float] = []
+        thinking_turns: list[int] = []   # 1 per turn whose reply carried a non-empty <think>
+        vlm_calls: list[float] = []
+        script_calls: list[float] = []
+        tool_names: list[str] = []
 
         while True:
+            if len(llm_turns) >= MAX_TURNS:
+                raise TurnLimitExceeded(
+                    f"planner made {len(llm_turns)} turns without answering "
+                    f"(cap {MAX_TURNS}, set SCOPE_MAX_TURNS to change)")
             t0 = time.time()
             resp = self._chat_create(self.messages, temperature=self.temperature)
-            llm_time += (time.time() - t0)
+            _dt = time.time() - t0
+            llm_time += _dt
+            llm_turns.append(round(_dt, 3))
+            # Whether the directive actually held on *this* turn. It is asserted per request
+            # now, but "asked for" and "obeyed" are different columns and only one is measured
+            # by reading the reply.
+            thinking_turns.append(1 if self._reasoned(resp) else 0)
             msg = resp.choices[0].message.model_dump()
             self.messages.append(msg)
             yield msg
@@ -328,6 +495,9 @@ class AgentClient:
                     "total": total, "llm": round(llm_time, 3),
                     "vlm": round(vlm_time, 3), "script": round(script_time, 3),
                     "camera": round(camera_time, 3),
+                    "llm_turns": llm_turns, "vlm_calls": vlm_calls,
+                    "script_calls": script_calls, "tools": tool_names,
+                    "thinking_turns": thinking_turns,
                 }
                 self.last_messages = copy.deepcopy(self.messages)
                 self.last_model_id = self.model_id
@@ -335,7 +505,11 @@ class AgentClient:
                 return
 
             for call in calls:
-                name = call["function"]["name"]
+                # vLLM's harmony parser sometimes leaves a channel marker glued to the tool
+                # name -- `query_answer<|channel|>commentary`. The model asked for the right
+                # tool; the parser leaked a control token. Trimming it is faithful to what was
+                # requested, where treating it as an unknown tool is not.
+                name = call["function"]["name"].split("<|", 1)[0].strip()
                 args = json.loads(call["function"].get("arguments") or "{}")
                 tool_fn = TOOL_FUNCTIONS.get(name)
                 if not tool_fn:
@@ -348,7 +522,17 @@ class AgentClient:
                     yield tool_msg
                     continue
 
-                out = tool_fn(**args)
+                # A planner can call a tool with arguments the tool cannot take:
+                # `pan_deg="in"`, `pan_deg="-50%"`, or a nested `arguments={}`. Those raise out
+                # of the tool and, before this, out of the whole batch -- one malformed call
+                # from a weak planner killed the shard and every remaining question in it went
+                # unrun. The model is told what went wrong instead, which is both what a real
+                # agent would do and the only way a weak planner can be measured at all.
+                try:
+                    out = tool_fn(**args)
+                except Exception as exc:
+                    out = {"result": f"Error: {type(exc).__name__}: {exc}",
+                           "timings": {"vlm": 0.0, "script": 0.0}}
 
                 if _is_gen_like(out):
                     gen = out
@@ -367,6 +551,9 @@ class AgentClient:
                     vlm_time    += float(t.get("vlm", 0.0))
                     script_time += float(t.get("script", 0.0))
                     camera_time += float(t.get("camera", 0.0))
+                    vlm_calls.append(round(float(t.get("vlm", 0.0)), 3))
+                    script_calls.append(round(float(t.get("script", 0.0)), 3))
+                    tool_names.append(name)
 
                 tool_msg = {
                     "role": "tool",

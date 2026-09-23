@@ -9,7 +9,8 @@ Implements the SCOPE tool schema:
 """
 
 from __future__ import annotations
-import os, time, math
+import os
+import time as _time, time, math
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Tuple
@@ -122,14 +123,210 @@ _RESOLVED_BACKEND = None if _CAPTURE_BACKEND in ("auto", "") else _CAPTURE_BACKE
 
 _BLANK_WARNED = False
 
+# Whether captures survive the run.
+#
+# Every capture used to be kept. At the benchmark's native resolution a frame is about 15 MB,
+# and a 541 row run takes several per row, so a single pairing left tens of gigabytes of PNGs
+# that nothing read again. They are worth keeping while debugging a scene, annotating evidence
+# or building a demo, and worth nothing otherwise.
+#
+# So the default is a small ring: the most recent frames stay on disk, older ones are removed
+# as new ones arrive. A ring rather than delete-immediately because a tool hands back a path
+# and something downstream may still open it, and because the last few frames are exactly what
+# you want when a row goes wrong.
+KEEP_CAPTURES = os.environ.get("SCOPE_KEEP_CAPTURES", "0").strip().lower() in ("1", "true", "yes")
+CAPTURE_RING = max(1, int(os.environ.get("SCOPE_CAPTURE_RING", "8") or 8))
+_RECENT_CAPTURES: List[str] = []
+
+
+# Blank-frame bookkeeping. Counts live beside the screenshots so the harness and the dashboard
+# can read them without reopening a single image, and a blank frame is kept as evidence rather
+# than rotated out of the ring with everything else.
+_BLANK_STATS = {"frames": 0, "blank": 0, "underdrawn": 0, "settled": 0, "still_flat": 0, "wait_ms": 0,
+                "uninformative": 0}
+_BLANK_KEEP: list = []
+# Every frame's colour reading, for the run-level check. A per-frame verdict cannot tell a grey
+# wall from a grey world; the aggregate can, and nothing was asking. A flat grey render of
+# city-street shipped in benchmark/preset_views and was used as evidence about model failures
+# for weeks because no check ever looked at whether the scene had colour in it at all.
+_COLOURS: list = []
+
+
+def _blank_stats_path():
+    return SCREENSHOTS_DIR / "_capture_stats.json"
+
+
+def _write_blank_stats() -> None:
+    try:
+        import json as _json
+        from scope.tools import frame_probe as P
+        ok, why = P.run_colour_health(_COLOURS)
+        out = dict(_BLANK_STATS, colour_ok=ok, colour=why)
+        if not ok:
+            # Loud, and on the shard log the sweep's validity guard reads. A run whose scene
+            # never loaded its materials still completes, still produces answers and still
+            # scores -- it just is not a measurement of the model.
+            print(f"[scope] SCENE RENDERED WITHOUT COLOUR -- {why}. Every answer from this "
+                  f"shard was graded against an unpainted view.", flush=True)
+        _blank_stats_path().write_text(_json.dumps(out))
+    except Exception:
+        pass
+
+
+def _note_blank_frame(path: str) -> None:
+    """Keep a blank frame out of the retirement ring so there is something to look at."""
+    _BLANK_KEEP.append(path)
+    n = _BLANK_STATS["blank"]
+    if n <= 5 or n % 25 == 0:
+        print(f"[scope] capture came back blank twice in a row ({n} so far this shard): {path}",
+              flush=True)
+
+
+def _retire_old_captures(path: str) -> None:
+    """Keep the ring bounded. Never raises: losing a capture must not lose a run."""
+    _RECENT_CAPTURES.append(path)
+    if KEEP_CAPTURES:
+        return
+    while len(_RECENT_CAPTURES) > CAPTURE_RING:
+        old = _RECENT_CAPTURES.pop(0)
+        if old in _BLANK_KEEP:          # evidence, not spillover
+            continue
+        try:
+            os.remove(old)
+        except OSError:
+            pass
+
+
+# A dead capture is nearly uniform, not exactly uniform.
+#
+# The original test was `hi - lo == 0`. A real blank frame from this pipeline measures
+# extrema (49, 61) -- an empty viewport plus one edge of window chrome -- so it missed by
+# twelve and 24 blank frames reached the vision model in one run. What actually separates
+# them is how many distinct grey levels the frame contains: a dead capture has 2, a live one
+# has 250. Both thresholds are deterministic, cost about a millisecond on a downsampled copy,
+# and need no model.
+BLANK_STD = float(os.environ.get("SCOPE_BLANK_STD", "3.0"))
+BLANK_LEVELS = int(os.environ.get("SCOPE_BLANK_LEVELS", "4"))
+
+# A second, looser band: the frame rendered, but there is nothing in it to answer from.
+#
+# There is no optical blur to detect here. An OpenGL viewport has no lens, no depth of field
+# and no motion blur -- a frame is drawn or it is not. What actually happens is the camera
+# ends up inside geometry or facing a dark wall, and the capture is technically fine and
+# useless. tA04 produced several of these: std 6.4 across 26 grey levels, a shadowed surface
+# with one faint edge.
+#
+# The thresholds are not guesses. Across 800 frames from every run except tA04, the WORST
+# measured 25.2 std over 164 grey levels; the bad frames sit at 0-6 and 2-26. Nothing occupies
+# the space between, so a cut at 12 and 60 is under half the worst good frame.
+DULL_STD = float(os.environ.get("SCOPE_DULL_STD", "12.0"))
+DULL_LEVELS = int(os.environ.get("SCOPE_DULL_LEVELS", "60"))
+
+
+def _frame_stats(path):
+    """(std-dev, distinct grey levels) on a downsampled copy. Never raises."""
+    try:
+        im = Image.open(path)
+        im.draft("L", (256, 256))
+        im = im.convert("L").resize((256, 256))
+        hist = im.histogram()
+        levels = sum(1 for c in hist if c)
+        n = 256 * 256
+        mean = sum(i * c for i, c in enumerate(hist)) / n
+        var = sum(c * (i - mean) ** 2 for i, c in enumerate(hist)) / n
+        return var ** 0.5, levels
+    except Exception:
+        return None, None
+
 
 def _is_flat(path) -> bool:
-    """True if the image has no variation at all, which is what a dead capture looks like."""
-    try:
-        lo, hi = Image.open(path).convert("L").getextrema()
-        return hi - lo == 0
-    except Exception:
+    """True if nothing was drawn: near-zero variation, or only a handful of grey levels."""
+    sd, levels = _frame_stats(path)
+    if sd is None:
         return False
+    return sd < BLANK_STD or levels <= BLANK_LEVELS
+
+
+def _is_dull(path) -> bool:
+    """True if the frame rendered but carries almost no information to answer from.
+
+    Not retried. A redraw cannot help: the camera is where the planner put it, and that is a
+    fact about the planner worth recording rather than an error worth hiding.
+    """
+    sd, levels = _frame_stats(path)
+    if sd is None:
+        return False
+    return sd < DULL_STD or levels < DULL_LEVELS
+
+
+
+# How long a single frame may spend waiting for its textures, in total. The two acceleration
+# arms showed the whole campaign is latency-bound, so this is deliberately small: at 400 ms and
+# the measured 0.5% under-drawn rate the expected cost is under two seconds across a 536-row run.
+DETAIL_WAIT_MS = int(os.environ.get("SCOPE_DETAIL_WAIT_MS", "400"))
+DETAIL_WAIT_STEP_MS = int(os.environ.get("SCOPE_DETAIL_WAIT_STEP_MS", "120"))
+
+
+def _check_frame(fp, draw):
+    """Decide whether this frame is fit to send, and fix it if it cheaply can be.
+
+    Blank and under-drawn need opposite treatment and the difference is the whole point.
+
+      blank        nothing was drawn. Redraw at once; waiting does not help a dropped draw.
+                   If it survives the redraws it is a real camera pose aimed at nothing, which
+                   is a measurement of the planner rather than a capture fault, and it is
+                   counted as such.
+      under-drawn  geometry is present, textures are not loaded yet. Wait a beat and look
+                   again, which is exactly what it needs. Bounded by DETAIL_WAIT_MS, and
+                   abandoned early if a redraw stops improving the detail, so a scene that is
+                   genuinely plain does not burn the whole budget every frame.
+    """
+    from scope.tools import frame_probe as P
+    st = P.probe_path(fp)
+    kind = P.classify(st)
+    c = P.colour_of(st)
+    if c is not None:
+        _COLOURS.append(c)
+
+    if kind == "blank":
+        # No redraw. The retry that used to live here is gone, and the measurement that
+        # retired it is worth keeping:
+        #
+        #   tRPL2, fully instrumented:  11 blanks, 22 retries, 0 recoveries, redraw_changed=0
+        #
+        # redraw_changed counted whether the second draw produced even one different pixel. It
+        # never did, across every retry, so the redraw was not failing to help -- it was not
+        # drawing anything at all. And the reason there was nothing to recover is now known:
+        # whitechapel has geometry on one side of the street only, so a 180-degree pan faces
+        # open sky and renders as a single flat colour. Nine of the eleven blanks were exactly
+        # that pan. An empty view is a true picture of an empty view; retrying it twice only
+        # spent time and made the counters look like a capture fault.
+        #
+        # Blanks are still detected, still counted and still kept as evidence, because a blank
+        # frame reaching the vision model is worth knowing about whatever its cause.
+        _BLANK_STATS["blank"] += 1
+        _note_blank_frame(str(fp))
+        return
+
+    if kind == "under-drawn":
+        _BLANK_STATS["underdrawn"] += 1
+        best = st[2] if st[2] is not None else 0.0
+        spent = 0
+        while spent < DETAIL_WAIT_MS:
+            _time.sleep(DETAIL_WAIT_STEP_MS / 1000.0)
+            spent += DETAIL_WAIT_STEP_MS
+            _BLANK_STATS["wait_ms"] += DETAIL_WAIT_STEP_MS
+            draw(str(fp))
+            P._CACHE.pop(str(fp), None)
+            st = P.probe_path(fp)
+            got = st[2] if st[2] is not None else 0.0
+            if P.classify(st) == "fine":
+                _BLANK_STATS["settled"] += 1
+                return
+            if got <= best + 0.05:
+                break          # not improving; the scene really is this plain
+            best = got
+        _BLANK_STATS["still_flat"] += 1
 
 
 def _capture_frame(prefix: str = "raw") -> str:
@@ -142,6 +339,7 @@ def _capture_frame(prefix: str = "raw") -> str:
         screenshot_camera_view(str(fp))
         if not _is_flat(fp):
             _RESOLVED_BACKEND = "viewport"
+            _retire_old_captures(str(fp))
             return str(fp)
 
         fast_opengl_screenshot(str(fp))
@@ -164,12 +362,29 @@ def _capture_frame(prefix: str = "raw") -> str:
         _RESOLVED_BACKEND = "opengl"
         print("[scope] capture: window grab came back blank, using the offscreen viewport "
               "draw for this run (SCOPE_CAPTURE=opengl to make it explicit).", flush=True)
+        _retire_old_captures(str(fp))
         return str(fp)
 
-    if _RESOLVED_BACKEND in ("opengl", "offscreen", "headless"):
-        fast_opengl_screenshot(str(fp))
-    else:
-        screenshot_camera_view(str(fp))
+    def _draw(dest):
+        if _RESOLVED_BACKEND in ("opengl", "offscreen", "headless"):
+            fast_opengl_screenshot(dest)
+        else:
+            screenshot_camera_view(dest)
+
+    _draw(str(fp))
+
+    # Redraw once if nothing came back, then record the outcome either way.
+    #
+    # Two different things produce a blank frame and they need different treatment. A dropped
+    # or half-finished draw is transient and a second attempt fixes it. A camera genuinely
+    # pointed at empty space will come back blank again, and that is a real measurement of the
+    # planner -- tA04 produced 24 such frames in bursts of six while every other pairing
+    # rendered the same scenes cleanly. Retrying separates the two without a model in the loop.
+    _check_frame(fp, _draw)
+    _BLANK_STATS["frames"] += 1
+    _write_blank_stats()
+
+    _retire_old_captures(str(fp))
 
     # Say something the first time a capture comes back with no variation at all.
     #

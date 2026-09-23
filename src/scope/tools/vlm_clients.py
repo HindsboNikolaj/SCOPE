@@ -34,13 +34,72 @@ class VLMClient:
 
 # ─── utils ────────────────────────────────────────────────────────────────────
 
+# How many pixels a vision model is given, as a budget rather than an edge length.
+#
+# The scenes render at very different shapes: 1920x1080 for whitechapel and postwar-city,
+# 2309x1867 for city-street, and 3240x3240 for book-nook. A cap on the longest edge treats
+# those unfairly, because a square frame at edge 1920 is 3.7 megapixels where a 16:9 frame at
+# the same edge is 2.1. Budgeting area instead means "no more detail than a 1080p frame,
+# whatever shape it is", which is the thing actually being asked for.
+#
+# 1080p is 1920x1080, so the budget is 2.07 megapixels. In practice that leaves the two 1080p
+# scenes untouched, takes city-street from about 1440p to 1080p, and takes book-nook from a
+# square 4K frame to 1440x1440.
+#
+# Sending more than this made the vision model the dominant cost on the large scenes and not on
+# the small ones, which reads as one scene being hard when it is only being photographed bigger.
+# The models resize internally, so the extra pixels only cost encode, transfer and decode.
+# SCOPE_VLM_MAX_PIXELS=0 sends frames untouched.
+VLM_MAX_PIXELS = int(os.environ.get("SCOPE_VLM_MAX_PIXELS", str(1920 * 1080)) or 0)
+
+# What coordinate space a served VLM answers in, for detect and point.
+#
+#   auto     (default) 0..1 unless a value exceeds 1, then treat the answer as pixels
+#   unit     always 0..1, clamp anything outside
+#   pixel    always pixels of the frame we sent, divide by width/height
+#   percent  always 0..100
+#
+# There is no universal answer: the prompt asks for 0..1 and models comply at very different
+# rates, so this is per model rather than a constant. `auto` is what the campaign has used.
+VLM_COORD_SPACE = (os.environ.get("SCOPE_VLM_COORD_SPACE") or "auto").strip().lower()
+
+
+def _to_unit(v: float, extent: int) -> float:
+    """One coordinate into 0..1, given the frame extent along that axis."""
+    if VLM_COORD_SPACE == "unit":
+        return _clamp01(v)
+    if VLM_COORD_SPACE == "pixel":
+        return _clamp01(v / extent) if extent else _clamp01(v)
+    if VLM_COORD_SPACE == "percent":
+        return _clamp01(v / 100.0)
+    return _clamp01(v / extent) if (v > 1.0 and extent) else _clamp01(v)
+
+
+def _fit_for_vlm(im: Image.Image) -> Image.Image:
+    """Scale a frame down to the pixel budget. Never crops: the model sees the whole frame.
+
+    BOX rather than LANCZOS. This runs on every capture, and on a 10.5 megapixel frame LANCZOS
+    costs 152 ms against 43 ms for BOX, which is real time taken out of the saving this is
+    supposed to produce. Measured against a LANCZOS result the two agree to 0.99977 by
+    correlation, and the model resizes again internally regardless, so the extra sharpness is
+    spent on pixels nothing looks at. BOX is also the correct filter for pure downscaling: it
+    averages the pixels it is discarding rather than sampling through them.
+    """
+    px = im.width * im.height
+    if not VLM_MAX_PIXELS or px <= VLM_MAX_PIXELS:
+        return im
+    scale = (VLM_MAX_PIXELS / px) ** 0.5
+    return im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))),
+                     Image.BOX)
+
+
 def _to_pil(img) -> Image.Image:
     if isinstance(img, Image.Image):
-        return img
+        return _fit_for_vlm(img)
     try:
         import numpy as np
         if isinstance(img, np.ndarray):
-            return Image.fromarray(img)
+            return _fit_for_vlm(Image.fromarray(img))
     except Exception:
         pass
     raise TypeError("Unsupported image type for VLM")
@@ -306,8 +365,13 @@ class MoondreamPhoton(VLMClient):
 # ─── Qwen VL server (OpenAI-compatible /v1) ───────────────────────────────────
 
 class QwenVLServer(VLMClient):
-    SYS_JSON_DET = _VLM_DET_PROMPT
-    SYS_JSON_POINT = _VLM_PT_PROMPT
+    # The 0..1 variants, matching QwenVLLocal. The generic prompts name no coordinate space,
+    # and a served VLM answers in pixels of its own resized input by default -- which the
+    # caller then reads as a fraction of the frame, so every zoom lands in the top-left
+    # corner. Saying "0..1" in the prompt is the cheap half of the fix; normalising anything
+    # that still comes back in pixels is the other half, below.
+    SYS_JSON_DET = _VLM_DET_QWEN_PROMPT
+    SYS_JSON_POINT = _VLM_PT_QWEN_PROMPT
     def __init__(self, base_url: str, model_id: Optional[str] = None, api_key: Optional[str] = None):
         self.base_url = base_url.rstrip("/")
         if not self.base_url.endswith("/v1"): self.base_url += "/v1"
@@ -345,14 +409,15 @@ class QwenVLServer(VLMClient):
         user   = {"role":"user","content":[self._img(pil), {"type":"text","text": f"Instruction: {instruction}"}]}
         raw = self._chat([system, user], max_tokens=512).strip()
         j = _extract_json(raw) or {"objects": []}
+        W, H = pil.size
         objs = []
         for o in (j.get("objects") or []):
             try:
-                objs.append({
-                    "x_min": float(o["x_min"]), "y_min": float(o["y_min"]),
-                    "x_max": float(o["x_max"]), "y_max": float(o["y_max"]),
-                })
-            except Exception: continue
+                b = [float(o["x_min"]), float(o["y_min"]), float(o["x_max"]), float(o["y_max"])]
+            except Exception:
+                continue
+            objs.append({"x_min": _to_unit(b[0], W), "y_min": _to_unit(b[1], H),
+                         "x_max": _to_unit(b[2], W), "y_max": _to_unit(b[3], H)})
         return {"objects": objs}
 
     def point(self, image, instruction: str):
@@ -363,10 +428,12 @@ class QwenVLServer(VLMClient):
         j = _extract_json(raw) or {"points": []}
         pts = j.get("points") or []
         if isinstance(pts, dict): pts = [pts]
+        W, H = pil.size
         out = []
         for p in pts:
-            try: out.append({"x": float(p["x"]), "y": float(p["y"])})
+            try: x, y = float(p["x"]), float(p["y"])
             except Exception: continue
+            out.append({"x": _to_unit(x, W), "y": _to_unit(y, H)})
         return {"points": out}
 
 # ─── Qwen VL local (Transformers) ─────────────────────────────────────────────
@@ -459,7 +526,10 @@ def create_vlm(kind: Optional[str], base_url: Optional[str] = None,
     if "qwen" in k:
         if url.startswith("http"): return QwenVLServer(base_url=url, model_id=model_id, api_key=api_key)
         return QwenVLLocal(model_id or "Qwen/Qwen2.5-VL-7B-Instruct")
-    raise ValueError(f"Unsupported VLM kind: {kind!r}")
+    if url.startswith("http"):
+        # Anything else with a URL: assume an OpenAI-compatible vision endpoint.
+        return QwenVLServer(base_url=url, model_id=model_id or kind, api_key=api_key)
+    raise ValueError(f"Unsupported VLM kind: {kind!r} (no VLM_MODEL_URL to fall back on)")
 
 def create_vlm_from_env() -> VLMClient:
     kind = os.getenv("VLM_MODEL") or os.getenv("VLM_KIND") or "Moondream2"
