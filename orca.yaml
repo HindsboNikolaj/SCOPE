@@ -1,0 +1,45 @@
+# Orca workspace defaults, read from each new worktree. Setup and archive never prompt, so they
+# run the same for a worktree made in the app, by `orca worktree create`, or by Firstmate.
+# setup: runs once in a new worktree (Setup tab). Its live checks come from the catalog's
+# skills/device-management/scripts/ws-status.sh (fail soft); re-run that, or the Quick Command
+# "Workspace status", any time. archive: runs before Orca removes the worktree.
+# defaultTabs: a new worktree opens an Agent tab and a Shell tab; starting it with an agent turns
+# the first tab into that agent.
+setupAgentStartupPolicy: wait-for-setup
+scripts:
+  setup: |
+    set -euo pipefail
+    export PATH="$HOME/.local/bin:$PATH" UV_CACHE_DIR="$HOME/.local/share/uv-cache"
+    warn="PUBLIC repo — pre-release and demo work goes to armada-ai/opus, not here."
+    cat <<'EOF'
+    !! PUBLIC REPO: HindsboNikolaj/SCOPE, visible to anyone. Pre-release and demo work goes to armada-ai/opus, not here. !!
+    == SCOPE (public, base: main) ==
+    What:  the public SCOPE release: natural-language PTZ camera agent + Blender benchmark (HRI '26).
+    Start: README.md, AGENT_INSTRUCTIONS.md; tests: .venv/bin/python -m pytest (no Blender needed, about 2 s).
+    Rules: only already-public material; push and open PRs as HindsboNikolaj (gh auth switch -u HindsboNikolaj); secrets stay in .env.
+    Data:  scenes, presets and outputs in /disk2/nikolaj/pano-lab (shared with opus); never copy unpublished results here.
+    EOF
+    command -v orca >/dev/null && orca worktree set --worktree "path:$PWD" --comment "$warn" >/dev/null 2>&1 || true
+    s=/disk2/nikolaj/ai-team-harness-catalog/skills/device-management/scripts/ws-status.sh; p=$(mktemp)
+    [ -x "$s" ] && { "$s" --data /disk2/nikolaj/pano-lab >"$p" 2>&1 & }
+    exclude() { f="$(git rev-parse --git-common-dir)/info/exclude"; grep -qxF "$1" "$f" 2>/dev/null || echo "$1" >> "$f"; }
+    # Core deps + pytest: one venv per dependency hash, shared by every worktree.
+    venv="$HOME/.local/share/orca-venvs/scope-public-$(cat requirements.txt pyproject.toml | sha256sum | cut -c1-12)"
+    if [ ! -f "$venv/.ready" ]; then
+      rm -rf "$venv"
+      uv venv -q --managed-python --python 3.12 "$venv"
+      VIRTUAL_ENV="$venv" uv pip install -q -r requirements.txt pytest
+      touch "$venv/.ready"
+    fi
+    ln -sfn "$venv" .venv && exclude .venv
+    [ -f .env ] || echo "Env:   no .env; cp .env.example .env (endpoints only; keys from ~/.config/armada/secrets.env)"
+    wait; cat "$p"; rm -f "$p"
+    echo "setup ok in ${SECONDS}s: .venv (shared, by dependency hash)"
+  archive: |
+    rm -rf .venv .pytest_cache
+    find . -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null
+    exit 0
+defaultTabs:
+  - title: Agent
+    command: claude
+  - title: Shell
