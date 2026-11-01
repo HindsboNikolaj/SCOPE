@@ -1,0 +1,16 @@
+question_id,repeat_idx,eval_category,question,llm_raw,judge_is_correct,judge_error_mode
+Q_007,1,comparative_relational,Which side has more trees?,,False,lack_of_tool_call
+Q_010,1,comparative_relational,"After a half-turn, which view shows more buildings—before or after?",,True,None
+Q_042,1,descriptor,What color is the prominent door?,,True,None
+Q_049,1,descriptor,Describe the sky in a single sentence.,,False,hallucination
+Q_064,1,descriptor,Describe the sky in a single sentence.,,False,hallucination
+Q_117,1,single_call,Pan left 10°.,,False,action_contradiction
+Q_119,1,single_call,Pan left 15°.,,False,action_contradiction
+Q_137,1,single_call,Return to the Home position.,,True,None
+Q_312,1,comparative_relational,"After panning 30° right, which view had more visible store signage—before or after?",,False,action_contradiction
+Q_369,1,location_spatial,"After panning right 20°, what is centered in the frame?",,True,None
+Q_402,1,ocr_identification,Pan right 20° then read the storefront’s name.,,True,None
+Q_406,1,ocr_identification,Zoom to the door of the left-middle building and read any posted text.,,False,VLM_query
+Q_423,1,single_call,Tilt up by 10°.,,True,None
+Q_427,1,single_call,Return the camera to Home.,,True,None
+Q_535,1,single_call,Go to the diff-view-1 preset.,,True,None

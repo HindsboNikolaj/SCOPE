@@ -1,6 +1,6 @@
 # What "the full view" should be, and why it is not always a panorama
 
-93 of the benchmark's 541 rows have `answer_view = full`. The question cannot be answered from
+89 of the 536 rows of dataset v2 have `answer_view = full`. The question cannot be answered from
 the starting frame, so the agent has to look around before answering. Every one of the ten
 scene-and-preset combinations carries some of these rows, so every viewpoint needs a full view
 that works.

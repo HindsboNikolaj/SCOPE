@@ -15,14 +15,17 @@ set -euo pipefail
 # Environment variables (all optional, with sensible defaults):
 #   BLENDER_BIN       Path to Blender binary           (default: blender)
 #   PYTHON_BIN        Python for judge/metrics         (default: python)
-#   QUESTIONS_CSV     Input questions CSV               (default: benchmark/scope_536.csv)
+#   SCOPE_DATASET     v2 (default) or v1 (paper's 536 tasks)
+#   QUESTIONS_CSV     Input questions CSV; overrides SCOPE_DATASET
 #   OUT_CSV           Raw results CSV path              (default: <RUN_DIR>/raw_results.csv)
 #   AGENT_API_BASE    Agent LLM endpoint                (default: http://localhost:11434/v1)
 #   AGENT_MODEL_ID    Agent model id                    (auto-pick if unset)
 #   AGENT_API_KEY     Agent API key                     (default: ollama)
 #   REPEATS           Repeats per question              (default: 1)
 #   SCOPE_RESUME      1=skip done qids, 0=fresh         (default: 1)
-#   BENCH_LIMIT       Cap to first N questions (smoke)  (default: 0 -> all)
+#   BENCH_LIMIT       Cap to first N questions          (default: 0 -> all)
+#                     The first rows are all book-nook; for a smoke test set
+#                     QUESTIONS_CSV=benchmark/scope_v2_smoke.csv instead.
 #   JUDGE_API_BASE    Judge LLM endpoint                (default: https://api.openai.com/v1)
 #   JUDGE_MODEL_ID    Judge model id                    (default: gpt-4o)
 #   JUDGE_API_KEY     Judge API key                     (falls back to OPENAI_API_KEY)
@@ -46,7 +49,12 @@ OUTPUT_DIR="${2:-${PROJECT_ROOT}/results}"
 
 BLENDER_BIN="${BLENDER_BIN:-blender}"
 PYTHON_BIN="${PYTHON_BIN:-python}"
-QUESTIONS_CSV="${QUESTIONS_CSV:-${PROJECT_ROOT}/benchmark/scope_536.csv}"
+case "${SCOPE_DATASET:-v2}" in
+    v2)     DEFAULT_CSV="${PROJECT_ROOT}/benchmark/scope_v2.csv" ;;
+    v1)     DEFAULT_CSV="${PROJECT_ROOT}/benchmark/archive/scope_536_v1.csv" ;;
+    *) echo "SCOPE_DATASET must be v2 or v1" >&2; exit 2 ;;
+esac
+QUESTIONS_CSV="${QUESTIONS_CSV:-${DEFAULT_CSV}}"
 REPEATS="${REPEATS:-1}"
 SCOPE_RESUME="${SCOPE_RESUME:-1}"
 BENCH_LIMIT="${BENCH_LIMIT:-0}"

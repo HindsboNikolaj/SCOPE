@@ -48,6 +48,19 @@ MODE = os.environ.get("SCOPE_PANO_CACHE_MODE", "use").strip().lower()
 _VALID_MODES = ("use", "write", "off")
 
 
+
+def _screen():
+    """Resolve the screen without relying on a context Blender only fills from its event loop."""
+    try:
+        from .helper_funcs import active_screen
+        return active_screen()
+    except Exception:
+        win = getattr(bpy.context, "window", None)
+        if win is not None:
+            return win.screen
+        wm = getattr(bpy.context, "window_manager", None)
+        return wm.windows[0].screen if wm and wm.windows else None
+
 def cache_dir(default_root=None):
     d = os.environ.get("SCOPE_PANO_CACHE")
     if d:
@@ -84,7 +97,7 @@ def _pose_key(cam):
 
 
 def _shading():
-    for area in bpy.context.screen.areas:
+    for area in _screen().areas:
         if area.type == "VIEW_3D":
             for sp in area.spaces:
                 if sp.type == "VIEW_3D":

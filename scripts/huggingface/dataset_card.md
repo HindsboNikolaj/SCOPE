@@ -24,61 +24,62 @@ The SCOPE benchmark accompanies the HRI '26 paper [*SCOPE: A Real-Time Natural L
 
 ## Contents
 
-- **scenes/** — 4 Blender `.blend` scenes (with packed textures where the original assets were available):
-  - `whitechapel/whitechapel.blend` — French Quarter exterior, ~95% textured
-  - `book-nook/book-nook.blend` — small interior, geometry-only (original SL/MySims textures lost)
-  - `city-street/city-street.blend` — urban scene, geometry-only (re-download CC0 textures via `scripts/fetch_textures/`)
-  - `postwar-city/postwar-city.blend` — partial textures, ~35% textured
-- **scope_541.csv** — 541-question benchmark with columns: `question_id`, `file_location`, `question`, `expected_answer`, `eval_category`, `difficulty`, `multi_step_mode`, `required_tools_policy`, `expected_tool_order_json`, `evaluation_notes`.
+- **scenes/**: the four Blender `.blend` worlds, with textures packed into the files:
+  - `book-nook/book-nook.blend`: a modern city corner with a bookshop; textures packed, none missing
+  - `city-street/city-street.blend`: a one-way street with hotel frontage; textures packed, none missing
+  - `postwar-city/postwar-city.blend`: a bombed-out European street; 46 of 71 textures absent
+  - `whitechapel/whitechapel.blend`: a rain-soaked Victorian yard; 5 of 193 textures absent, among them its sky
+- **scope_v2.csv**: dataset v2, 536 tasks, the dataset SCOPE 0.2.0 ships and scores, with `CHANGES_v2.md` (every change from v1 and why) and **archive/** (dataset v1, the paper's 536 tasks, and the lineage from the 541-row file SCOPE 0.1.0 shipped). These are copies for convenience. The authoritative CSVs are in the [GitHub repository](https://github.com/HindsboNikolaj/SCOPE/tree/main/benchmark), and SCOPE's scripts read those, not these.
+
+This dataset is mainly the download for the four 3D worlds; `scripts/03_download_scenes.sh` fetches only `scenes/`.
 
 ## Task categories
 
-8 categories (see paper §4):
-1. Object identification
-2. Object counting
-3. Spatial reasoning
-4. Multi-step planning
-5. Camera control validation
-6. Perception robustness
-7. Error recovery
-8. Tool-use correctness
+Eight evaluation categories (`eval_category`): `single_call`, `multi_step_command`,
+`multi_step_reasoning`, `counting`, `descriptor`, `ocr_identification`, `location_spatial`,
+`comparative_relational`.
 
 ## Usage
 
-```bash
-pip install huggingface_hub
-huggingface-cli download HindsboNikolaj/scope-benchmark \
-    --repo-type dataset \
-    --local-dir benchmark/
-```
-
-Then run the benchmark from the [main repository](https://github.com/HindsboNikolaj/SCOPE):
+Run the benchmark from the [main repository](https://github.com/HindsboNikolaj/SCOPE); its
+download script fetches the scenes from here:
 
 ```bash
 git clone https://github.com/HindsboNikolaj/SCOPE
 cd SCOPE
 bash scripts/01_install.sh
+bash scripts/03_download_scenes.sh
 bash scripts/run_eval_pipeline.sh
 ```
 
 ## Texture state
 
-Two of the four scenes (`book-nook`, `city-street`) shipped without textures from their original authors — they referenced absolute Windows paths (`D:/SL/...`, `E:/New folder/...`) that were never bundled. The packed `.blend` files in this dataset are honest about what's available:
+The original authors' files referenced many textures by absolute paths on their own machines
+(`D:/SL/...`, `E:/New folder/...`). The `.blend` files here were re-packed for release, so most
+textures travel inside them. Counted by opening each downloaded scene (image datablocks neither
+packed nor found on disk):
 
 | Scene | Texture refs | Packed | Missing |
 |---|---|---|---|
-| whitechapel | 193 | 188 (97%) | 5 (paid HDR addon) |
-| book-nook | 385 | 0 | 296 (SL/MySims rips) |
-| city-street | 127 | 0 | 126 (CC0 — re-downloadable) |
-| postwar-city | 71 | 25 (35%) | 46 (mixed sources) |
+| book-nook | 387 | 385 | 0 |
+| city-street | 127 | 126 | 0 |
+| postwar-city | 71 | 21 | 46 (surface textures from mixed sources) |
+| whitechapel | 193 | 187 | 5 (including the sky map, its only light) |
 
-To restore textures for the partially-bundled scenes, see [`docs/MISSING_TEXTURES.md`](https://github.com/HindsboNikolaj/SCOPE/blob/main/docs/MISSING_TEXTURES.md) in the main repo — there's an automated AmbientCG downloader and a manifest of where to find the rest.
+[`docs/MISSING_TEXTURES.md`](https://github.com/HindsboNikolaj/SCOPE/blob/main/docs/MISSING_TEXTURES.md)
+in the main repo lists the texture references by category.
 
-The benchmark questions are designed to be answerable from geometry alone for most rows, so even untextured scenes produce meaningful results.
+The missing textures do not change benchmark results: SCOPE captures the viewport with studio
+lighting, which ignores the scene world, so they only show (as magenta) when a scene is rendered
+as authored.
 
 ## License
 
-The dataset is released under CC-BY-NC-4.0 for research use. Individual scene assets retain their original licenses — see the per-scene README in each subfolder for source attribution.
+The dataset is released under CC-BY-NC-4.0 for research use. Scene assets keep their original licences.
+
+## Credits
+
+- city-street: "City Street" by amaryase, BlendSwap #30474, CC-BY.
 
 ## Citation
 

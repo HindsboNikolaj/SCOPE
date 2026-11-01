@@ -1,0 +1,27 @@
+question_id,repeat_idx,eval_category,question,llm_raw,judge_is_correct,judge_error_mode
+Q_001,1,comparative_relational,"After panning left 180°, which view has more street lamps—before or after?",,True,None
+Q_009,1,comparative_relational,"After panning left 180 degrees, which view has more street lamps – the original or the after?",,False,no_final_answer
+Q_014,1,comparative_relational,"After panning left 180°, which view has more street lamps—before or after?",,True,None
+Q_050,1,descriptor,Do you see any readable signs?,,True,None
+Q_124,1,single_call,Tilt up 5°.,,True,None
+Q_144,1,comparative_relational,"After panning right 50°, which view had more bikes—before or after?",,False,no_final_answer
+Q_172,1,counting,"After zooming in on the fire hydrant, how many trees do you see?",,False,vision_counting
+Q_178,1,counting,"After a 2× zoom in, how many trees do you see?",,False,hallucination
+Q_190,1,descriptor,What color is the nearest bike?,,False,VLM_query
+Q_196,1,descriptor,What color is the fire hydrant?,,True,None
+Q_210,1,location_spatial,Is the bike left or right of the fire hydrant?,,False,no_final_answer
+Q_263,1,multi_step_reasoning,"Zoom to the storefront windows, then describe what is inside.",,False,action_contradiction
+Q_319,1,comparative_relational,"After zooming out 50%, which view had more of the hotel in frame—before or after?",,True,None
+Q_322,1,counting,"In a full sweep, how many trees are there?",,True,None
+Q_328,1,counting,Are there at least two mailboxes visible?,,False,admitted_failure
+Q_342,1,descriptor,Give a one-sentence description of the scene.,,True,None
+Q_366,1,location_spatial,Where are the garbage cans relative to the hotel?,,True,None
+Q_375,1,multi_step_command,"Take a screenshot, then zoom into the mailboxes, then take another screenshot.",,False,action_contradiction
+Q_391,1,multi_step_reasoning,Compare the number of visible windows before and after zooming out 50%.,,True,None
+Q_415,1,ocr_identification,"Across the full view, are there any store OPEN/CLOSED signs and what do they say?",,False,VLM_query
+Q_420,1,single_call,Zoom in on the mailboxes.,,False,claimed_unperformed_action
+Q_423,1,single_call,Tilt up by 10°.,,True,None
+Q_433,1,comparative_relational,"Go to street-view-1; which half has more rocks, the left half or the right half?",,True,None
+Q_436,1,comparative_relational,"After panning 50° to the right, which view had more shrubs—the one before or after the pan?",,False,Reasoning
+Q_511,1,ocr_identification,"Across a full 360° sweep, is there any readable text anywhere?",,True,None
+Q_518,1,ocr_identification,Zoom in on the white sign; can you read any text on it?,,False,admitted_failure

@@ -5,6 +5,10 @@
 #   ./docker/build-gpu.sh                 # build scope-blender:gpu
 #   ./docker/build-gpu.sh --check         # only report whether this host needs it
 #   SCOPE_GPU_TAG=myimage ./docker/build-gpu.sh
+#   SCOPE_GPU_DEVICE=5 SCOPE_CONTAINER_PREFIX=alice-scope ./docker/build-gpu.sh
+#
+# SCOPE_GPU_DEVICE (index or UUID, default 0) is the card the driver version is read from and
+# the renderer is proved on; SCOPE_CONTAINER_PREFIX (default scope) names the check container.
 #
 # You probably do not need this. If your machine has a desktop and a working driver, Blender
 # already draws on the GPU and a capture already costs about 0.2 seconds. This is for the case
@@ -42,6 +46,8 @@ TAG="${SCOPE_GPU_TAG:-scope-blender:gpu}"
 BASE="${SCOPE_BASE_IMAGE:-scope-blender:4.4.3}"
 VGL_VERSION="${VGL_VERSION:-3.1.1}"
 WORK="${SCOPE_GPU_WORKDIR:-${HERE}/.gpu-build}"
+GPU="${SCOPE_GPU_DEVICE:-0}"
+PREFIX="${SCOPE_CONTAINER_PREFIX:-scope}"
 CHECK_ONLY=0
 [ "${1:-}" = "--check" ] && CHECK_ONLY=1
 
@@ -55,10 +61,11 @@ say "Checking whether this host needs the GPU bridge"
 command -v nvidia-smi >/dev/null || die "no nvidia-smi. This script is only for NVIDIA hosts."
 command -v docker     >/dev/null || die "no docker."
 
-# -i 0 rather than piping through head: under `set -o pipefail`, head closing the pipe sends
+# -i rather than piping through head: under `set -o pipefail`, head closing the pipe sends
 # nvidia-smi a SIGPIPE and the whole script exits 141 before printing anything.
-DRIVER="$(nvidia-smi -i 0 --query-gpu=driver_version --format=csv,noheader | tr -d ' \n')"
-GPUNAME="$(nvidia-smi -i 0 --query-gpu=name --format=csv,noheader | tr -d '\n')"
+DRIVER="$(nvidia-smi -i "$GPU" --query-gpu=driver_version --format=csv,noheader | tr -d ' \n')"
+GPUNAME="$(nvidia-smi -i "$GPU" --query-gpu=name --format=csv,noheader | tr -d '\n')"
+echo "  card:   $GPU"
 echo "  GPU:    $GPUNAME"
 echo "  driver: $DRIVER"
 
@@ -166,10 +173,11 @@ docker build --build-arg BASE="$BASE" -t "$TAG" -f Dockerfile.hardware-gl . \
 # ---------------------------------------------------------------- 4. prove it
 
 say "Verifying the GPU is actually drawing"
-OUT="$(docker run --rm --gpus '"device=0"' --entrypoint bash "$TAG" -c '
+# -f 10 ends glxspheres64 after ten frames; without it the probe draws until timeout kills it.
+OUT="$(docker run --rm --name "${PREFIX}-gpu-verify-$$" --gpus "device=$GPU" --entrypoint bash "$TAG" -c '
   Xvfb :99 -screen 0 1280x1024x24 >/dev/null 2>&1 &
   sleep 3; export DISPLAY=:99
-  timeout 60 vglrun -d egl0 /opt/VirtualGL/bin/glxspheres64 -n 20 2>&1 | grep -i "OpenGL Renderer"
+  timeout 60 vglrun -d egl0 /opt/VirtualGL/bin/glxspheres64 -n 20 -f 10 2>&1 | grep -i "OpenGL Renderer"
 ' 2>&1 || true)"
 
 echo "  $OUT"
@@ -185,9 +193,11 @@ cat <<EOF
 
   Run a capture with it by prefixing Blender with vglrun:
 
-    docker run --rm --gpus '"device=0"' --entrypoint bash $TAG -c '
+    docker run --rm --gpus "device=$GPU" --entrypoint bash $TAG -c '
       Xvfb :99 -screen 0 1920x1080x24 & sleep 3; export DISPLAY=:99
       vglrun -d egl0 blender /scenes/<scene>.blend --python <script>.py'
+
+  For the benchmark, use scripts/run_fast.py, which starts one display per worker.
 
   Build artefacts are in $WORK (about 600 MB) and can be deleted.
 EOF

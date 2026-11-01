@@ -32,7 +32,7 @@ from scope.eval.runner import prepare_view_for_capture        # noqa: E402
 from scope.tools import blender_tools as BT                   # noqa: E402
 
 SETTLE = float(os.environ.get("SCOPE_SETTLE", "15"))
-CSV_PATH = os.environ.get("SCOPE_CSV", str(_HERE.parent / "benchmark" / "scope_536.csv"))
+CSV_PATH = os.environ.get("SCOPE_CSV", str(_HERE.parent / "benchmark" / "scope_v2.csv"))
 
 
 def presets_for_this_scene():

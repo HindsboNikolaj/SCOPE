@@ -5,22 +5,26 @@
 # Environment variables can be referenced as ${VAR_NAME}.
 
 agent:
+  # Default: one vLLM server for planner and vision, gemma-4-26B-A4B-it (v2 run tB08, 77.6%).
+  # Serving command: docs/CONFIGURATION.md ("Measured recipes"). The runner reads the planner
+  # endpoint below when SCOPE_CONFIG points here (run_eval_pipeline.sh does); AGENT_* in .env
+  # override it. The vision model is read from VLM_* in .env; the vlm block documents it.
   # SLM — the reasoning/planning backbone
   slm:
-    backend: "ollama"                  # ollama | vllm | openai-compatible
-    model_id: "qwen3:30b-a3b"         # Model identifier for your backend
-    base_url: "http://localhost:11434/v1"
-    api_key: "ollama"                  # "ollama" for Ollama; set for vLLM/OpenAI
+    backend: "vllm"                    # vllm | ollama | openai-compatible
+    model_id: "gemma4-26b-a4b"         # the served model name (--served-model-name)
+    base_url: "http://localhost:8000/v1"
+    api_key: "EMPTY"                   # "EMPTY" for vLLM; "ollama" for Ollama; set for hosted APIs
     temperature: 0.7
     max_tokens: 2048
     thinking: "toggle"                 # never | toggle | always | levels
 
   # VLM — the visual perception backbone
   vlm:
-    backend: "moondream"               # moondream-api | moondream-local | qwen2.5-vl
-    api_key: "${MOONDREAM_API_KEY}"    # Moondream API key (from .env)
-    model_id: "vikhyatk/moondream2"    # For local loading
-    # base_url: ""                     # Set for self-hosted VLM servers
+    backend: "openai-compatible"       # openai-compatible | moondream-api | moondream-local | moondream-photon
+    model_id: "gemma4-26b-a4b"         # same server as the planner
+    base_url: "http://localhost:8000/v1"
+    api_key: "${MOONDREAM_API_KEY}"    # only for Moondream Cloud
 
   # System prompt override (optional)
   # system_prompt: "You are a PTZ camera agent..."
@@ -31,7 +35,7 @@ tools:
 
 # Evaluation settings
 evaluation:
-  benchmark: "benchmark/scope_536.csv"
+  benchmark: "benchmark/scope_v2.csv"
   output_dir: "results/"
   judge:
     model: "${JUDGE_MODEL_ID}"         # gpt-4o, gpt-oss-120b, or any model you serve

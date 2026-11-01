@@ -1,7 +1,7 @@
 # Reusing panoramas instead of re-sweeping them
 
-93 of the benchmark's 541 rows have `answer_view = full`. The agent cannot answer from the
-starting frame, so it sweeps the camera around and looks at the result. Those 93 rows start
+89 of the 536 rows of dataset v2 have `answer_view = full`. The agent cannot answer from the
+starting frame, so it sweeps the camera around and looks at the result. Those 89 rows start
 from ten fixed camera positions, and nothing in these scenes moves between rows, so the same
 ten sweeps were being recomputed for answers that cannot differ.
 

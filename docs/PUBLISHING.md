@@ -15,7 +15,7 @@ What's automated vs. manual after the professionalization pass.
 - [x] Benchmark CSV `file_location` column updated for all 541 rows
 - [x] `03_download_scenes.sh` switched to Hugging Face Hub (Google Drive as fallback)
 - [x] AmbientCG auto-downloader: `scripts/fetch_textures/download_ambientcg.sh`
-- [x] Texture manifest with source attribution: `docs/MISSING_TEXTURES.md`
+- [x] Texture manifest by source category (not an attribution or licence record): `docs/MISSING_TEXTURES.md`
 - [x] HF dataset card + Space landing page drafts: `scripts/huggingface/`
 - [x] Install-verified end-to-end on real Blender + Ollama (5/5 smoke passed)
 
@@ -55,7 +55,7 @@ Follow-up mechanical updates landed alongside the ID assignment:
 
 3. **Run the upload**:
    ```bash
-   cd /tmp/scope-refactor
+   cd SCOPE   # the repository root
    bash scripts/huggingface/upload_to_hf.sh
    ```
 
@@ -102,7 +102,7 @@ done
 When ready (independent of texture work — you can ship without):
 ```bash
 gh auth switch -u HindsboNikolaj
-cd /tmp/scope-refactor
+cd SCOPE   # the repository root
 gh pr create --title "Professionalize SCOPE repo for 2026" \
   --body "$(cat docs/PR_BODY.md)" \
   --base main --head refactor/professionalize-2026

@@ -60,6 +60,28 @@ from scope.blender.preset_helpers import (
 )
 
 
+
+def _window():
+    """The window, resolved without relying on a context Blender only fills from its event loop."""
+    win = getattr(bpy.context, "window", None)
+    if win is not None:
+        return win
+    wm = getattr(bpy.context, "window_manager", None)
+    return wm.windows[0] if wm and wm.windows else None
+
+
+def _screen():
+    """The screen, for the same reason."""
+    try:
+        from ..blender.helper_funcs import active_screen
+        return active_screen()
+    except Exception:
+        win = getattr(bpy.context, "window", None)
+        if win is not None:
+            return win.screen
+        wm = getattr(bpy.context, "window_manager", None)
+        return wm.windows[0].screen if wm and wm.windows else None
+
 def get_vlm_label() -> str:
     """Return a human-readable label for the active VLM, or empty string."""
     try:
@@ -117,7 +139,7 @@ def prepare_view_for_capture():
     inherited from the file or from the user, and then two machines disagree.
     """
     try:
-        for area in bpy.context.screen.areas:
+        for area in _screen().areas:
             if area.type != "VIEW_3D":
                 continue
             for space in area.spaces:
@@ -134,7 +156,7 @@ def prepare_view_for_capture():
                 try:
                     region = next(r for r in area.regions if r.type == "WINDOW")
                     with bpy.context.temp_override(
-                            window=bpy.context.window, screen=bpy.context.screen,
+                            window=_window(), screen=_screen(),
                             area=area, region=region, space=space):
                         bpy.ops.view3d.view_center_camera()
                 except (RuntimeError, AttributeError, StopIteration):
@@ -177,12 +199,17 @@ def prepare_view_for_capture():
                         setattr(ov, attr, False)
                     except (TypeError, AttributeError):
                         pass
-                for attr in ("show_gizmo", "show_region_ui", "show_region_toolbar",
-                             "show_region_header"):
-                    try:
-                        setattr(space, attr, False)
-                    except (TypeError, AttributeError):
-                        pass
+                # Gizmos are drawn inside the 3D region, so they can reach a capture and are
+                # turned off. The editor chrome flags that used to be set alongside them,
+                # show_region_ui, show_region_toolbar and show_region_header, are deliberately
+                # not: they resize the editor's regions, and doing that from outside Blender's
+                # event loop segfaults the process rather than raising, so the try/except around
+                # them caught nothing. They were never needed either. Both capture paths
+                # photograph the 3D region alone and no chrome has ever appeared in a frame.
+                try:
+                    space.show_gizmo = False
+                except (TypeError, AttributeError):
+                    pass
             break
     except Exception as _e:
         print(f"[runner] WARN: could not standardise the viewport: {_e}")
@@ -212,6 +239,8 @@ REPEATS       = int(os.environ.get("REPEATS") or "1")
 # Default ON (Blender can crash mid-run); set SCOPE_RESUME=0 to force a fresh run.
 RESUME        = (os.environ.get("SCOPE_RESUME", "1").strip().lower()
                  not in ("0", "false", "no", "off", ""))
+HOME_PER_TASK = (os.environ.get("SCOPE_HOME_PER_TASK", "1").strip().lower()
+                 not in ("0", "false", "no", "off"))
 # Optional smoke-test knob: cap the number of input questions actually processed.
 try:
     BENCH_LIMIT = int(os.environ.get("BENCH_LIMIT") or "0")
@@ -254,6 +283,19 @@ def append_result(path, row, header):
         w.writerow(row)
 
 
+def _upgrade_header(path, old_header: list, header: list) -> None:
+    """Rewrite a results CSV under a longer header, leaving the new columns blank."""
+    with open(path, "r", encoding="utf-8", newline="") as rf:
+        rows = list(csv.DictReader(rf))
+    tmp = str(path) + ".upgrade"
+    with open(tmp, "w", encoding="utf-8", newline="") as wf:
+        w = csv.DictWriter(wf, fieldnames=header)
+        w.writeheader()
+        for r in rows:
+            w.writerow({k: r.get(k, "") for k in header})
+    os.replace(tmp, str(path))
+
+
 def prepare_resume(path: str, header: list) -> set:
     """Read an existing OUT_CSV and return the set of (question_id, repeat_idx)
     pairs that are already complete (non-empty ``final_answer``). Errored rows
@@ -264,9 +306,8 @@ def prepare_resume(path: str, header: list) -> set:
     crashed partway through a question's repeats correctly resumes the
     remaining repeats instead of skipping them.
 
-    If the existing header doesn't match ``header``, abort: a mismatched schema
-    almost certainly means an older runner wrote it and interleaving columns
-    would corrupt the file. The user can pass SCOPE_RESUME=0 to overwrite.
+    An ordered subset of the current columns can be upgraded by name. Unknown,
+    duplicate or reordered columns are rejected. SCOPE_RESUME=0 starts fresh.
     """
     p = Path(path)
     if not p.exists() or p.stat().st_size == 0:
@@ -276,10 +317,19 @@ def prepare_resume(path: str, header: list) -> set:
         first_line = rf.readline()
     existing_header = next(csv.reader([first_line])) if first_line else []
     if existing_header != header:
-        print(f"[runner] ERROR: existing {p} has incompatible schema; "
-              f"set SCOPE_RESUME=0 or delete it to start fresh.")
-        bpy.ops.wm.quit_blender()
-        return set()
+        # Preserve the order of known columns and fill newly added columns with blanks.
+        # Reject unknown names, duplicate names and reordered existing columns.
+        if (len(existing_header) == len(set(existing_header))
+                and set(existing_header) <= set(header)
+                and [c for c in header if c in existing_header] == existing_header):
+            print(f"[runner] Resume: {p} predates "
+                  f"{', '.join(c for c in header if c not in existing_header)}; upgrading in place.")
+            _upgrade_header(p, existing_header, header)
+        else:
+            print(f"[runner] ERROR: existing {p} has incompatible schema; "
+                  f"set SCOPE_RESUME=0 or delete it to start fresh.")
+            bpy.ops.wm.quit_blender()
+            return set()
 
     # Drop a trailing partial line (interrupted write) before parsing.
     with open(p, "r", encoding="utf-8", newline="") as rf:
@@ -548,7 +598,7 @@ def coverage_for_unordered(required_tools_policy: str, expected_tool_order_json:
 
 AUTHOR_COLS = [
     "question_id", "file_location", "preset_start", "presets_available", "question", "expected_answer",
-    "question_type", "eval_category", "multi_step_mode", "required_tools_policy", "expected_tool_order_json",
+    "also_accept", "question_type", "eval_category", "multi_step_mode", "required_tools_policy", "expected_tool_order_json",
     "args_check", "expected_tool_args_json", "answer_view", "evaluation_notes", "difficulty",
     "scene_objects_mentioned", "tool_schema_version", "metadata_json",
     "nl_required", "text_normalization", "expected_tools_multiset", "expected_tool_order_signature",
@@ -559,6 +609,13 @@ RUNTIME_COLS = [
     "repeat_idx", "start_ts", "end_ts", "llm_model", "vlm_model",
     "wall_total", "llm_total", "vlm_total", "camera_total", "script_total",
     "final_answer", "tool_call_order", "actual_tool_calls_json", "llm_raw", "llm_readable",
+    # Provenance. Both are written into every row, so both have to be declared here: csv's
+    # DictWriter raises on a key it was not told about, which took the whole run down on its
+    # first row rather than dropping a column.
+    "preset_applied", "panorama",
+    # Per-turn latency. The *_total columns are sums; this keeps the per-turn shape so a
+    # report can show the distribution of planner turns and vision calls, not just the mean.
+    "turn_timings_json",
 ]
 
 JUDGE_COLS = ["judge_error_mode", "judge_reason"]
@@ -579,6 +636,7 @@ _LOG_LINES = []
 _CSV_PRESETS: List[str] = []
 _CUR_PROMPT = ""
 _RUN_START_TS = ""
+_PRESET_APPLIED = None
 _DONE_QIDS: set = set()
 
 
@@ -616,6 +674,7 @@ def field_map(row: Dict[str, Any]) -> Dict[str, Any]:
     pavl  = _get(row, ["presets_available", "Presets Available", "Presets"], default="")
     ques  = _get(row, ["question", "Question", "Question Text", "Prompt", "User Question"], default="")
     expt  = _get(row, ["expected_answer", "Expected Answer", "Expected", "Answer", "Ground Truth", "GT", "Label"], default="")
+    aacc  = _get(row, ["also_accept"], default="[]") or "[]"   # dataset v2: JSON list of accepted alternates
     qtype = _get(row, ["question_type", "Question Type"], default="")
     ecat  = _get(row, ["eval_category", "Eval Category", "Category"], default="")
     msmode = _get(row, ["multi_step_mode", "Multi-step Mode"], default="none")
@@ -647,6 +706,7 @@ def field_map(row: Dict[str, Any]) -> Dict[str, Any]:
         "presets_available": pavl_json,
         "question": ques,
         "expected_answer": expt,
+        "also_accept": aacc,
         "question_type": qtype,
         "eval_category": ecat,
         "multi_step_mode": msmode,
@@ -677,7 +737,7 @@ _STATE = 0
 def _batch_step():
     global _STATE, _AGENT, _ROWS, _ROW_IDX, _REPEAT_IDX
     global _EVENTS, _CUR_PROMPT, _LOG_LINES, _CSV_PRESETS, _RUN_START_TS
-    global _DONE_QIDS
+    global _DONE_QIDS, _PRESET_APPLIED
 
     try:
         # 0) Load questions & init agent once
@@ -784,6 +844,7 @@ def _batch_step():
                 print("[runner] No CSV presets for this question -- using tool-fetched presets/default.")
                 _AGENT.set_presets(None)
 
+            _PRESET_APPLIED = None
             preset = author_fields["preset_start"]
             if preset:
                 print(f"[runner] Applying preset: {preset}")
@@ -796,13 +857,18 @@ def _batch_step():
                     print(f"[runner] WARNING: preset {preset!r} not found. The camera has NOT "
                           f"moved and this row is being answered from the previous view. "
                           f"Check scripts/04_install_presets.py has been run.")
-                    author_fields["preset_applied"] = False
+                    _PRESET_APPLIED = False
                 else:
-                    author_fields["preset_applied"] = True
+                    _PRESET_APPLIED = True
             else:
                 print("[runner] No preset in row; continuing from current view.")
-                author_fields["preset_applied"] = None
+                _PRESET_APPLIED = None
 
+            # The question's start view is its Home: home_action must return here, not to
+            # wherever an earlier question first called it (as in the v2 runs).
+            # SCOPE_HOME_PER_TASK=0 keeps the old once-per-session Home, as the paper's runs had.
+            if HOME_PER_TASK:
+                blender_tools.reset_home()
             prepare_view_for_capture()
 
             print(f"[runner] Ask (row={_ROW_IDX+1}/{len(_ROWS)}, repeat={_REPEAT_IDX+1}/{REPEATS}): {_CUR_PROMPT}")
@@ -862,7 +928,7 @@ def _batch_step():
                 "question_id": author_fields["question_id"],
                 "file_location": author_fields["file_location"],
                 "preset_start": author_fields["preset_start"],
-                "preset_applied": author_fields.get("preset_applied"),
+                "preset_applied": _PRESET_APPLIED,
                 # Which panorama answered this row, if it asked for the full view.
                 #
                 # A path alone is not identification. Cache entries are shared between
@@ -875,6 +941,7 @@ def _batch_step():
                 "presets_available": author_fields["presets_available"],
                 "question": author_fields["question"],
                 "expected_answer": author_fields["expected_answer"],
+                "also_accept": author_fields["also_accept"],
                 "question_type": author_fields["question_type"],
                 "eval_category": author_fields["eval_category"],
                 "multi_step_mode": author_fields["multi_step_mode"],
@@ -914,6 +981,13 @@ def _batch_step():
                 "actual_tool_calls_json": actual_calls_json,
                 "llm_raw": llm_raw_json,
                 "llm_readable": "\n".join(_LOG_LINES[-500:]),
+                "turn_timings_json": json.dumps({
+                    "llm_turns": timings.get("llm_turns", []),
+                    "vlm_calls": timings.get("vlm_calls", []),
+                    "script_calls": timings.get("script_calls", []),
+                    "tools": timings.get("tools", []),
+                    "thinking_turns": timings.get("thinking_turns", []),
+                }),
             })
 
             # Group 3 -- Judge (empty placeholders for now)
@@ -942,12 +1016,116 @@ def _batch_step():
             return 0.1
 
     except Exception as e:
-        print("[runner] FATAL error in batch runner:", e)
+        # One bad row must not take the shard down with it.
+        #
+        # A single context-length 400 on tA04 killed two of four shards and stranded roughly a
+        # hundred rows each; the run looked like a hang, not a crash, because the containers
+        # stayed up. Running out of context is a real, measurable outcome for a small model --
+        # it belongs in the results as a failed row with a reason, not as a dead shard.
+        #
+        # Only errors scoped to the current question are recoverable. Blender dying, or the
+        # dataset failing to load, still terminates: continuing past those produces garbage.
+        msg = str(e)   # _ROW_IDX / _REPEAT_IDX / _STATE are already declared global above
+        recoverable = (
+            "maximum context length" in msg
+            or "reduce the length of the input prompt" in msg
+            or isinstance(e, (ConnectionError, TimeoutError))
+            or e.__class__.__name__ in ("TurnLimitExceeded",
+                                        "APIConnectionError", "APITimeoutError",
+                                        "BadRequestError", "InternalServerError",
+                                        "RateLimitError")
+        )
+        if not recoverable:
+            print("[runner] FATAL error in batch runner:", e)
+            traceback.print_exc()
+            _RUN_FAILED[0] = True
+            bpy.ops.wm.quit_blender()
+            return None
+
+        print(f"[runner] row {_ROW_IDX + 1} failed ({e.__class__.__name__}): {msg[:200]}")
         traceback.print_exc()
-        bpy.ops.wm.quit_blender()
-        return None
+        try:
+            row = _ROWS[_ROW_IDX] if _ROW_IDX < len(_ROWS) else {}
+            out_row = {k: "" for k in RESULT_HEADER}
+            out_row.update({k: v for k, v in field_map(row).items() if k in out_row})
+            out_row.update({
+                "repeat_idx": _REPEAT_IDX + 1,
+                "start_ts": _RUN_START_TS or now_iso(),
+                "end_ts": now_iso(),
+                "final_answer": "",
+                "llm_readable": f"ROW FAILED: {e.__class__.__name__}: {msg[:1000]}",
+                "judge_error_mode": ("context_exhausted"
+                                     if "maximum context length" in msg
+                                     else "turn_limit"
+                                     if e.__class__.__name__ == "TurnLimitExceeded"
+                                     else e.__class__.__name__),
+                "judge_is_correct": "False",
+            })
+            append_result(OUT_CSV, out_row, RESULT_HEADER)
+        except Exception as inner:
+            print("[runner] could not record the failed row:", inner)
+
+        _REPEAT_IDX += 1
+        if _REPEAT_IDX >= REPEATS:
+            _REPEAT_IDX = 0
+            _ROW_IDX += 1
+        _STATE = 1
+        return 0.1
 
 
-# Entrypoint: register timer
-print("=== Starting SCOPE Batch Evaluation Runner ===")
-bpy.app.timers.register(_batch_step, first_interval=0.2)
+# Entrypoint.
+#
+# The batch runs on bpy.app.timers, which needs Blender's event loop to be ticking. On a
+# machine with no window manager it does not tick, and the failure is silent in the worst way:
+# the timer registers, Blender sits in its event loop, and the run produces no output, no error
+# and no CSV. It looks like a very slow benchmark. It never finishes.
+#
+# So the timer is tested rather than assumed. Register a probe, give the event loop a moment to
+# call it, and if it never does, drive the same step function from a plain loop here instead.
+# The step function is identical either way; only who calls it changes.
+print("=== Starting SCOPE Batch Evaluation Runner ===", flush=True)
+
+_TIMER_ALIVE = [False]
+
+
+def _timer_probe():
+    _TIMER_ALIVE[0] = True
+    return None
+
+
+# Set by the fatal path in _batch_step; the direct loop turns it into Blender's exit status.
+_RUN_FAILED = [False]
+
+
+def _direct_loop_exit_code():
+    """0 when every row was answered, 1 when the batch stopped early on a fatal error."""
+    return 0 if not _RUN_FAILED[0] and _ROW_IDX >= len(_ROWS or []) else 1
+
+
+def _drive_by_loop():
+    print("[runner] Blender's timers are not firing, which is normal with no window manager. "
+          "Driving the batch from the script instead.", flush=True)
+    while True:
+        delay = _batch_step()
+        if delay is None:
+            break
+        _time.sleep(max(float(delay), 0.0))
+    # quit_blender() only queues a quit for the event loop, and this path runs before that loop
+    # starts: without an explicit exit, Blender stayed open after the last row and the serial
+    # pipeline never reached the judge. Every row is already appended and closed by now.
+    code = _direct_loop_exit_code()
+    print(f"[runner] Direct loop finished; exiting Blender with status {code}.", flush=True)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(code)
+
+
+bpy.app.timers.register(_timer_probe, first_interval=0.0)
+_deadline = _time.time() + float(os.environ.get("SCOPE_TIMER_PROBE_SECONDS", "5"))
+while not _TIMER_ALIVE[0] and _time.time() < _deadline:
+    _time.sleep(0.05)
+
+if _TIMER_ALIVE[0]:
+    bpy.app.timers.register(_batch_step, first_interval=0.2)
+else:
+    _drive_by_loop()

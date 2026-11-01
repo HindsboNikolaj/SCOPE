@@ -1,0 +1,941 @@
+[
+ {
+  "run": "tA01",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3-4B",
+   "label": "Qwen3-4B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.45",
+    "--max-model-len",
+    "24576"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "hermes"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tA02",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3-8B",
+   "label": "Qwen3-8B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.45",
+    "--max-model-len",
+    "24576"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "hermes"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tA03",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3-30B-A3B",
+   "label": "Qwen3-30B-A3B (base checkpoint, /no_think)",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.9",
+    "--max-model-len",
+    "24576"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "hermes"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tA04",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3.5-0.8B",
+   "label": "Qwen3.5-0.8B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.3",
+    "--max-model-len",
+    "24576"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tA05",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3.6-35B-A3B",
+   "label": "Qwen3.6-35B-A3B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.9",
+    "--max-model-len",
+    "24576"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tA06",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3.8-27B",
+   "label": "Qwen3.8-27B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tA07",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "openai/gpt-oss-20b",
+   "label": "gpt-oss-20b",
+   "precision": "MXFP4",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.6",
+    "--max-model-len",
+    "24576"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "openai"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": [
+   "regenerated answers served with vllm/vllm-openai:v0.10.2",
+   "October re-answers with the planner at --gpu-memory-utilization 0.45 (September 0.6) to fit fewer cards"
+  ]
+ },
+ {
+  "run": "tA08",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "openai/gpt-oss-120b",
+   "label": "gpt-oss-120b",
+   "precision": "MXFP4",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.92",
+    "--max-model-len",
+    "24576"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "openai"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": [
+   "regenerated answers served with vllm/vllm-openai:v0.10.2"
+  ]
+ },
+ {
+  "run": "tA09",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "google/gemma-4-12B-it",
+   "label": "gemma-4-12B-it",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai@sha256:41d42cfabd3289f40fdca71b4a0fe290474880d20e9534a90c698eb78e3eecee (nightly build of 6 Sep 2026)",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.55",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "gemma4"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": [
+   "October re-answers with the planner at --gpu-memory-utilization 0.45 (September 0.55) to fit fewer cards"
+  ]
+ },
+ {
+  "run": "tA10",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "google/gemma-4-26B-A4B-it",
+   "label": "gemma-4-26B-A4B-it",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai@sha256:41d42cfabd3289f40fdca71b4a0fe290474880d20e9534a90c698eb78e3eecee (nightly build of 6 Sep 2026)",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "gemma4"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tA11",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "google/gemma-4-E4B-it",
+   "label": "gemma-4-E4B-it",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai@sha256:41d42cfabd3289f40fdca71b4a0fe290474880d20e9534a90c698eb78e3eecee (nightly build of 6 Sep 2026)",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.45",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "gemma4"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tA13",
+  "group": "repeat",
+  "repeat_of": "tA06",
+  "planner": {
+   "model": "Qwen/Qwen3.8-27B",
+   "label": "Qwen3.8-27B (thinking off)",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--default-chat-template-kwargs",
+    "{\"enable_thinking\": false}"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tA12",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "meta-models/Muse-Glimmer-30B",
+   "label": "Muse-Glimmer-30B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai@sha256:41d42cfabd3289f40fdca71b4a0fe290474880d20e9534a90c698eb78e3eecee (nightly build of 6 Sep 2026)",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "muse_glimmer"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tC01",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "meta-models/Muse-Glimmer-30B",
+   "label": "Muse-Glimmer-30B+DFlash2",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai@sha256:41d42cfabd3289f40fdca71b4a0fe290474880d20e9534a90c698eb78e3eecee (nightly build of 6 Sep 2026)",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.88",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32",
+    "--speculative-config",
+    "{\"method\": \"dflash\", \"model\": \"z-lab/Muse-Glimmer-30B-DFlash2\", \"num_speculative_tokens\": 4}"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "muse_glimmer"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tC02",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3.8-27B",
+   "label": "Qwen3.8-27B+DFlash2",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai@sha256:41d42cfabd3289f40fdca71b4a0fe290474880d20e9534a90c698eb78e3eecee (nightly build of 6 Sep 2026)",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.80",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32",
+    "--speculative-config",
+    "{\"method\": \"dflash\", \"model\": \"z-lab/Qwen3.8-27B-DFlash2\", \"num_speculative_tokens\": 4}"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tC03",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3-8B",
+   "label": "Qwen3-8B+DSpark",
+   "precision": "BF16",
+   "serving": "vLLM development build (PR 51655)",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.55",
+    "--max-model-len",
+    "24576",
+    "--speculative-config",
+    "{\"method\": \"dspark\", \"model\": \"Dogacel/Qwen3-8B-DSpark\", \"num_speculative_tokens\": 8}"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "hermes"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": [
+   "October re-answers with the planner at --gpu-memory-utilization 0.45 (September 0.55) to fit fewer cards"
+  ]
+ },
+ {
+  "run": "tC04",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3-8B",
+   "label": "Qwen3-8B+EAGLE3",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.55",
+    "--max-model-len",
+    "24576",
+    "--speculative-config",
+    "{\"method\": \"eagle3\", \"model\": \"Tengyunw/qwen3_8b_eagle3\", \"num_speculative_tokens\": 4}"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "hermes"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": [
+   "October re-answers with the planner at --gpu-memory-utilization 0.45 (September 0.55) to fit fewer cards"
+  ]
+ },
+ {
+  "run": "tC05",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "cyankiwi/Qwen3.8-27B-AWQ-INT4",
+   "label": "Qwen3.8-27B-AWQ-INT4",
+   "precision": "AWQ-INT4",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.60",
+    "--max-model-len",
+    "24576"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": [
+   "October re-answers with the planner at --gpu-memory-utilization 0.45 (September 0.60) to fit fewer cards"
+  ]
+ },
+ {
+  "run": "tB01",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3.8-27B",
+   "label": "Qwen3.8-27B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "moondream2",
+   "label": "Moondream2",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": []
+ },
+ {
+  "run": "tB02",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3.8-27B",
+   "label": "Qwen3.8-27B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "allenai/Molmo2-8B",
+   "label": "Molmo2-8B",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.55",
+    "--max-model-len",
+    "16384",
+    "--trust-remote-code",
+    "--max-num-batched-tokens",
+    "16384"
+   ]
+  },
+  "notes": []
+ },
+ {
+  "run": "tB03",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3.8-27B",
+   "label": "Qwen3.8-27B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "allenai/Molmo2-VideoPoint-4B",
+   "label": "Molmo2-VideoPoint-4B",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.30",
+    "--max-model-len",
+    "16384",
+    "--trust-remote-code",
+    "--max-num-batched-tokens",
+    "16384"
+   ]
+  },
+  "notes": []
+ },
+ {
+  "run": "tB04",
+  "group": "Qwen vision runs, answered again",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3.8-27B",
+   "label": "Qwen3.8-27B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "same_as_planner": true
+  },
+  "notes": [
+   "answered again on 6 Oct 2026 after the Qwen vision fixes"
+  ]
+ },
+ {
+  "run": "tB05",
+  "group": "Qwen vision runs, answered again",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3.8-27B",
+   "label": "Qwen3.8-27B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "cyankiwi/Qwen3.8-27B-AWQ-INT4",
+   "label": "Qwen3.8-27B-AWQ-INT4",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.40",
+    "--max-model-len",
+    "16384"
+   ]
+  },
+  "notes": [
+   "answered again on 6 Oct 2026 after the Qwen vision fixes"
+  ]
+ },
+ {
+  "run": "tB06",
+  "group": "Qwen vision runs, answered again",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3.8-27B",
+   "label": "Qwen3.8-27B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "Qwen/Qwen3.6-35B-A3B",
+   "label": "Qwen3.6-35B-A3B",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.9",
+    "--max-model-len",
+    "16384"
+   ]
+  },
+  "notes": [
+   "answered again on 6 Oct 2026 after the Qwen vision fixes"
+  ]
+ },
+ {
+  "run": "tB07",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3.8-27B",
+   "label": "Qwen3.8-27B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "model": "google/gemma-4-26B-A4B-it",
+   "label": "gemma-4-26B-A4B-it",
+   "serving": "vllm/vllm-openai@sha256:41d42cfabd3289f40fdca71b4a0fe290474880d20e9534a90c698eb78e3eecee (nightly build of 6 Sep 2026)",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "16384"
+   ]
+  },
+  "notes": [
+   "October re-answers with the vision at --gpu-memory-utilization 0.80 (September 0.85) to fit fewer cards"
+  ]
+ },
+ {
+  "run": "tB08",
+  "group": "Standard runs",
+  "repeat_of": null,
+  "planner": {
+   "model": "google/gemma-4-26B-A4B-it",
+   "label": "gemma-4-26B-A4B-it",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai@sha256:41d42cfabd3289f40fdca71b4a0fe290474880d20e9534a90c698eb78e3eecee (nightly build of 6 Sep 2026)",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "gemma4"
+   ]
+  },
+  "vision": {
+   "same_as_planner": true
+  },
+  "notes": [
+   "October re-answers with the planner at --gpu-memory-utilization 0.80 (September 0.85) to fit fewer cards"
+  ]
+ },
+ {
+  "run": "tB09",
+  "group": "repeat",
+  "repeat_of": "tB04",
+  "planner": {
+   "model": "Qwen/Qwen3.8-27B",
+   "label": "Qwen3.8-27B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai:v0.27.1",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "qwen3_xml"
+   ]
+  },
+  "vision": {
+   "same_as_planner": true
+  },
+  "notes": [
+   "answered again on 6 Oct 2026 after the Qwen vision fixes"
+  ]
+ },
+ {
+  "run": "tD03",
+  "group": "Large planner, smaller cache for 30 tasks",
+  "repeat_of": null,
+  "planner": {
+   "model": "Qwen/Qwen3-Next-80B-A3B-Instruct",
+   "label": "Qwen3-Next-80B-A3B",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai@sha256:41d42cfabd3289f40fdca71b4a0fe290474880d20e9534a90c698eb78e3eecee (nightly build of 6 Sep 2026)",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.70",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32",
+    "--tensor-parallel-size",
+    "4",
+    "--default-chat-template-kwargs",
+    "{\"enable_thinking\": false}"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "hermes"
+   ]
+  },
+  "vision": {
+   "model": "moondream3.1-9B-A2B",
+   "label": "Moondream 3.1",
+   "serving": "Moondream Photon",
+   "server_args": []
+  },
+  "notes": [
+   "30 October re-answers (6 reworded tasks, 24 home_action tasks) with the planner at --gpu-memory-utilization 0.55"
+  ]
+ },
+ {
+  "run": "tRPL2",
+  "group": "repeat",
+  "repeat_of": "tB08",
+  "planner": {
+   "model": "google/gemma-4-26B-A4B-it",
+   "label": "gemma-4-26B-A4B-it",
+   "precision": "BF16",
+   "serving": "vllm/vllm-openai@sha256:41d42cfabd3289f40fdca71b4a0fe290474880d20e9534a90c698eb78e3eecee (nightly build of 6 Sep 2026)",
+   "server_args": [
+    "--gpu-memory-utilization",
+    "0.85",
+    "--max-model-len",
+    "24576",
+    "--max-num-seqs",
+    "32",
+    "--default-chat-template-kwargs",
+    "{\"enable_thinking\": false}"
+   ],
+   "tool_call_args": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser",
+    "gemma4"
+   ]
+  },
+  "vision": {
+   "same_as_planner": true
+  },
+  "notes": [
+   "October re-answers with the planner at --gpu-memory-utilization 0.80 (September 0.85) to fit fewer cards"
+  ]
+ }
+]
