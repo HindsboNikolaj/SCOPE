@@ -68,7 +68,7 @@ A modern city corner with a bookshop. Only some sides are modelled, so turning r
 
 ## city-street
 
-A one-way street with a hotel. Its full views are grey because this scene is too slow to capture in the normal colour mode on a machine without a graphics driver. Everything else about it is fine.
+A one-way street with a hotel. Both the camera views and the full views are in colour (Material Preview). This scene is slow to capture in that mode without a graphics driver, from about 13 minutes to over 2 hours a frame in software OpenGL, so a capture that comes back grey here was most likely taken in Solid mode.
 
 ### hotel-m
 
@@ -80,7 +80,7 @@ A one-way street with a hotel. Its full views are grey because this scene is too
 
 ![full view](../benchmark/panoramas/city-street__preset-hotel-m.png)
 
-*Full view: 360&deg; sweep. Captured in SOLID+TEXTURE, so it is grey.*
+*Full view: 360&deg; sweep, Material Preview.*
 
 ### mailbox
 
@@ -92,7 +92,7 @@ A one-way street with a hotel. Its full views are grey because this scene is too
 
 ![full view](../benchmark/panoramas/city-street__preset-mailbox.png)
 
-*Full view: 360&deg; sweep. Captured in SOLID+TEXTURE, so it is grey.*
+*Full view: 360&deg; sweep, Material Preview.*
 
 ## postwar-city
 

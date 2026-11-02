@@ -97,6 +97,21 @@ print(list_presets())       # Should include your preset names
 apply_preset("Entrance")    # Camera should move to the saved position
 ```
 
+### Composing a scene from existing ones
+
+`scripts/kitbash_scene.py` appends collections or objects from other `.blend` files, places
+them with a transform, optionally adds an HDRI, and packs the output's textures. The manifest
+format is in the script's docstring; give each part either `collection` or `objects`.
+
+```bash
+blender --background --python scripts/kitbash_scene.py -- --inspect source.blend
+blender --background --python scripts/kitbash_scene.py -- --manifest scene.json
+```
+
+It was tested on Blender 4.4.3 with generated geometry (append, instancing, transforms,
+absolute and relative output paths), not on arbitrary third-party scenes or lighting. Packing
+textures makes a file portable; it does not grant the right to redistribute them.
+
 ---
 
 ## Scene Directory Structure
@@ -112,7 +127,7 @@ benchmark/
       MyScene.blend
     another-scene/
       AnotherScene.blend
-  scope_536.csv
+  scope_v2.csv
 ```
 
 The `file_location` value in the CSV would be:

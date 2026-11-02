@@ -188,7 +188,7 @@ whitechapel none of its 193 textures are resident at that moment: a capture take
 away is a blank grey rectangle, one at four seconds is still about a third wrong, and the
 image is not stable until roughly twenty seconds. Fifteen seconds is a sensible floor, and it
 costs almost nothing over a whole run because the runner only reopens a file when the scene
-changes and the benchmark CSV is grouped by scene, which is four opens in 541 rows.
+changes and the benchmark CSV is grouped by scene, which is four opens in 536 rows.
 
 **Image size depends on how you capture.** With `SCOPE_CAPTURE=opengl` it comes from the
 scene's own render settings, so it is reproducible across machines. With the default viewport

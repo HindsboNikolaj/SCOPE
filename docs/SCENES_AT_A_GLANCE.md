@@ -1,10 +1,10 @@
 # Scenes at a glance
 
-Every camera position the benchmark starts from, what it sees, and what it sees when it looks around. 10 scene-and-preset combinations across four scenes account for all 541 rows.
+Every camera position the benchmark starts from, what it sees, and what it sees when it looks around. 10 scene-and-preset combinations across four scenes account for all 536 rows of dataset v2.
 
 Both pictures are viewport screenshots in Material Preview, which is the mode captures use and the mode the vision models are shown. Neither is a Cycles render.
 
-**Two of these were not captured in the mode the benchmark grades on.** `city-street/hotel-m`, `city-street/mailbox` are in Solid with textures rather than Material Preview.
+The two city-street sweep timings in the table were measured in Solid with textures, an earlier fallback; the city-street panoramas and camera views shipped in this repository are Material Preview, like the other three scenes.
 
 `city-street` costs roughly 750 to 820 seconds per frame in Material Preview under software OpenGL, and that figure barely moves with resolution: a 184 by 149 pixel capture took twenty-four minutes, and quadrupling the pixels after that added twelve percent. So it is a fixed per-frame cost rather than a per-pixel one, and lowering the resolution recovers almost nothing. The other three scenes cost seconds. On a machine with a real GL driver this is unremarkable. Solid with textures brings the same nine frame sweep back to 57 seconds.
 
@@ -14,19 +14,19 @@ What that mode costs, measured rather than assumed. Geometry, layout and signage
 
 | scene | preset | rows start here | of those, full-view | sweep | shading |
 |---|---|---:|---:|---|---|
-| `book-nook` | `road1` | 56 | 8 | 10 frames, 36° step, 164s | MATERIAL |
-| `book-nook` | `store-front` | 56 | 9 | 10 frames, 36° step, 530s | MATERIAL |
-| `book-nook` | `store-front2` | 56 | 9 | 10 frames, 36° step, 158s | MATERIAL |
-| `city-street` | `hotel-m` | 61 | 15 | 9 frames, 40° step, 59s | **SOLID+TEXTURE** |
-| `city-street` | `mailbox` | 59 | 15 | 9 frames, 40° step, 57s | **SOLID+TEXTURE** |
-| `postwar-city` | `diff-view-1` | 40 | 5 | 9 frames, 40° step, 104s | MATERIAL |
-| `postwar-city` | `street-view-1` | 40 | 6 | 9 frames, 40° step, 67s | MATERIAL |
-| `postwar-city` | `street-view-2` | 40 | 6 | 9 frames, 40° step, 62s | MATERIAL |
-| `whitechapel` | `eor-viewpoint` | 68 | 10 | 10 frames, 36° step, 191s | MATERIAL |
-| `whitechapel` | `sor-viewpoint` | 65 | 10 | 10 frames, 36° step, 141s | MATERIAL |
-| | **total** | **541** | **93** | |
+| `book-nook` | `road1` | 54 | 6 | 10 frames, 36° step, 164s | MATERIAL |
+| `book-nook` | `store-front` | 57 | 6 | 10 frames, 36° step, 530s | MATERIAL |
+| `book-nook` | `store-front2` | 59 | 13 | 10 frames, 36° step, 158s | MATERIAL |
+| `city-street` | `hotel-m` | 61 | 12 | 9 frames, 40° step, 59s | SOLID+TEXTURE (timing only) |
+| `city-street` | `mailbox` | 59 | 15 | 9 frames, 40° step, 57s | SOLID+TEXTURE (timing only) |
+| `postwar-city` | `diff-view-1` | 34 | 5 | 9 frames, 40° step, 104s | MATERIAL |
+| `postwar-city` | `street-view-1` | 38 | 6 | 9 frames, 40° step, 67s | MATERIAL |
+| `postwar-city` | `street-view-2` | 37 | 6 | 9 frames, 40° step, 62s | MATERIAL |
+| `whitechapel` | `eor-viewpoint` | 70 | 10 | 10 frames, 36° step, 191s | MATERIAL |
+| `whitechapel` | `sor-viewpoint` | 67 | 10 | 10 frames, 36° step, 141s | MATERIAL |
+| | **total** | **536** | **89** | |
 
-A *full-view* row is one whose `answer_view` is `full`: the question cannot be answered from the starting frame, so the agent has to look around first. There are 93 of them across the whole benchmark, and every viewpoint has some, so every viewpoint needs a full view that works. It does not follow that every viewpoint needs a panorama, which is the next section.
+A *full-view* row is one whose `answer_view` is `full`: the question cannot be answered from the starting frame, so the agent has to look around first. There are 89 of them in dataset v2, and every viewpoint has some, so every viewpoint needs a full view that works. It does not follow that every viewpoint needs a panorama, which is the next section.
 
 ## The full view is not the same shape at every viewpoint
 

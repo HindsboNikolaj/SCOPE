@@ -28,6 +28,7 @@ outputs/
 output/
 runs/
 results/
+!benchmark/results/
 benchmark/scenes/
 *.blend1
 blender_temp/
@@ -41,3 +42,4 @@ blender_temp/
 benchmark/.gitattributes
 benchmark/paper.pdf
 benchmark/scope_541.csv
+.scope-presets/

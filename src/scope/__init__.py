@@ -7,4 +7,4 @@ PTZ camera agents. Published at HRI '26 (Edinburgh, Scotland).
 https://github.com/HindsboNikolaj/SCOPE
 """
 
-__version__ = "1.0.0"
+__version__ = "0.2.0"

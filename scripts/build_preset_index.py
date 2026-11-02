@@ -29,7 +29,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PRESETS = ROOT / "benchmark" / "presets" / "presets.json"
-CSV_PATH = Path(os.environ.get("SCOPE_CSV", ROOT / "benchmark" / "scope_536.csv"))
+CSV_PATH = Path(os.environ.get("SCOPE_CSV", ROOT / "benchmark" / "scope_v2.csv"))
 OUT = ROOT / "benchmark" / "presets" / "presets_by_scene.json"
 
 

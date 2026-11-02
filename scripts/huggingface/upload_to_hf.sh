@@ -20,7 +20,7 @@ rm -rf "$STAGE"
 mkdir -p "$STAGE/scenes"
 
 # Pack each scene from local SCOPE/ folder (the texture-rich source)
-LOCAL_SCOPE="${LOCAL_SCOPE:-$HOME/Desktop/HindsboNikolaj Git Random/SCOPE}"
+LOCAL_SCOPE="${LOCAL_SCOPE:?set LOCAL_SCOPE to the folder holding the texture-rich scene sources}"
 for s in whitechapel book-nook city-street postwar-city; do
     mkdir -p "$STAGE/scenes/$s"
     # Prefer packed if it exists, else copy raw .blend
@@ -31,8 +31,11 @@ for s in whitechapel book-nook city-street postwar-city; do
     fi
 done
 
-# Include benchmark CSV
-cp "$PROJECT_ROOT/benchmark/scope_536.csv" "$STAGE/scope_541.csv"
+# Include benchmark CSVs: v2 (default) and the archived v1 files, with the change list
+cp "$PROJECT_ROOT/benchmark/scope_v2.csv" "$STAGE/scope_v2.csv"
+cp "$PROJECT_ROOT/benchmark/CHANGES_v2.md" "$STAGE/CHANGES_v2.md"
+mkdir -p "$STAGE/archive"
+cp "$PROJECT_ROOT/benchmark/archive/"*.csv "$PROJECT_ROOT/benchmark/archive/README.md" "$STAGE/archive/"
 
 # Include dataset card as README.md
 cp "$SCRIPT_DIR/dataset_card.md" "$STAGE/README.md"

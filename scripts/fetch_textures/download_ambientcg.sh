@@ -48,12 +48,11 @@ echo ""
 echo "Distributing textures into scene folders..."
 # For each scene, scan its .blend for referenced filenames and copy matching files
 # from the staging area.
-python3 - <<'PY'
+PROJECT_ROOT="$PROJECT_ROOT" python3 - <<'PY'
 import os, shutil
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).parent.parent if "__file__" in dir() else Path("/tmp/scope-refactor")
-PROJECT_ROOT = Path("/tmp/scope-refactor")
+PROJECT_ROOT = Path(os.environ["PROJECT_ROOT"])
 SCENES_DIR = PROJECT_ROOT / "benchmark" / "scenes"
 STAGING = SCENES_DIR / ".ambientcg_staging" / "extracted"
 

@@ -151,7 +151,7 @@ def check_panoramas():
 def _presets_for_scene(stem):
     """The preset names the benchmark starts at in this scene, read from the CSV."""
     import csv
-    path = os.environ.get("SCOPE_CSV") or os.path.join(REPO, "benchmark", "scope_536.csv")
+    path = os.environ.get("SCOPE_CSV") or os.path.join(REPO, "benchmark", "scope_v2.csv")
     if not os.path.exists(path):
         return set()
     want = set()

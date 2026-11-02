@@ -9,21 +9,16 @@ This document is what was learned making it work anyway, on a datacentre GPU ser
 compute-only NVIDIA driver and no graphics stack of any kind. Nothing below depends on the
 particular card or driver version; what matters is that the driver ships no OpenGL.
 
-## This is not the recommended setup
+## Choose the capture backend
 
-Read this as a way to make SCOPE run where it otherwise could not, not as the way to run it.
-A headless box gives you software OpenGL and nothing else: an Xvfb display has no hardware GL,
-so the GPUs on the machine accelerate the vision model and do not touch the viewport at all.
+Blender still needs a UI viewport. On a server, use a virtual display and
+hardware OpenGL through the setup in [HARDWARE_GL.md](HARDWARE_GL.md), then
+[RUN_FAST.md](RUN_FAST.md) for parallel benchmark workers.
 
-What that costs, measured at a 640 pixel long edge in Material Preview: 5 to 60 seconds a frame
-on three of the four scenes, and 790 to 8500 seconds a frame on `city-street`, whose materials
-are expensive to shade in software. The same captures on a workstation with a real display and
-a GL driver are not in that range.
-
-So the order of preference is a workstation, then a cloud instance with a virtual workstation
-driver (the GRID and vWS variants do ship OpenGL), and only then this. If you are here because
-a headless box is what you have, the rest of the document works. If you are here because it
-seemed simpler, it is not.
+The software-rendering measurements below describe an earlier fallback, not
+an expected cost of headless operation. Check the renderer before timing a
+run. The new launcher requires an NVIDIA renderer and stops if it cannot
+confirm one.
 
 ## What fails, and the exact message
 
@@ -47,7 +42,7 @@ Recorded so the same afternoon is not spent twice.
 | Xvfb from a conda `cos7` package | Starts, but Blender quits: `GLX_ARB_create_context not available`. That X server is from the CentOS 7 era and its GLX cannot create a modern context. |
 | Mesa surfaceless EGL, no X at all | Blender's GL loader crashes. |
 | A newer X server from conda-forge | There is not one. Only the `cos7` build is packaged. |
-| Hardware OpenGL through the NVIDIA container runtime | Nothing to expose. `nvidia-container-cli list` shows no GL libraries, because the driver was installed compute-only. Getting hardware GL means reinstalling the driver with graphics support. |
+| Hardware OpenGL through the NVIDIA container runtime | Nothing to expose. `nvidia-container-cli list` shows no GL libraries, because the driver was installed compute-only. Use the matching userspace libraries and VirtualGL bridge in HARDWARE_GL.md. |
 
 ## What does solve it
 
@@ -85,8 +80,7 @@ manager running, without one, after forcing a full draw and buffer swap with
 `wm.redraw_timer(type='DRAW_WIN_SWAP')`, and with the whole-window `screen.screenshot`
 operator. Every one of them returned a uniformly black image.
 
-So set `SCOPE_CAPTURE=opengl` when running headless. The default is `viewport`, which is
-what produced the published results and what you should keep when you have a display.
+So set `SCOPE_CAPTURE=opengl` when running headless. The default is `auto`, which tries a window capture and falls back to an offscreen draw if needed. Use `viewport` explicitly to retain the paper capture path on a display.
 
 ## Shading: the flags that decide whether the picture is right
 

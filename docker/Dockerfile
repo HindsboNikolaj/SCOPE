@@ -49,10 +49,12 @@ RUN curl -fsSL -o /tmp/blender.tar.xz \
  && rm /tmp/blender.tar.xz \
  && ln -s /opt/blender/blender /usr/local/bin/blender
 
-# SCOPE's helper_funcs imports PIL, and the stitch needs numpy. These go into Blender's own
-# bundled Python, not the system one, because that is the interpreter Blender scripts run in.
+# Install the runner's Python dependencies into Blender's bundled interpreter.
+# System Python packages are not available to Blender's scripts.
 RUN /opt/blender/${BLENDER_SERIES}/python/bin/python3.11 -m pip install --no-cache-dir \
-      Pillow numpy
+      Pillow numpy requests openai pyyaml python-dotenv pandas \
+ && /opt/blender/${BLENDER_SERIES}/python/bin/python3.11 -c \
+      "import PIL, numpy, requests, openai, yaml, dotenv, pandas"
 
 # Force software GL. Without this Mesa probes /dev/dri, finds cards it cannot open, and the
 # probe failures are the first thing in every log.

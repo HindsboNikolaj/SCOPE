@@ -1,10 +1,13 @@
 # SCOPE Benchmark
 
-The SCOPE benchmark consists of **541 tasks** defined in
-[`scope_536.csv`](scope_536.csv). The filename preserves the **536-task**
-published score subset used in the HRI '26 paper; five shipped rows fall
-outside that subset. The public Git history begins with the full 541-row CSV,
-so it does not establish task-by-task provenance for the difference. Each row
+The SCOPE benchmark is **536 tasks**, dataset v2, in [`scope_v2.csv`](scope_v2.csv):
+the HRI '26 paper's tasks ([`archive/scope_536_v1.csv`](archive/scope_536_v1.csv)) with 187
+rows corrected. Every change and its reason is in [`CHANGES_v2.md`](CHANGES_v2.md); v2 is
+rebuilt from v1 and [`corrections.json`](corrections.json) by `scripts/apply_corrections.py`.
+v2 adds one column, `also_accept`: a JSON list of alternates that also pass. SCOPE 0.1.0 shipped
+a 541-row file named `scope_536.csv`; it is removed, and
+[`archive/lineage_541_to_536.csv`](archive/lineage_541_to_536.csv) lists its 23 removed and 18
+inserted rows. Each row
 specifies a natural-language question, the Blender scene to load, the expected
 answer, and metadata used for automated evaluation.
 
@@ -48,12 +51,12 @@ answer, and metadata used for automated evaluation.
 |----------|-----------------------|------:|-------------|
 | Counting | `counting` | 95 | Count objects matching a natural-language description. Requires `count_pointing` with correct `view_type`. |
 | Descriptor | `descriptor` | 89 | Identify or describe visual attributes (color, shape, material) of objects in the scene. |
-| Location / Spatial | `location` | 53 | Reason about spatial relationships between objects (left of, above, behind, etc.). |
-| OCR Identification | `ocr` | 54 | Read and report text visible on signs, labels, or surfaces in the scene. |
+| Location / Spatial | `location_spatial` | 53 | Reason about spatial relationships between objects (left of, above, behind, etc.). |
+| OCR Identification | `ocr_identification` | 54 | Read and report text visible on signs, labels, or surfaces in the scene. |
 | Single Call | `single_call` | 72 | Tasks solvable with exactly one tool call. Tests basic tool selection. |
-| Multi-step Command | `multi_cmd` | 57 | Tasks requiring a sequence of tool calls executed in order (e.g., go to preset, then count). |
-| Multi-step Reasoning | `multi_reason` | 54 | Multi-step chains where intermediate results inform subsequent tool calls. |
-| Comparative Relational | `comparative` | 62 | Compare attributes or counts across multiple objects or viewpoints. |
+| Multi-step Command | `multi_step_command` | 57 | Tasks requiring a sequence of tool calls executed in order (e.g., go to preset, then count). |
+| Multi-step Reasoning | `multi_step_reasoning` | 54 | Multi-step chains where intermediate results inform subsequent tool calls. |
+| Comparative Relational | `comparative_relational` | 62 | Compare attributes or counts across multiple objects or viewpoints. |
 
 ---
 
@@ -76,21 +79,24 @@ or create your own scenes following the guide in
 ### Full Benchmark
 
 ```bash
-python -m scope.eval.run \
-    --config configs/agent_config.yaml \
-    --benchmark benchmark/scope_536.csv \
-    --output results/
+bash scripts/run_eval_pipeline.sh configs/agent_config.yaml results/   # one Blender process
+python3 scripts/run_fast.py --gpu 0 --out results/my-pairing --judge    # GPU server, parallel shards
 ```
+
+Both read `benchmark/scope_v2.csv` by default; see [`docs/RUN_FAST.md`](../docs/RUN_FAST.md) for
+the parallel runner.
 
 ### Single Category
 
+Write that category's rows to their own CSV and pass it as the questions file:
+
 ```bash
-python -m scope.eval.run \
-    --config configs/agent_config.yaml \
-    --benchmark benchmark/scope_536.csv \
-    --category counting \
-    --output results/counting/
+mkdir -p results/counting
+python3 -c "import pandas as pd; d = pd.read_csv('benchmark/scope_v2.csv'); d[d.eval_category == 'counting'].to_csv('results/counting/questions.csv', index=False)"
+QUESTIONS_CSV=results/counting/questions.csv bash scripts/run_eval_pipeline.sh configs/agent_config.yaml results/counting/
 ```
+
+`run_fast.py --questions results/counting/questions.csv` does the same on a GPU server.
 
 ### Evaluation Pipeline
 
@@ -113,7 +119,7 @@ python -m scope.eval.run \
 To add tasks to the benchmark:
 
 1. Create or select a Blender scene with appropriate camera presets.
-2. Add one row per task to `scope_536.csv` (or a new CSV file) following the
+2. Add one row per task to a new CSV file (keep `scope_v2.csv` fixed so results stay comparable) following the
    schema above.
 3. Ensure `expected_tool_order_json` accurately reflects the ideal tool-call
    sequence.

@@ -9,6 +9,9 @@ numpy>=1.24.0
 # Evaluation
 pandas>=2.0.0
 
+# Scene download (scripts/03_download_scenes.sh)
+huggingface_hub>=0.23
+
 # VLM backends (install the one you need)
 # moondream                  # pip install moondream (for local Moondream inference)
 # transformers>=4.40.0       # For local HuggingFace VLMs

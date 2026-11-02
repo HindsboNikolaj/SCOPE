@@ -1,0 +1,82 @@
+{
+ "configurations": 26,
+ "records": 13936,
+ "passes": 10193,
+ "pct": 73.14,
+ "groups": {
+  "Standard runs": {
+   "runs": [
+    "tA01",
+    "tA02",
+    "tA03",
+    "tA04",
+    "tA05",
+    "tA06",
+    "tA07",
+    "tA08",
+    "tA09",
+    "tA10",
+    "tA11",
+    "tA12",
+    "tC01",
+    "tC02",
+    "tC03",
+    "tC04",
+    "tC05",
+    "tB01",
+    "tB02",
+    "tB03",
+    "tB07",
+    "tB08"
+   ],
+   "mean_pct": 72.08
+  },
+  "Qwen vision runs, answered again": {
+   "runs": [
+    "tB04",
+    "tB05",
+    "tB06"
+   ],
+   "mean_pct": 79.66
+  },
+  "Large planner, smaller cache for 30 tasks": {
+   "runs": [
+    "tD03"
+   ],
+   "mean_pct": 76.87
+  }
+ },
+ "repeats": {
+  "tB09": "tB04",
+  "tRPL2": "tB08",
+  "tA13": "tA06"
+ },
+ "seat_pass_pct": {
+  "gpt-oss-120b": 71.6,
+  "muse-glimmer-judge": 76.5,
+  "qwen3-nemotron-genrm": 67.4
+ },
+ "all_three_agree_pct": 87.8,
+ "code_checks": {
+  "action_contradiction": 170,
+  "no_final_answer": 48
+ },
+ "unparseable_vision": 9,
+ "september_grading_pct": 64.34,
+ "flips_september_to_v2": {
+  "0->0": 3152,
+  "1->0": 591,
+  "0->1": 1818,
+  "1->1": 8375
+ },
+ "category_pct": {
+  "comparative_relational": 59.6,
+  "counting": 60.4,
+  "descriptor": 72.5,
+  "location_spatial": 70.8,
+  "multi_step_command": 86.7,
+  "multi_step_reasoning": 68.6,
+  "ocr_identification": 72.6,
+  "single_call": 97.3
+ }
+}

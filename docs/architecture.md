@@ -236,7 +236,7 @@ VLM perception, and simulation execution stages.
 ```
 SCOPE/
   benchmark/
-    scope_536.csv            # 541-task benchmark (paper scores use a 536-task subset)
+    scope_v2.csv             # 536-task benchmark, dataset v2 (archive/ holds v1 and the 541-to-536 lineage)
     scenes/                  # Blender scene files (.blend)
     presets/presets.json     # Camera preset definitions
   configs/
@@ -274,8 +274,23 @@ SCOPE/
 
 - **Add a model:** see [`adding_models.md`](adding_models.md).
 - **Add a scene:** drop `.blend` files in `benchmark/scenes/`, add rows to
-  `benchmark/scope_536.csv`; see [`creating_scenes.md`](creating_scenes.md).
+  a new questions CSV; see [`creating_scenes.md`](creating_scenes.md).
 - **Add a tool:** implement in `src/scope/tools/blender_tools.py`, register
   in `src/scope/tools/schema.json`; the agent auto-discovers from the schema.
 - **Edit a prompt:** modify the corresponding file under `prompts/`; no code
   changes needed.
+
+### Using SCOPE from another runtime or camera
+
+SCOPE declares its tools as OpenAI-compatible function-calling JSON and executes them in
+Blender's Python. MCP is a separate client/server protocol with its own transport and result
+conventions; an OpenAI-compatible tool schema is not an MCP server definition.
+
+To expose a SCOPE tool through MCP or another agent runtime, write a thin adapter: map that
+runtime's tool declaration and request to the SCOPE function arguments, call the
+implementation, and translate `result`, errors and timings back into the runtime's result
+format. Keep the mapping and validation explicit.
+
+To attach a physical camera, write and validate an adapter for that device's API. The paper and
+the office film document research work on real PTZ cameras; this repository does not contain
+that camera driver.

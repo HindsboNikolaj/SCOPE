@@ -1,0 +1,581 @@
+change,fields_changed,old_id,new_id,scene,old_category,new_category,question
+unchanged,,Q_078,Q_001,whitechapel,comparative_relational,comparative_relational,"After panning left 180°, which view has more street lamps—before or after?"
+added,,,Q_002,whitechapel,,comparative_relational,"After a 180 degree turn to the left, which view shows more street lamps – before or after?"
+unchanged,,Q_080,Q_003,whitechapel,comparative_relational,comparative_relational,"Which half of the frame has more shrubbery, left or right?"
+edited,question;preset_start;multi_step_mode;expected_tool_order_json,Q_086,Q_004,whitechapel,comparative_relational,comparative_relational,"Which side of the road has more trees, left or right?"
+added,,,Q_005,whitechapel,,comparative_relational,Which side of the road has more trees?
+added,,,Q_006,whitechapel,,comparative_relational,"Which side of the road has more trees, left or right?"
+added,,,Q_007,whitechapel,,comparative_relational,Which side has more trees?
+unchanged,,Q_082,Q_008,whitechapel,comparative_relational,comparative_relational,Which view shows a clearer intersection—before or after panning right 20°?
+edited,question;expected_answer;preset_start,Q_088,Q_009,whitechapel,comparative_relational,comparative_relational,"After panning left 180 degrees, which view has more street lamps – the original or the after?"
+unchanged,,Q_084,Q_010,whitechapel,comparative_relational,comparative_relational,"After a half-turn, which view shows more buildings—before or after?"
+unchanged,,Q_085,Q_011,whitechapel,comparative_relational,comparative_relational,"Which half of the frame has more shrubbery, left or right?"
+edited,expected_answer;preset_start;multi_step_mode;expected_tool_order_json,Q_081,Q_012,whitechapel,comparative_relational,comparative_relational,"Which side has more trees, left or right?"
+unchanged,,Q_087,Q_013,whitechapel,comparative_relational,comparative_relational,Which view shows a clearer intersection—before or after panning right 20°?
+edited,preset_start,Q_083,Q_014,whitechapel,comparative_relational,comparative_relational,"After panning left 180°, which view has more street lamps—before or after?"
+edited,expected_answer,Q_079,Q_015,whitechapel,comparative_relational,comparative_relational,"After a half-turn, which view shows more buildings—before or after?"
+unchanged,,Q_090,Q_016,whitechapel,comparative_relational,comparative_relational,"Which half of the frame has more shrubbery, left or right?"
+unchanged,,Q_001,Q_017,whitechapel,counting,counting,How many tanks are visible right now?
+unchanged,,Q_002,Q_018,whitechapel,counting,counting,How many drones are visible right now?
+unchanged,,Q_003,Q_019,whitechapel,counting,counting,How many people are visible right now?
+unchanged,,Q_004,Q_020,whitechapel,counting,counting,How many dogs are visible right now?
+unchanged,,Q_005,Q_021,whitechapel,counting,counting,How many cats are visible right now?
+unchanged,,Q_006,Q_022,whitechapel,counting,counting,How many cars are visible right now?
+unchanged,,Q_007,Q_023,whitechapel,counting,counting,How many buses are visible right now?
+unchanged,,Q_008,Q_024,whitechapel,counting,counting,How many bicycles are visible right now?
+unchanged,,Q_009,Q_025,whitechapel,counting,counting,How many motorcycles are visible right now?
+unchanged,,Q_010,Q_026,whitechapel,counting,counting,How many airplanes are visible right now?
+unchanged,,Q_011,Q_027,whitechapel,counting,counting,How many birds are visible right now?
+unchanged,,Q_012,Q_028,whitechapel,counting,counting,How many signs are visible right now?
+unchanged,,Q_013,Q_029,whitechapel,counting,counting,How many windows with lights on are visible right now?
+unchanged,,Q_014,Q_030,whitechapel,counting,counting,How many tanks are visible right now?
+unchanged,,Q_015,Q_031,whitechapel,counting,counting,How many drones are visible right now?
+unchanged,,Q_016,Q_032,whitechapel,counting,counting,How many people are visible right now?
+unchanged,,Q_017,Q_033,whitechapel,counting,counting,How many dogs are visible right now?
+unchanged,,Q_018,Q_034,whitechapel,counting,counting,How many cats are visible right now?
+unchanged,,Q_019,Q_035,whitechapel,counting,counting,How many cars are visible right now?
+unchanged,,Q_020,Q_036,whitechapel,counting,counting,How many buses are visible right now?
+unchanged,,Q_021,Q_037,whitechapel,counting,counting,How many bicycles are visible right now?
+unchanged,,Q_022,Q_038,whitechapel,counting,counting,How many street lamps are visible right now?
+unchanged,,Q_023,Q_039,whitechapel,counting,counting,Are there at least seven street lamps in view?
+unchanged,,Q_024,Q_040,whitechapel,descriptor,descriptor,Describe the condition of the street.
+unchanged,,Q_025,Q_041,whitechapel,descriptor,descriptor,Give a one-sentence description of the scene.
+unchanged,,Q_026,Q_042,whitechapel,descriptor,descriptor,What color is the prominent door?
+unchanged,,Q_027,Q_043,whitechapel,descriptor,descriptor,Are the street lights turned on or off?
+unchanged,,Q_028,Q_044,whitechapel,descriptor,descriptor,List notable features in this scene.
+unchanged,,Q_029,Q_045,whitechapel,descriptor,descriptor,Do the buildings look new or old?
+unchanged,,Q_030,Q_046,whitechapel,descriptor,descriptor,Is the street clean?
+unchanged,,Q_031,Q_047,whitechapel,descriptor,descriptor,Is anyone present in the scene?
+unchanged,,Q_032,Q_048,whitechapel,descriptor,descriptor,Is the weather dry or does it look like it just rained?
+unchanged,,Q_033,Q_049,whitechapel,descriptor,descriptor,Describe the sky in a single sentence.
+unchanged,,Q_034,Q_050,whitechapel,descriptor,descriptor,Do you see any readable signs?
+edited,preset_start,Q_035,Q_051,whitechapel,descriptor,descriptor,Describe the intersection area.
+unchanged,,Q_036,Q_052,whitechapel,descriptor,descriptor,Are the balconies occupied?
+unchanged,,Q_037,Q_053,whitechapel,descriptor,descriptor,Is there shrubbery on the road?
+unchanged,,Q_038,Q_054,whitechapel,descriptor,descriptor,What is the general color palette of the buildings?
+unchanged,,Q_039,Q_055,whitechapel,descriptor,descriptor,Describe the condition of the street.
+unchanged,,Q_040,Q_056,whitechapel,descriptor,descriptor,Give a one-sentence description of the scene.
+unchanged,,Q_041,Q_057,whitechapel,descriptor,descriptor,What color is the prominent door?
+unchanged,,Q_042,Q_058,whitechapel,descriptor,descriptor,Are the street lights turned on or off?
+unchanged,,Q_043,Q_059,whitechapel,descriptor,descriptor,List notable features in this scene.
+unchanged,,Q_044,Q_060,whitechapel,descriptor,descriptor,Do the buildings look new or old?
+unchanged,,Q_045,Q_061,whitechapel,descriptor,descriptor,Is the street clean?
+unchanged,,Q_046,Q_062,whitechapel,descriptor,descriptor,Is anyone present in the scene?
+unchanged,,Q_047,Q_063,whitechapel,descriptor,descriptor,Is the weather dry or does it look like it just rained?
+unchanged,,Q_048,Q_064,whitechapel,descriptor,descriptor,Describe the sky in a single sentence.
+unchanged,,Q_049,Q_065,whitechapel,descriptor,descriptor,Do you see any readable signs?
+added,,,Q_066,whitechapel,,descriptor,Describe the location of the two street lamps—what are they on and what are they near?
+unchanged,,Q_051,Q_067,whitechapel,descriptor,descriptor,Are the balconies occupied?
+edited,expected_answer,Q_052,Q_068,whitechapel,descriptor,descriptor,Is there shrubbery on the road?
+unchanged,,Q_053,Q_069,whitechapel,descriptor,descriptor,What is the general color palette of the buildings?
+unchanged,,Q_054,Q_070,whitechapel,descriptor,descriptor,Describe the condition of the street.
+unchanged,,Q_055,Q_071,whitechapel,descriptor,descriptor,Give a one-sentence description of the scene.
+unchanged,,Q_056,Q_072,whitechapel,descriptor,descriptor,What color is the prominent door?
+unchanged,,Q_057,Q_073,whitechapel,location_spatial,location_spatial,Where is the tan building relative to the street?
+added,,,Q_074,whitechapel,,location_spatial,"From this perspective, are the two trees on the left sidewalk, right sidewalk, or in the road?"
+added,,,Q_075,whitechapel,,location_spatial,"From the current viewpoint, where are the two trees relative to the street?"
+unchanged,,Q_059,Q_076,whitechapel,location_spatial,location_spatial,Where are most puddles located?
+unchanged,,Q_060,Q_077,whitechapel,location_spatial,location_spatial,Is the red door centered on its building?
+unchanged,,Q_061,Q_078,whitechapel,location_spatial,location_spatial,Are the street lamps near the intersection?
+unchanged,,Q_062,Q_079,whitechapel,location_spatial,location_spatial,Is there notable occlusion on the right side?
+edited,expected_answer,Q_063,Q_080,whitechapel,location_spatial,location_spatial,What occupies the top-right of the frame?
+unchanged,,Q_064,Q_081,whitechapel,location_spatial,location_spatial,Where is the tan building relative to the street?
+edited,expected_answer;preset_start,Q_058,Q_082,whitechapel,location_spatial,location_spatial,Where are the two trees relative to the street?
+unchanged,,Q_066,Q_083,whitechapel,location_spatial,location_spatial,Where are most puddles located?
+unchanged,,Q_067,Q_084,whitechapel,location_spatial,location_spatial,Is the red door centered on its building?
+unchanged,,Q_068,Q_085,whitechapel,location_spatial,location_spatial,Are the street lamps near the intersection?
+unchanged,,Q_069,Q_086,whitechapel,location_spatial,location_spatial,Is there notable occlusion on the right side?
+unchanged,,Q_115,Q_087,whitechapel,multi_step_command,multi_step_command,Take a screenshot and then zoom in 2×.
+unchanged,,Q_116,Q_088,whitechapel,multi_step_command,multi_step_command,Take a screenshot and then zoom in 2×.
+unchanged,,Q_117,Q_089,whitechapel,multi_step_command,multi_step_command,Take a screenshot and then zoom in 2×.
+unchanged,,Q_118,Q_090,whitechapel,multi_step_command,multi_step_command,Take a screenshot and then zoom in 2×.
+unchanged,,Q_119,Q_091,whitechapel,multi_step_command,multi_step_command,Take a screenshot and then zoom in 2×.
+unchanged,,Q_120,Q_092,whitechapel,multi_step_command,multi_step_command,Take a screenshot and then zoom in 2×.
+unchanged,,Q_121,Q_093,whitechapel,multi_step_command,multi_step_command,"First go to the eor-viewpoint, then pan left 20° and take a screenshot."
+unchanged,,Q_122,Q_094,whitechapel,multi_step_command,multi_step_command,"First go to the sor-viewpoint, tilt up 15°, then take a screenshot."
+unchanged,,Q_123,Q_095,whitechapel,multi_step_command,multi_step_command,"Return Home, zoom out 50%, then take a screenshot."
+unchanged,,Q_124,Q_096,whitechapel,multi_step_reasoning,multi_step_reasoning,Tilt up 50° and check the sky for a blip; report if one is present.
+unchanged,,Q_125,Q_097,whitechapel,multi_step_reasoning,multi_step_reasoning,Tilt up 50° and check the sky for a blip; report if one is present.
+unchanged,,Q_126,Q_098,whitechapel,multi_step_reasoning,multi_step_reasoning,Turn around (pan 180°) and tell me if the road behind you is also wet.
+unchanged,,Q_127,Q_099,whitechapel,multi_step_reasoning,multi_step_reasoning,Turn around (pan 180°) and tell me if the road behind you is also wet.
+unchanged,,Q_128,Q_100,whitechapel,multi_step_reasoning,multi_step_reasoning,"Count birds, then pan left 20° and count again; which view had more?"
+unchanged,,Q_129,Q_101,whitechapel,multi_step_reasoning,multi_step_reasoning,"Count birds, then pan left 20° and count again; which view had more?"
+unchanged,,Q_130,Q_102,whitechapel,multi_step_reasoning,multi_step_reasoning,"Count birds, then pan left 20° and count again; which view had more?"
+unchanged,,Q_131,Q_103,whitechapel,multi_step_reasoning,multi_step_reasoning,"Count birds, then pan left 20° and count again; which view had more?"
+unchanged,,Q_132,Q_104,whitechapel,multi_step_reasoning,multi_step_reasoning,"Count birds, then pan left 20° and count again; which view had more?"
+unchanged,,Q_133,Q_105,whitechapel,multi_step_reasoning,multi_step_reasoning,"Count birds, then pan left 20° and count again; which view had more?"
+unchanged,,Q_070,Q_106,whitechapel,ocr_identification,ocr_identification,Are there any readable street signs?
+unchanged,,Q_071,Q_107,whitechapel,ocr_identification,ocr_identification,What is the name of any business in view?
+unchanged,,Q_072,Q_108,whitechapel,ocr_identification,ocr_identification,Read the text on any door or window if present.
+unchanged,,Q_073,Q_109,whitechapel,ocr_identification,ocr_identification,Identify any logos or emblems you can see.
+unchanged,,Q_074,Q_110,whitechapel,ocr_identification,ocr_identification,Are there any readable street signs?
+unchanged,,Q_075,Q_111,whitechapel,ocr_identification,ocr_identification,What is the name of any business in view?
+unchanged,,Q_076,Q_112,whitechapel,ocr_identification,ocr_identification,Read the text on any door or window if present.
+unchanged,,Q_077,Q_113,whitechapel,ocr_identification,ocr_identification,Identify any logos or emblems you can see.
+unchanged,,Q_091,Q_114,whitechapel,single_call,single_call,Pan right 5°.
+unchanged,,Q_092,Q_115,whitechapel,single_call,single_call,Pan left 5°.
+unchanged,,Q_093,Q_116,whitechapel,single_call,single_call,Pan right 10°.
+unchanged,,Q_094,Q_117,whitechapel,single_call,single_call,Pan left 10°.
+unchanged,,Q_095,Q_118,whitechapel,single_call,single_call,Pan right 15°.
+unchanged,,Q_096,Q_119,whitechapel,single_call,single_call,Pan left 15°.
+unchanged,,Q_097,Q_120,whitechapel,single_call,single_call,Pan right 20°.
+unchanged,,Q_098,Q_121,whitechapel,single_call,single_call,Pan left 20°.
+unchanged,,Q_099,Q_122,whitechapel,single_call,single_call,Pan right 30°.
+unchanged,,Q_100,Q_123,whitechapel,single_call,single_call,Pan left 30°.
+unchanged,,Q_101,Q_124,whitechapel,single_call,single_call,Tilt up 5°.
+unchanged,,Q_102,Q_125,whitechapel,single_call,single_call,Tilt down 5°.
+unchanged,,Q_103,Q_126,whitechapel,single_call,single_call,Tilt up 10°.
+unchanged,,Q_104,Q_127,whitechapel,single_call,single_call,Tilt down 10°.
+unchanged,,Q_105,Q_128,whitechapel,single_call,single_call,Tilt up 15°.
+unchanged,,Q_106,Q_129,whitechapel,single_call,single_call,Tilt down 15°.
+unchanged,,Q_107,Q_130,whitechapel,single_call,single_call,Zoom in 50%.
+unchanged,,Q_108,Q_131,whitechapel,single_call,single_call,Zoom out 50%.
+unchanged,,Q_109,Q_132,whitechapel,single_call,single_call,Zoom in 2×.
+unchanged,,Q_110,Q_133,whitechapel,single_call,single_call,Zoom out 2×.
+unchanged,,Q_111,Q_134,whitechapel,single_call,single_call,Take a screenshot.
+unchanged,,Q_112,Q_135,whitechapel,single_call,single_call,Go to the eor-viewpoint preset.
+unchanged,,Q_113,Q_136,whitechapel,single_call,single_call,Go to the sor-viewpoint preset.
+unchanged,,Q_114,Q_137,whitechapel,single_call,single_call,Return to the Home position.
+unchanged,,Q_206,Q_138,book-nook,comparative_relational,comparative_relational,"Which half has more bikes, the left or the right?"
+edited,expected_answer,Q_207,Q_139,book-nook,comparative_relational,comparative_relational,Are there more trees or bikes in the current view?
+unchanged,,Q_208,Q_140,book-nook,comparative_relational,comparative_relational,"After panning right 50°, which view had more bikes—before or after?"
+added,,,Q_141,book-nook,,comparative_relational,Which preset shows more bikes?
+edited,expected_answer,Q_210,Q_142,book-nook,comparative_relational,comparative_relational,"Which half has more bikes, the left or the right?"
+edited,expected_answer,Q_211,Q_143,book-nook,comparative_relational,comparative_relational,Are there more trees or bikes in the current view?
+edited,expected_answer,Q_212,Q_144,book-nook,comparative_relational,comparative_relational,"After panning right 50°, which view had more bikes—before or after?"
+added,,,Q_145,book-nook,,comparative_relational,Which preset shows more bikes?
+edited,expected_answer,Q_214,Q_146,book-nook,comparative_relational,comparative_relational,"Which half has more bikes, the left or the right?"
+unchanged,,Q_215,Q_147,book-nook,comparative_relational,comparative_relational,Are there more trees or bikes in the current view?
+unchanged,,Q_216,Q_148,book-nook,comparative_relational,comparative_relational,"After panning right 50°, which view had more bikes—before or after?"
+edited,question;expected_answer;preset_start,Q_209,Q_149,book-nook,comparative_relational,comparative_relational,"Which preset shows more bikes, store-front2 or road1?"
+unchanged,,Q_218,Q_150,book-nook,comparative_relational,comparative_relational,"Which half has more bikes, the left or the right?"
+edited,expected_answer,Q_219,Q_151,book-nook,comparative_relational,comparative_relational,Are there more trees or bikes in the current view?
+unchanged,,Q_220,Q_152,book-nook,comparative_relational,comparative_relational,"After panning right 50°, which view had more bikes—before or after?"
+edited,question;expected_answer;preset_start,Q_213,Q_153,book-nook,comparative_relational,comparative_relational,"Which preset shows more bikes, store-front2 or store-front?"
+added,,,Q_154,book-nook,,comparative_relational,Which half is the bank in—the left or the right half?
+edited,expected_answer,Q_223,Q_155,book-nook,comparative_relational,comparative_relational,Are there more trees or bikes in the current view?
+added,,,Q_156,book-nook,,comparative_relational,"After panning 50° to the right, do you still see the bookstore?"
+added,,,Q_157,book-nook,,comparative_relational,Is the tree in the left or right half of the current view?
+edited,expected_answer;preset_start,Q_222,Q_158,book-nook,comparative_relational,comparative_relational,"Which half has more bikes, the left or the right?"
+unchanged,,Q_227,Q_159,book-nook,comparative_relational,comparative_relational,Are there more trees or bikes in the current view?
+edited,preset_start,Q_224,Q_160,book-nook,comparative_relational,comparative_relational,"After panning right 50°, which view had more bikes—before or after?"
+unchanged,,Q_134,Q_161,book-nook,counting,counting,How many bikes are visible right now?
+added,,,Q_162,book-nook,,counting,Is there a tree on the right side of the frame?
+unchanged,,Q_135,Q_163,book-nook,counting,counting,Count trees in the left half of the frame.
+unchanged,,Q_136,Q_164,book-nook,counting,counting,Are there at least 2 fire hydrants in view?
+added,,,Q_165,book-nook,,counting,"After zooming in on the bike racks, how many bikes do you see?"
+edited,expected_answer,Q_137,Q_166,book-nook,counting,counting,"After a 2× zoom in, how many bikes do you see?"
+unchanged,,Q_138,Q_167,book-nook,counting,counting,How many trees can you make out after zooming in slightly?
+unchanged,,Q_139,Q_168,book-nook,counting,counting,How many fire hydrants are visible right now?
+edited,expected_answer,Q_140,Q_169,book-nook,counting,counting,Count bikes in the left half of the frame.
+unchanged,,Q_141,Q_170,book-nook,counting,counting,Are there at least 2 trees in view?
+added,,,Q_171,book-nook,,counting,"After zooming in 2x, how many fire hydrants are visible?"
+added,,,Q_172,book-nook,,counting,"After zooming in on the fire hydrant, how many trees do you see?"
+edited,expected_answer,Q_142,Q_173,book-nook,counting,counting,"After a 2× zoom in, how many fire hydrants do you see?"
+edited,question,Q_143,Q_174,book-nook,counting,counting,How many bikes can you make out after zooming out 10 percent?
+unchanged,,Q_144,Q_175,book-nook,counting,counting,How many trees are visible right now?
+edited,expected_answer,Q_145,Q_176,book-nook,counting,counting,Count fire hydrants in the left half of the frame.
+edited,expected_answer,Q_146,Q_177,book-nook,counting,counting,Are there at least 2 bikes in view?
+edited,expected_answer,Q_147,Q_178,book-nook,counting,counting,"After a 2× zoom in, how many trees do you see?"
+added,,,Q_179,book-nook,,counting,"Before zooming in, how many trees do you see?"
+added,,,Q_180,book-nook,,counting,"After zooming in, how many trees do you see?"
+unchanged,,Q_148,Q_181,book-nook,counting,counting,How many fire hydrants can you make out after zooming in slightly?
+edited,expected_answer;preset_start,Q_149,Q_182,book-nook,counting,counting,How many bikes are visible right now?
+edited,expected_answer,Q_150,Q_183,book-nook,counting,counting,Count trees in the left half of the frame.
+unchanged,,Q_151,Q_184,book-nook,counting,counting,Are there at least 2 fire hydrants in view?
+added,,,Q_185,book-nook,,counting,"After panning 20° to the left, how many bikes do you see?"
+unchanged,,Q_153,Q_186,book-nook,counting,counting,How many trees can you make out after zooming in slightly?
+unchanged,,Q_154,Q_187,book-nook,counting,counting,How many fire hydrants are visible right now?
+added,,,Q_188,book-nook,,counting,"After panning 20° to the left, how many bikes do you see?"
+unchanged,,Q_156,Q_189,book-nook,descriptor,descriptor,Describe the storefront area in the current view.
+unchanged,,Q_157,Q_190,book-nook,descriptor,descriptor,What color is the nearest bike?
+unchanged,,Q_158,Q_191,book-nook,descriptor,descriptor,List notable features visible right now.
+unchanged,,Q_159,Q_192,book-nook,descriptor,descriptor,Describe the storefront area in the current view.
+unchanged,,Q_160,Q_193,book-nook,descriptor,descriptor,What color is the nearest bike?
+unchanged,,Q_161,Q_194,book-nook,descriptor,descriptor,List notable features visible right now.
+unchanged,,Q_162,Q_195,book-nook,descriptor,descriptor,Describe the storefront area in the current view.
+added,,,Q_196,book-nook,,descriptor,What color is the fire hydrant?
+added,,,Q_197,book-nook,,descriptor,What color is the curb near the fire hydrant?
+unchanged,,Q_163,Q_198,book-nook,descriptor,descriptor,What color is the nearest bike?
+unchanged,,Q_164,Q_199,book-nook,descriptor,descriptor,List notable features visible right now.
+unchanged,,Q_166,Q_200,book-nook,descriptor,descriptor,What color is the nearest bike?
+unchanged,,Q_167,Q_201,book-nook,descriptor,descriptor,List notable features visible right now.
+unchanged,,Q_169,Q_202,book-nook,descriptor,descriptor,What color is the nearest bike?
+unchanged,,Q_170,Q_203,book-nook,descriptor,descriptor,List notable features visible right now.
+unchanged,,Q_172,Q_204,book-nook,descriptor,descriptor,What color is the nearest bike?
+unchanged,,Q_173,Q_205,book-nook,descriptor,descriptor,List notable features visible right now.
+edited,expected_answer,Q_181,Q_206,book-nook,location_spatial,location_spatial,Is the bike left or right of the fire hydrant?
+unchanged,,Q_176,Q_207,book-nook,location_spatial,location_spatial,Where is the tree relative to the storefront (in front/behind/near/far)?
+edited,expected_answer,Q_177,Q_208,book-nook,location_spatial,location_spatial,Is the bike left or right of the fire hydrant?
+unchanged,,Q_178,Q_209,book-nook,location_spatial,location_spatial,Where is the tree relative to the storefront (in front/behind/near/far)?
+edited,expected_answer,Q_179,Q_210,book-nook,location_spatial,location_spatial,Is the bike left or right of the fire hydrant?
+edited,question;expected_answer,Q_186,Q_211,book-nook,location_spatial,location_spatial,"Where is the tree relative to the storefront? Answer with the pair: {in front/behind}, {near/far}."
+added,,,Q_212,book-nook,,location_spatial,Where is the tree relative to the storefront?
+added,,,Q_213,book-nook,,location_spatial,Is the fire hydrant on the left or right side of the road?
+edited,preset_start,Q_180,Q_214,book-nook,location_spatial,location_spatial,Where is the tree relative to the storefront (in front/behind/near/far)?
+added,,,Q_215,book-nook,,location_spatial,Is the bike closer to the bookstore or the fire hydrant?
+edited,question;expected_answer,Q_184,Q_216,book-nook,location_spatial,location_spatial,"Where is the tree relative to the storefront? Answer with the pair: {in front/behind}, {near/far}."
+added,,,Q_217,book-nook,,location_spatial,Is the graffiti to the right or left of the bikes?
+added,,,Q_218,book-nook,,location_spatial,"Where is the fire hydrant relative to the storefront? Answer with the pair: {left/right}, {near/far}."
+unchanged,,Q_175,Q_219,book-nook,location_spatial,location_spatial,Is the bike left or right of the fire hydrant?
+unchanged,,Q_182,Q_220,book-nook,location_spatial,location_spatial,Where is the tree relative to the storefront (in front/behind/near/far)?
+unchanged,,Q_254,Q_221,book-nook,multi_step_command,multi_step_command,Take a screenshot and zoom in on the bookstore sign.
+unchanged,,Q_255,Q_222,book-nook,multi_step_command,multi_step_command,Zoom in slightly and then count the bikes.
+unchanged,,Q_256,Q_223,book-nook,multi_step_command,multi_step_command,Track the bike briefly and also take a screenshot.
+unchanged,,Q_257,Q_224,book-nook,multi_step_command,multi_step_command,Take a screenshot and zoom in on the bookstore sign.
+unchanged,,Q_258,Q_225,book-nook,multi_step_command,multi_step_command,Zoom in slightly and then count the bikes.
+unchanged,,Q_259,Q_226,book-nook,multi_step_command,multi_step_command,Track the bike briefly and also take a screenshot.
+unchanged,,Q_260,Q_227,book-nook,multi_step_command,multi_step_command,Take a screenshot and zoom in on the bookstore sign.
+unchanged,,Q_261,Q_228,book-nook,multi_step_command,multi_step_command,Zoom in slightly and then count the bikes.
+unchanged,,Q_262,Q_229,book-nook,multi_step_command,multi_step_command,Track the bike briefly and also take a screenshot.
+unchanged,,Q_263,Q_230,book-nook,multi_step_command,multi_step_command,Take a screenshot and zoom in on the bookstore sign.
+unchanged,,Q_264,Q_231,book-nook,multi_step_command,multi_step_command,Zoom in slightly and then count the bikes.
+unchanged,,Q_265,Q_232,book-nook,multi_step_command,multi_step_command,Track the bike briefly and also take a screenshot.
+unchanged,,Q_266,Q_233,book-nook,multi_step_command,multi_step_command,Take a screenshot and zoom in on the bookstore sign.
+unchanged,,Q_267,Q_234,book-nook,multi_step_command,multi_step_command,Zoom in slightly and then count the bikes.
+unchanged,,Q_268,Q_235,book-nook,multi_step_command,multi_step_command,"First go to store-front2, then take a screenshot."
+added,,,Q_236,book-nook,,multi_step_command,"Go to the store-front preset, then zoom in on the bank sign, then read it out loud."
+added,,,Q_237,book-nook,,multi_step_command,"First, go to store-front2, then pan right 20°, tilt down 10°, then take a screenshot."
+unchanged,,Q_271,Q_238,book-nook,multi_step_command,multi_step_command,"First go to store-front2, then take a screenshot."
+unchanged,,Q_269,Q_239,book-nook,multi_step_command,multi_step_command,"Zoom in on the bank sign, then read it aloud."
+added,,,Q_240,book-nook,,multi_step_command,"First, go to store-front2, then pan right 20°, tilt down 10°, then take a screenshot."
+unchanged,,Q_274,Q_241,book-nook,multi_step_command,multi_step_command,"First go to store-front2, then take a screenshot."
+added,,,Q_242,book-nook,,multi_step_command,"First, go to store-front2, then zoom in on the bank sign and read it aloud."
+added,,,Q_243,book-nook,,multi_step_command,"First, go to store-front2, then pan right 20°, tilt down 10°, then take a screenshot."
+unchanged,,Q_277,Q_244,book-nook,multi_step_command,multi_step_command,"First go to store-front2, then take a screenshot."
+unchanged,,Q_278,Q_245,book-nook,multi_step_reasoning,multi_step_reasoning,Count bikes now and after a slight zoom; which count is higher?
+unchanged,,Q_279,Q_246,book-nook,multi_step_reasoning,multi_step_reasoning,"Summarize the scene, then go to road1 and summarize again."
+unchanged,,Q_280,Q_247,book-nook,multi_step_reasoning,multi_step_reasoning,"Check if any bikes are present; if yes, zoom and read the bookstore name."
+unchanged,,Q_281,Q_248,book-nook,multi_step_reasoning,multi_step_reasoning,Count bikes now and after a slight zoom; which count is higher?
+unchanged,,Q_282,Q_249,book-nook,multi_step_reasoning,multi_step_reasoning,"Summarize the scene, then go to road1 and summarize again."
+unchanged,,Q_283,Q_250,book-nook,multi_step_reasoning,multi_step_reasoning,"Check if any bikes are present; if yes, zoom and read the bookstore name."
+unchanged,,Q_284,Q_251,book-nook,multi_step_reasoning,multi_step_reasoning,Count bikes now and after a slight zoom; which count is higher?
+unchanged,,Q_285,Q_252,book-nook,multi_step_reasoning,multi_step_reasoning,"Summarize the scene, then go to road1 and summarize again."
+unchanged,,Q_286,Q_253,book-nook,multi_step_reasoning,multi_step_reasoning,"Check if any bikes are present; if yes, zoom and read the bookstore name."
+unchanged,,Q_287,Q_254,book-nook,multi_step_reasoning,multi_step_reasoning,Count bikes now and after a slight zoom; which count is higher?
+unchanged,,Q_288,Q_255,book-nook,multi_step_reasoning,multi_step_reasoning,"Summarize the scene, then go to road1 and summarize again."
+unchanged,,Q_289,Q_256,book-nook,multi_step_reasoning,multi_step_reasoning,"Check if any bikes are present; if yes, zoom and read the bookstore name."
+added,,,Q_257,book-nook,,multi_step_reasoning,Explain which view has more bikes—this one or the store-front preset.
+unchanged,,Q_291,Q_258,book-nook,multi_step_reasoning,multi_step_reasoning,"Go to road1, pan right 51.5°, then read the bookstore name."
+unchanged,,Q_292,Q_259,book-nook,multi_step_reasoning,multi_step_reasoning,"Zoom to the storefront windows, then describe what is inside."
+unchanged,,Q_293,Q_260,book-nook,multi_step_reasoning,multi_step_reasoning,"Take a screenshot, then track the bike for 15 seconds, then take another screenshot."
+added,,,Q_261,book-nook,,multi_step_reasoning,Explain which view has more bikes—this one or the store-front preset.
+unchanged,,Q_295,Q_262,book-nook,multi_step_reasoning,multi_step_reasoning,"Go to road1, pan right 51.5°, then read the bookstore name."
+unchanged,,Q_296,Q_263,book-nook,multi_step_reasoning,multi_step_reasoning,"Zoom to the storefront windows, then describe what is inside."
+unchanged,,Q_297,Q_264,book-nook,multi_step_reasoning,multi_step_reasoning,"Take a screenshot, then track the bike for 15 seconds, then take another screenshot."
+edited,preset_start,Q_290,Q_265,book-nook,multi_step_reasoning,multi_step_reasoning,"Go to store-front, then count the bikes, then explain briefly which side has more."
+unchanged,,Q_299,Q_266,book-nook,multi_step_reasoning,multi_step_reasoning,"Go to road1, pan right 51.5°, then read the bookstore name."
+unchanged,,Q_300,Q_267,book-nook,multi_step_reasoning,multi_step_reasoning,"Zoom to the storefront windows, then describe what is inside."
+unchanged,,Q_301,Q_268,book-nook,multi_step_reasoning,multi_step_reasoning,"Take a screenshot, then track the bike for 15 seconds, then take another screenshot."
+unchanged,,Q_189,Q_269,book-nook,ocr_identification,ocr_identification,What is the name of the bookstore in view?
+edited,expected_answer,Q_190,Q_270,book-nook,ocr_identification,ocr_identification,What is the name of the bank visible here?
+unchanged,,Q_191,Q_271,book-nook,ocr_identification,ocr_identification,Read the sign that says 'Books' near the storefront.
+added,,,Q_272,book-nook,,ocr_identification,"Is the graffiti on the Book Nook store, to the left, or right of the store?"
+added,,,Q_273,book-nook,,ocr_identification,Is there any graffiti on the black Book Nook store? The store is only on the black-painted part.
+added,,,Q_274,book-nook,,ocr_identification,Is there any graffiti on the Book Nook store?
+unchanged,,Q_192,Q_275,book-nook,ocr_identification,ocr_identification,What is the name of the bookstore in view?
+unchanged,,Q_194,Q_276,book-nook,ocr_identification,ocr_identification,Read the sign that says 'Books' near the storefront.
+unchanged,,Q_195,Q_277,book-nook,ocr_identification,ocr_identification,What is the name of the bookstore in view?
+edited,expected_answer,Q_197,Q_278,book-nook,ocr_identification,ocr_identification,Read the sign that says 'Books' near the storefront.
+unchanged,,Q_198,Q_279,book-nook,ocr_identification,ocr_identification,What is the name of the bookstore in view?
+edited,expected_answer,Q_193,Q_280,book-nook,ocr_identification,ocr_identification,What is the name of the bank visible here?
+unchanged,,Q_201,Q_281,book-nook,ocr_identification,ocr_identification,What is the name of the bookstore in view?
+unchanged,,Q_204,Q_282,book-nook,ocr_identification,ocr_identification,What is the name of the bookstore in view?
+added,,,Q_283,book-nook,,descriptor,Can you park in front of the Book Nook?
+unchanged,,Q_230,Q_284,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_231,Q_285,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_232,Q_286,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_233,Q_287,book-nook,single_call,single_call,Go to the store-front preset.
+unchanged,,Q_234,Q_288,book-nook,single_call,single_call,Return to the Home position.
+unchanged,,Q_235,Q_289,book-nook,single_call,single_call,Track the bike for 30 seconds.
+unchanged,,Q_236,Q_290,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_237,Q_291,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_238,Q_292,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_239,Q_293,book-nook,single_call,single_call,Go to the store-front preset.
+unchanged,,Q_240,Q_294,book-nook,single_call,single_call,Return to the Home position.
+unchanged,,Q_241,Q_295,book-nook,single_call,single_call,Track the bike for 30 seconds.
+unchanged,,Q_242,Q_296,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_243,Q_297,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_244,Q_298,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_245,Q_299,book-nook,single_call,single_call,Go to the store-front preset.
+unchanged,,Q_246,Q_300,book-nook,single_call,single_call,Return to the Home position.
+unchanged,,Q_247,Q_301,book-nook,single_call,single_call,Track the bike for 30 seconds.
+unchanged,,Q_248,Q_302,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_249,Q_303,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_250,Q_304,book-nook,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_251,Q_305,book-nook,single_call,single_call,Go to the store-front preset.
+unchanged,,Q_252,Q_306,book-nook,single_call,single_call,Return to the Home position.
+unchanged,,Q_253,Q_307,book-nook,single_call,single_call,Track the bike for 30 seconds.
+unchanged,,Q_374,Q_308,city-street,comparative_relational,comparative_relational,"Which are more in the current view, mailboxes or trees?"
+unchanged,,Q_375,Q_309,city-street,comparative_relational,comparative_relational,"Which are more in this view, garbage cans or trees?"
+unchanged,,Q_376,Q_310,city-street,comparative_relational,comparative_relational,"Which half has more windows, left or right?"
+unchanged,,Q_377,Q_311,city-street,comparative_relational,comparative_relational,"Which has more, buildings or street lamps in the current view?"
+unchanged,,Q_378,Q_312,city-street,comparative_relational,comparative_relational,"After panning 30° right, which view had more visible store signage—before or after?"
+unchanged,,Q_379,Q_313,city-street,comparative_relational,comparative_relational,"Which is closer to the hotel entrance, the mailbox or the street lamp?"
+unchanged,,Q_380,Q_314,city-street,comparative_relational,comparative_relational,"Across the full view, are there more mailboxes or fire hydrants?"
+unchanged,,Q_381,Q_315,city-street,comparative_relational,comparative_relational,"Across the full view, which are more, trees or street lamps?"
+edited,expected_answer,Q_382,Q_316,city-street,comparative_relational,comparative_relational,Which side of the frame contains more windows right now?
+unchanged,,Q_383,Q_317,city-street,comparative_relational,comparative_relational,"Which has more signage visible, the hotel area or the tree area?"
+unchanged,,Q_384,Q_318,city-street,comparative_relational,comparative_relational,"Which is nearer to the street, the mailboxes or the buildings?"
+unchanged,,Q_385,Q_319,city-street,comparative_relational,comparative_relational,"After zooming out 50%, which view had more of the hotel in frame—before or after?"
+unchanged,,Q_302,Q_320,city-street,counting,counting,How many mailboxes are visible in the full scene?
+unchanged,,Q_303,Q_321,city-street,counting,counting,How many fire hydrants are visible in the full scene?
+unchanged,,Q_304,Q_322,city-street,counting,counting,"In a full sweep, how many trees are there?"
+unchanged,,Q_305,Q_323,city-street,counting,counting,"Across the full view, how many street lamps are present?"
+edited,expected_answer,Q_306,Q_324,city-street,counting,counting,"In the full view, how many buildings are visible?"
+unchanged,,Q_307,Q_325,city-street,counting,counting,"Are there any people visible across the full view, and if so how many?"
+unchanged,,Q_308,Q_326,city-street,counting,counting,How many mailboxes are visible right now?
+unchanged,,Q_309,Q_327,city-street,counting,counting,How many trees are in view right now?
+unchanged,,Q_310,Q_328,city-street,counting,counting,Are there at least two mailboxes visible?
+edited,expected_answer,Q_311,Q_329,city-street,counting,counting,Count the mailboxes in the left half of the frame.
+unchanged,,Q_312,Q_330,city-street,counting,counting,How many garbage cans are visible right now?
+unchanged,,Q_313,Q_331,city-street,counting,counting,How many trees are visible from here?
+unchanged,,Q_314,Q_332,city-street,counting,counting,How many mailboxes are in this view?
+unchanged,,Q_315,Q_333,city-street,counting,counting,How many street lamps are visible right now?
+unchanged,,Q_316,Q_334,city-street,counting,counting,"After a slight zoom in, how many mailboxes can you make out?"
+unchanged,,Q_317,Q_335,city-street,counting,counting,"After zooming a bit, how many garbage cans are there?"
+edited,expected_answer,Q_318,Q_336,city-street,counting,counting,Count the windows you can clearly see now.
+unchanged,,Q_319,Q_337,city-street,counting,counting,Count the hotel floors visible in this frame.
+edited,expected_answer,Q_320,Q_338,city-street,counting,counting,How many buildings are visible in the current view?
+added,,,Q_339,city-street,,counting,How many commercial buildings do you see right now?
+unchanged,,Q_322,Q_340,city-street,counting,counting,Count the visible windows on the hotel facade.
+unchanged,,Q_323,Q_341,city-street,counting,counting,How many distinct storefronts are visible from here?
+unchanged,,Q_324,Q_342,city-street,descriptor,descriptor,Give a one-sentence description of the scene.
+unchanged,,Q_325,Q_343,city-street,descriptor,descriptor,What notable features do you see in this view?
+unchanged,,Q_326,Q_344,city-street,descriptor,descriptor,Is the left-middle building’s door open or closed?
+unchanged,,Q_327,Q_345,city-street,descriptor,descriptor,Is the street clean in this scene?
+edited,expected_answer,Q_328,Q_346,city-street,descriptor,descriptor,Do the trees have leaves?
+unchanged,,Q_329,Q_347,city-street,descriptor,descriptor,Describe what’s in front of the hotel.
+unchanged,,Q_330,Q_348,city-street,descriptor,descriptor,How many floors of the hotel are visible at least?
+unchanged,,Q_331,Q_349,city-street,descriptor,descriptor,Is the street lamp turned on?
+unchanged,,Q_332,Q_350,city-street,descriptor,descriptor,Summarize the current view in one sentence.
+unchanged,,Q_333,Q_351,city-street,descriptor,descriptor,Is there a road in front of the hotel?
+unchanged,,Q_334,Q_352,city-street,descriptor,descriptor,Is there any suspicious activity to report?
+unchanged,,Q_335,Q_353,city-street,descriptor,descriptor,Are there any people visible in the current view?
+unchanged,,Q_336,Q_354,city-street,descriptor,descriptor,Describe the condition of the hotel sign.
+unchanged,,Q_337,Q_355,city-street,descriptor,descriptor,What is located to the far right side of the frame?
+unchanged,,Q_338,Q_356,city-street,descriptor,descriptor,Describe the sidewalks in this view.
+edited,expected_answer,Q_339,Q_357,city-street,descriptor,descriptor,Is anything occluding parts of the hotel name?
+unchanged,,Q_340,Q_358,city-street,descriptor,descriptor,Is traffic visible in this frame?
+unchanged,,Q_341,Q_359,city-street,descriptor,descriptor,What textures are most prominent here?
+unchanged,,Q_342,Q_360,city-street,descriptor,descriptor,What stands to the right of the hotel?
+unchanged,,Q_343,Q_361,city-street,location_spatial,location_spatial,Are the trees in front of the mailboxes or behind them?
+unchanged,,Q_344,Q_362,city-street,location_spatial,location_spatial,Is the partial storefront to the left or right side of the frame?
+unchanged,,Q_345,Q_363,city-street,location_spatial,location_spatial,Is the small sliver on the far left a building facade?
+unchanged,,Q_346,Q_364,city-street,location_spatial,location_spatial,Where are the mailboxes relative to the buildings?
+edited,expected_answer,Q_347,Q_365,city-street,location_spatial,location_spatial,Is the street lamp to the left or right of the hotel entrance?
+unchanged,,Q_348,Q_366,city-street,location_spatial,location_spatial,Where are the garbage cans relative to the hotel?
+unchanged,,Q_349,Q_367,city-street,location_spatial,location_spatial,Is the mailbox nearer to the hotel or to the trees?
+unchanged,,Q_350,Q_368,city-street,location_spatial,location_spatial,What is visible at the bottom edge of the frame?
+unchanged,,Q_351,Q_369,city-street,location_spatial,location_spatial,"After panning right 20°, what is centered in the frame?"
+unchanged,,Q_352,Q_370,city-street,location_spatial,location_spatial,"After tilting up 10°, what changes at the top of the view?"
+edited,expected_answer,Q_353,Q_371,city-street,location_spatial,location_spatial,Is a street sign visible from this view?
+edited,question;expected_answer,Q_354,Q_372,city-street,location_spatial,location_spatial,Where is the mailbox relative to the street lamp (left/right)?
+unchanged,,Q_355,Q_373,city-street,location_spatial,location_spatial,Is the hotel visible from this preset?
+unchanged,,Q_356,Q_374,city-street,location_spatial,location_spatial,Is the residential building to the right or left of the hotel?
+unchanged,,Q_398,Q_375,city-street,multi_step_command,multi_step_command,"Take a screenshot, then zoom into the mailboxes, then take another screenshot."
+unchanged,,Q_399,Q_376,city-street,multi_step_command,multi_step_command,Track the hotel sign for a short time and also count the garbage cans.
+unchanged,,Q_400,Q_377,city-street,multi_step_command,multi_step_command,Zoom to the hotel entrance and read any posted text.
+unchanged,,Q_401,Q_378,city-street,multi_step_command,multi_step_command,Count the mailboxes and the trees in any order.
+unchanged,,Q_402,Q_379,city-street,multi_step_command,multi_step_command,Take a screenshot and count the trees.
+unchanged,,Q_403,Q_380,city-street,multi_step_command,multi_step_command,Pan right slightly and then read the partial store sign.
+unchanged,,Q_404,Q_381,city-street,multi_step_command,multi_step_command,Zoom out a bit and then track the mailbox briefly.
+unchanged,,Q_405,Q_382,city-street,multi_step_command,multi_step_command,"First go to the ‘hotel-m’ preset, then take a screenshot."
+unchanged,,Q_406,Q_383,city-street,multi_step_command,multi_step_command,"First go to ‘mailbox’, zoom to the mailboxes, then take a screenshot."
+unchanged,,Q_407,Q_384,city-street,multi_step_command,multi_step_command,"Go to ‘hotel-m’, tilt up 10°, then read the hotel name."
+unchanged,,Q_408,Q_385,city-street,multi_step_command,multi_step_command,"Pan right 20°, zoom to the hotel sign, then take a screenshot."
+unchanged,,Q_409,Q_386,city-street,multi_step_command,multi_step_command,"Go to ‘hotel-m’, take a screenshot, then return Home."
+unchanged,,Q_410,Q_387,city-street,multi_step_reasoning,multi_step_reasoning,Count the mailboxes now and after panning 20° right; summarize the change.
+unchanged,,Q_411,Q_388,city-street,multi_step_reasoning,multi_step_reasoning,"Describe the scene, then zoom 1.5× and describe it again."
+unchanged,,Q_412,Q_389,city-street,multi_step_reasoning,multi_step_reasoning,Summarize this view and also the ‘mailbox’ preset in any order.
+unchanged,,Q_413,Q_390,city-street,multi_step_reasoning,multi_step_reasoning,Count trees and then read any street sign you can see.
+unchanged,,Q_414,Q_391,city-street,multi_step_reasoning,multi_step_reasoning,Compare the number of visible windows before and after zooming out 50%.
+unchanged,,Q_415,Q_392,city-street,multi_step_reasoning,multi_step_reasoning,"Check for a store name on the right, then verify by zooming if needed."
+unchanged,,Q_416,Q_393,city-street,multi_step_reasoning,multi_step_reasoning,"Go to ‘hotel-m’, tilt down slightly, then tell me how many garbage cans are visible."
+edited,expected_answer,Q_417,Q_394,city-street,multi_step_reasoning,multi_step_reasoning,"Go to ‘mailbox’, pan right 20°, then read the partial store name."
+edited,expected_answer,Q_418,Q_395,city-street,multi_step_reasoning,multi_step_reasoning,"Go to ‘hotel-m’, zoom to the hotel sign, then read the name."
+edited,multi_step_mode,Q_419,Q_396,city-street,multi_step_reasoning,multi_step_reasoning,"Pan right 20° repeatedly until you see at least one street sign, then take a screenshot."
+edited,multi_step_mode,Q_420,Q_397,city-street,multi_step_reasoning,multi_step_reasoning,"Go to ‘hotel-m’, compare mailbox count here with the current view, then explain briefly."
+unchanged,,Q_421,Q_398,city-street,multi_step_reasoning,multi_step_reasoning,"Go to ‘mailbox’, do a full sweep to read any store names, then report one."
+unchanged,,Q_357,Q_399,city-street,ocr_identification,ocr_identification,Zoom to the hotel sign and read its name.
+unchanged,,Q_358,Q_400,city-street,ocr_identification,ocr_identification,Zoom into the partial store name on the right and read it.
+unchanged,,Q_359,Q_401,city-street,ocr_identification,ocr_identification,Read any hours or text posted near the hotel entrance.
+unchanged,,Q_360,Q_402,city-street,ocr_identification,ocr_identification,Pan right 20° then read the storefront’s name.
+unchanged,,Q_361,Q_403,city-street,ocr_identification,ocr_identification,Read the one‑way street sign across the area (full view).
+unchanged,,Q_362,Q_404,city-street,ocr_identification,ocr_identification,"Across the full view, identify the coffee shop name."
+edited,question;expected_answer,Q_363,Q_405,city-street,ocr_identification,ocr_identification,"Across the full view, read the coffee store name."
+unchanged,,Q_364,Q_406,city-street,ocr_identification,ocr_identification,Zoom to the door of the left-middle building and read any posted text.
+unchanged,,Q_365,Q_407,city-street,ocr_identification,ocr_identification,Zoom to the lower-right hotel window and read anything on it.
+unchanged,,Q_366,Q_408,city-street,ocr_identification,ocr_identification,Read the LED sign across from the store in the full scene.
+edited,expected_answer,Q_367,Q_409,city-street,ocr_identification,ocr_identification,Read any visible street name sign in this view.
+unchanged,,Q_368,Q_410,city-street,ocr_identification,ocr_identification,Zoom to the hotel awning and read any text.
+edited,expected_answer,Q_369,Q_411,city-street,ocr_identification,ocr_identification,"After zooming in 1.5×, read the partial store letters again."
+unchanged,,Q_370,Q_412,city-street,ocr_identification,ocr_identification,Is there any brand logo visible near the hotel entrance?
+unchanged,,Q_371,Q_413,city-street,ocr_identification,ocr_identification,Read the text on any visible poster or notice.
+unchanged,,Q_372,Q_414,city-street,ocr_identification,ocr_identification,Read the number on any visible address plaque.
+unchanged,,Q_373,Q_415,city-street,ocr_identification,ocr_identification,"Across the full view, are there any store OPEN/CLOSED signs and what do they say?"
+unchanged,,Q_386,Q_416,city-street,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_387,Q_417,city-street,single_call,single_call,Take a screenshot of the hotel view.
+unchanged,,Q_388,Q_418,city-street,single_call,single_call,Go to the ‘hotel-m’ preset.
+unchanged,,Q_389,Q_419,city-street,single_call,single_call,Return to the ‘mailbox’ preset.
+unchanged,,Q_390,Q_420,city-street,single_call,single_call,Zoom in on the mailboxes.
+unchanged,,Q_391,Q_421,city-street,single_call,single_call,Zoom in on the hotel sign.
+unchanged,,Q_392,Q_422,city-street,single_call,single_call,Pan right by 20°.
+unchanged,,Q_393,Q_423,city-street,single_call,single_call,Tilt up by 10°.
+unchanged,,Q_394,Q_424,city-street,single_call,single_call,Zoom out by 50%.
+unchanged,,Q_395,Q_425,city-street,single_call,single_call,Track the hotel sign for 10 seconds.
+unchanged,,Q_396,Q_426,city-street,single_call,single_call,Track the mailbox for 15 seconds.
+unchanged,,Q_397,Q_427,city-street,single_call,single_call,Return the camera to Home.
+unchanged,,Q_494,Q_428,postwar-city,comparative_relational,comparative_relational,"Across a full sweep, are there more buildings or empty open areas?"
+unchanged,,Q_495,Q_429,postwar-city,comparative_relational,comparative_relational,"Across a full sweep, are there more buildings or empty open areas?"
+unchanged,,Q_496,Q_430,postwar-city,comparative_relational,comparative_relational,"After panning 50° to the right, which view had more shrubs—the one before or after the pan?"
+unchanged,,Q_497,Q_431,postwar-city,comparative_relational,comparative_relational,"After panning 50° to the right, which view had more shrubs—the one before or after the pan?"
+edited,expected_answer,Q_498,Q_432,postwar-city,comparative_relational,comparative_relational,"Which half has more rocks right now, the left half or the right half?"
+edited,expected_answer,Q_499,Q_433,postwar-city,comparative_relational,comparative_relational,"Which half has more rocks right now, the left half or the right half?"
+unchanged,,Q_500,Q_434,postwar-city,comparative_relational,comparative_relational,"After panning 50° to the right, which view had more shrubs—the one before or after the pan?"
+unchanged,,Q_501,Q_435,postwar-city,comparative_relational,comparative_relational,"After panning 50° to the right, which view had more shrubs—the one before or after the pan?"
+unchanged,,Q_503,Q_436,postwar-city,comparative_relational,comparative_relational,"After panning 50° to the right, which view had more shrubs—the one before or after the pan?"
+edited,expected_answer;preset_start,Q_502,Q_437,postwar-city,comparative_relational,comparative_relational,"Which half has more rocks right now, the left half or the right half?"
+unchanged,,Q_505,Q_438,postwar-city,comparative_relational,comparative_relational,"After panning 50° to the right, which view had more shrubs—the one before or after the pan?"
+unchanged,,Q_422,Q_439,postwar-city,counting,counting,"Across a full 360° sweep, are there any people visible?"
+unchanged,,Q_423,Q_440,postwar-city,counting,counting,How many phone booths are visible in a full 360° view?
+unchanged,,Q_424,Q_441,postwar-city,counting,counting,"Across a full 360° sweep, are there any people visible?"
+unchanged,,Q_425,Q_442,postwar-city,counting,counting,How many phone booths are visible in a full 360° view?
+unchanged,,Q_426,Q_443,postwar-city,counting,counting,"Across a full 360° sweep, are there any people visible?"
+edited,expected_answer,Q_427,Q_444,postwar-city,counting,counting,How many phone booths are visible in a full 360° view?
+unchanged,,Q_428,Q_445,postwar-city,counting,counting,Are there any animals visible right now?
+unchanged,,Q_429,Q_446,postwar-city,counting,counting,Are there any animals visible right now?
+unchanged,,Q_430,Q_447,postwar-city,counting,counting,Are there any cats visible right now?
+unchanged,,Q_431,Q_448,postwar-city,counting,counting,Are there any cats visible right now?
+unchanged,,Q_432,Q_449,postwar-city,counting,counting,Are there any people visible right now?
+unchanged,,Q_433,Q_450,postwar-city,counting,counting,Are there any people visible right now?
+unchanged,,Q_434,Q_451,postwar-city,counting,counting,Are there any cats visible right now?
+unchanged,,Q_435,Q_452,postwar-city,counting,counting,Are there any people visible right now?
+unchanged,,Q_436,Q_453,postwar-city,counting,counting,Are there any people visible right now?
+unchanged,,Q_437,Q_454,postwar-city,counting,counting,Are there any animals visible right now?
+unchanged,,Q_438,Q_455,postwar-city,counting,counting,Are there any tanks visible right now?
+unchanged,,Q_439,Q_456,postwar-city,counting,counting,Are there any animals visible right now?
+unchanged,,Q_440,Q_457,postwar-city,counting,counting,Are there any cats visible right now?
+unchanged,,Q_441,Q_458,postwar-city,counting,counting,Are there any dogs visible right now?
+unchanged,,Q_442,Q_459,postwar-city,counting,counting,Are there any people visible right now?
+unchanged,,Q_443,Q_460,postwar-city,counting,counting,Are there any animals visible right now?
+unchanged,,Q_444,Q_461,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_445,Q_462,postwar-city,descriptor,descriptor,Describe the town from this vantage point.
+unchanged,,Q_446,Q_463,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_447,Q_464,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_448,Q_465,postwar-city,descriptor,descriptor,Describe the town from this vantage point.
+unchanged,,Q_449,Q_466,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_450,Q_467,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_451,Q_468,postwar-city,descriptor,descriptor,Describe the town from this vantage point.
+unchanged,,Q_452,Q_469,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_453,Q_470,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_454,Q_471,postwar-city,descriptor,descriptor,Describe the town from this vantage point.
+unchanged,,Q_455,Q_472,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_456,Q_473,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_457,Q_474,postwar-city,descriptor,descriptor,Describe the town from this vantage point.
+unchanged,,Q_458,Q_475,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_459,Q_476,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_460,Q_477,postwar-city,descriptor,descriptor,Describe the town from this vantage point.
+unchanged,,Q_461,Q_478,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+unchanged,,Q_462,Q_479,postwar-city,descriptor,descriptor,What notable features stand out in the current view?
+edited,expected_answer,Q_463,Q_480,postwar-city,location_spatial,location_spatial,What is at the left side of the frame right now?
+edited,expected_answer,Q_464,Q_481,postwar-city,location_spatial,location_spatial,Is the brown rusty car left or right of the red car?
+unchanged,,Q_465,Q_482,postwar-city,location_spatial,location_spatial,What lies to the right of the barricade in this view?
+edited,expected_answer,Q_467,Q_483,postwar-city,location_spatial,location_spatial,Pan right 20°; what notable feature appears near the center afterward?
+edited,expected_answer,Q_468,Q_484,postwar-city,location_spatial,location_spatial,Pan right 20°; what notable feature appears near the center afterward?
+edited,expected_answer,Q_469,Q_485,postwar-city,location_spatial,location_spatial,Pan right 20°; what notable feature appears near the center afterward?
+edited,question;expected_answer,Q_473,Q_486,postwar-city,location_spatial,location_spatial,What is on the right side of the frame right now?
+edited,expected_answer,Q_466,Q_487,postwar-city,location_spatial,location_spatial,What is at the left side of the frame right now?
+edited,expected_answer,Q_470,Q_488,postwar-city,location_spatial,location_spatial,What is at the left side of the frame right now?
+edited,expected_answer;preset_start,Q_472,Q_489,postwar-city,location_spatial,location_spatial,What is at the left side of the frame right now?
+unchanged,,Q_518,Q_490,postwar-city,multi_step_command,multi_step_command,"Take a screenshot, then zoom on the barricade, and also take another screenshot."
+unchanged,,Q_519,Q_491,postwar-city,multi_step_command,multi_step_command,"Take a screenshot, then zoom on the barricade, and also take another screenshot."
+unchanged,,Q_520,Q_492,postwar-city,multi_step_command,multi_step_command,"Take a screenshot, then zoom on the barricade, and also take another screenshot."
+unchanged,,Q_521,Q_493,postwar-city,multi_step_command,multi_step_command,"Take a screenshot, then zoom on the barricade, and also take another screenshot."
+unchanged,,Q_522,Q_494,postwar-city,multi_step_command,multi_step_command,"Take a screenshot, then zoom on the barricade, and also take another screenshot."
+unchanged,,Q_523,Q_495,postwar-city,multi_step_command,multi_step_command,"Take a screenshot, then zoom on the barricade, and also take another screenshot."
+unchanged,,Q_524,Q_496,postwar-city,multi_step_command,multi_step_command,"Take a screenshot, then zoom on the barricade, and also take another screenshot."
+unchanged,,Q_525,Q_497,postwar-city,multi_step_command,multi_step_command,"First go to diff-view-1, then take a screenshot."
+unchanged,,Q_526,Q_498,postwar-city,multi_step_command,multi_step_command,"First go to diff-view-1, then take a screenshot."
+unchanged,,Q_527,Q_499,postwar-city,multi_step_command,multi_step_command,"First go to diff-view-1, then take a screenshot."
+unchanged,,Q_528,Q_500,postwar-city,multi_step_command,multi_step_command,"First go to diff-view-1, then take a screenshot."
+unchanged,,Q_529,Q_501,postwar-city,multi_step_command,multi_step_command,"First go to diff-view-1, then take a screenshot."
+edited,multi_step_mode,Q_530,Q_502,postwar-city,multi_step_reasoning,multi_step_reasoning,"In a full 360° sweep, first take a screenshot, then tell me whether a phone booth exists."
+unchanged,,Q_531,Q_503,postwar-city,multi_step_reasoning,multi_step_reasoning,"In a full 360° sweep, first take a screenshot, then tell me whether a phone booth exists."
+unchanged,,Q_532,Q_504,postwar-city,multi_step_reasoning,multi_step_reasoning,Count shrubs now and after panning 50° right; which count is higher?
+unchanged,,Q_533,Q_505,postwar-city,multi_step_reasoning,multi_step_reasoning,Count shrubs now and after panning 50° right; which count is higher?
+unchanged,,Q_534,Q_506,postwar-city,multi_step_reasoning,multi_step_reasoning,Count shrubs now and after panning 50° right; which count is higher?
+edited,question,Q_536,Q_507,postwar-city,multi_step_reasoning,multi_step_reasoning,"Go to street-view-2, tilt down 8°, then tell me how many barricades are visible."
+edited,question,Q_537,Q_508,postwar-city,multi_step_reasoning,multi_step_reasoning,"Go to street-view-2, tilt down 8°, then tell me how many barricades are visible."
+edited,question,Q_538,Q_509,postwar-city,multi_step_reasoning,multi_step_reasoning,"Go to street-view-2, tilt down 8°, then tell me how many barricades are visible."
+unchanged,,Q_477,Q_510,postwar-city,ocr_identification,ocr_identification,"Across a full 360° sweep, is there any readable text anywhere?"
+unchanged,,Q_478,Q_511,postwar-city,ocr_identification,ocr_identification,"Across a full 360° sweep, is there any readable text anywhere?"
+unchanged,,Q_479,Q_512,postwar-city,ocr_identification,ocr_identification,"Across a full 360° sweep, is there any readable text anywhere?"
+unchanged,,Q_480,Q_513,postwar-city,ocr_identification,ocr_identification,"Across a full 360° sweep, is there any readable text anywhere?"
+unchanged,,Q_481,Q_514,postwar-city,ocr_identification,ocr_identification,"Across a full 360° sweep, is there any readable text anywhere?"
+unchanged,,Q_482,Q_515,postwar-city,ocr_identification,ocr_identification,"Across a full 360° sweep, is there any readable text anywhere?"
+unchanged,,Q_483,Q_516,postwar-city,ocr_identification,ocr_identification,Zoom in on the barricade and name what it is.
+unchanged,,Q_484,Q_517,postwar-city,ocr_identification,ocr_identification,Zoom in on the barricade and name what it is.
+unchanged,,Q_485,Q_518,postwar-city,ocr_identification,ocr_identification,Zoom in on the white sign; can you read any text on it?
+unchanged,,Q_486,Q_519,postwar-city,ocr_identification,ocr_identification,Zoom in on the barricade and name what it is.
+unchanged,,Q_487,Q_520,postwar-city,ocr_identification,ocr_identification,Zoom in on the barricade and name what it is.
+unchanged,,Q_488,Q_521,postwar-city,ocr_identification,ocr_identification,Is there any readable text on the small white sign to the right?
+edited,expected_answer,Q_489,Q_522,postwar-city,ocr_identification,ocr_identification,Identify the type of vehicles visible here.
+edited,expected_answer,Q_490,Q_523,postwar-city,ocr_identification,ocr_identification,Identify the type of vehicles visible here.
+unchanged,,Q_491,Q_524,postwar-city,ocr_identification,ocr_identification,Is there any readable text on the small white sign to the right?
+unchanged,,Q_506,Q_525,postwar-city,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_507,Q_526,postwar-city,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_508,Q_527,postwar-city,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_509,Q_528,postwar-city,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_510,Q_529,postwar-city,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_511,Q_530,postwar-city,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_512,Q_531,postwar-city,single_call,single_call,Go to the diff-view-1 preset.
+unchanged,,Q_513,Q_532,postwar-city,single_call,single_call,Return the camera to the Home position.
+unchanged,,Q_514,Q_533,postwar-city,single_call,single_call,Take a screenshot of the current view.
+unchanged,,Q_515,Q_534,postwar-city,single_call,single_call,Zoom in 2×.
+unchanged,,Q_516,Q_535,postwar-city,single_call,single_call,Go to the diff-view-1 preset.
+unchanged,,Q_517,Q_536,postwar-city,single_call,single_call,Return the camera to the Home position.
+removed,,Q_050,,whitechapel,descriptor,,Describe the intersection area.
+removed,,Q_065,,whitechapel,location_spatial,,Where are the two trees relative to the street?
+removed,,Q_089,,whitechapel,comparative_relational,,"After a half-turn, which view shows more buildings—before or after?"
+removed,,Q_152,,book-nook,counting,,"After a 2× zoom in, how many bikes do you see?"
+removed,,Q_155,,book-nook,counting,,Count bikes in the left half of the frame.
+removed,,Q_165,,book-nook,descriptor,,Describe the storefront area in the current view.
+removed,,Q_168,,book-nook,descriptor,,Describe the storefront area in the current view.
+removed,,Q_171,,book-nook,descriptor,,Describe the storefront area in the current view.
+removed,,Q_174,,book-nook,descriptor,,Describe the storefront area in the current view.
+removed,,Q_183,,book-nook,location_spatial,,Is the bike left or right of the fire hydrant?
+removed,,Q_185,,book-nook,location_spatial,,Is the bike left or right of the fire hydrant?
+removed,,Q_187,,book-nook,location_spatial,,Is the bike left or right of the fire hydrant?
+removed,,Q_188,,book-nook,location_spatial,,Where is the tree relative to the storefront (in front/behind/near/far)?
+removed,,Q_196,,book-nook,ocr_identification,,What is the name of the bank visible here?
+removed,,Q_199,,book-nook,ocr_identification,,What is the name of the bank visible here?
+removed,,Q_200,,book-nook,ocr_identification,,Read the sign that says 'Books' near the storefront.
+removed,,Q_202,,book-nook,ocr_identification,,What is the name of the bank visible here?
+removed,,Q_203,,book-nook,ocr_identification,,Read the sign that says 'Books' near the storefront.
+removed,,Q_205,,book-nook,ocr_identification,,What is the name of the bank visible here?
+removed,,Q_217,,book-nook,comparative_relational,,"Which preset shows more bikes, store-front or road1?"
+removed,,Q_221,,book-nook,comparative_relational,,"Which preset shows more bikes, store-front or road1?"
+removed,,Q_225,,book-nook,comparative_relational,,"Which preset shows more bikes, store-front or road1?"
+removed,,Q_226,,book-nook,comparative_relational,,"Which half has more bikes, the left or the right?"
+removed,,Q_228,,book-nook,comparative_relational,,"After panning right 50°, which view had more bikes—before or after?"
+removed,,Q_229,,book-nook,comparative_relational,,"Which preset shows more bikes, store-front or road1?"
+removed,,Q_270,,book-nook,multi_step_command,,"Pan right 20°, tilt down 10°, then take a screenshot."
+removed,,Q_272,,book-nook,multi_step_command,,"Zoom in on the bank sign, then read it aloud."
+removed,,Q_273,,book-nook,multi_step_command,,"Pan right 20°, tilt down 10°, then take a screenshot."
+removed,,Q_275,,book-nook,multi_step_command,,"Zoom in on the bank sign, then read it aloud."
+removed,,Q_276,,book-nook,multi_step_command,,"Pan right 20°, tilt down 10°, then take a screenshot."
+removed,,Q_294,,book-nook,multi_step_reasoning,,"Go to store-front, then count the bikes, then explain briefly which side has more."
+removed,,Q_298,,book-nook,multi_step_reasoning,,"Go to store-front, then count the bikes, then explain briefly which side has more."
+removed,,Q_321,,city-street,counting,,How many signs are visible right now?
+removed,,Q_471,,postwar-city,location_spatial,,Pan right 20°; what notable feature appears near the center afterward?
+removed,,Q_474,,postwar-city,location_spatial,,What is at the left side of the frame right now?
+removed,,Q_475,,postwar-city,location_spatial,,Pan right 20°; what notable feature appears near the center afterward?
+removed,,Q_476,,postwar-city,location_spatial,,What is at the left side of the frame right now?
+removed,,Q_492,,postwar-city,ocr_identification,,Identify the type of vehicles visible here.
+removed,,Q_493,,postwar-city,ocr_identification,,Identify the type of vehicles visible here.
+removed,,Q_504,,postwar-city,comparative_relational,,"Which half has more rocks right now, the left half or the right half?"
+removed,,Q_535,,postwar-city,multi_step_reasoning,,Count shrubs now and after panning 50° right; which count is higher?
+removed,,Q_539,,postwar-city,multi_step_reasoning,,"Go to street-view-2, tilt down a little, then tell me how many barricades are visible."
+removed,,Q_540,,postwar-city,multi_step_reasoning,,"Go to street-view-2, tilt down a little, then tell me how many barricades are visible."
+removed,,Q_541,,postwar-city,multi_step_reasoning,,"Go to street-view-2, tilt down a little, then tell me how many barricades are visible."
