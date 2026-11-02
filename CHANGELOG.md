@@ -13,7 +13,7 @@
   `benchmark/results/v2-2026-10/`. See `docs/RESULTS.md`. The paper's numbers are unchanged in
   `docs/PAPER_RESULTS.md`.
 - **Faster runs**: `scripts/run_fast.py` runs a pairing as six scene workers with GPU capture and
-  resume; a full pairing took 51 min instead of 157 on an A100. Headless servers are supported.
+  resume; a full pairing took 30 min instead of 157 on A100s. Headless servers are supported.
 - **Install**: Blender's own Python packages (`scripts/install_blender_deps.py`), a scene
   download that fetches only `scenes/` with fallbacks, camera presets and the Blender check inside
   the GPU image, and the judge on Python 3.10 and 3.11.

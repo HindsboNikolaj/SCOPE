@@ -119,13 +119,12 @@ against [VISUAL_SMOKE_TEST.md](VISUAL_SMOKE_TEST.md) before accepting scores.
 
 ## Expected time and hardware
 
-On a shared A100 80GB server, Qwen3.8-27B with Moondream 3.1 answered all 536 tasks in 50.8 min
-plus 6.9 min loading models, on three cards (planner, vision, and one card for the six Blender
-workers). Judging, downloads, image builds and scene preparation are excluded. These are
-observations from retained runs with the same execution shape, not predictions. That run
-used an earlier six-shard launcher; `run_fast.py` itself is covered by CPU
-tests and a full 536-row dry run, and has no recorded GPU timing of its own yet. Its timer
-starts once the model servers are ready. With gemma-4-26B-A4B-it as the vision model instead,
+On an A100 80GB server, `run_fast.py` with Qwen3.8-27B and Moondream 3.1 answered all 536 tasks
+in 30.2 min (1 November 2026) plus 6.5 min loading the two models, on three cards (planner,
+vision, and one card for the six Blender workers, which peaked at 20 GB). Judging, downloads,
+image builds and scene preparation are excluded; the timer starts once the model servers are
+ready. These are observations, not predictions. The earlier six-shard launcher took 50.8 min
+for the same pairing and shape. With that launcher and gemma-4-26B-A4B-it as the vision model instead,
 the same shape took 46.8 min plus 12.3 min loading. The four worlds run at once, so their
 times overlap and do not add up to the total.
 

@@ -206,9 +206,12 @@ python3 scripts/run_fast.py --workers 2 --out results/my-pairing --judge   # all
 Re-run the same command to resume. `--dataset v1` runs the paper's tasks; `--dry-run` prints the
 plan. Details: [`docs/RUN_FAST.md`](docs/RUN_FAST.md).
 
+Answering time with the models already loaded; 0.2.0 ran `run_fast.py` with six workers on one card
+and the planner and vision models on two more (judging and setup excluded).
+
 | Measured on A100 80GB GPUs | 0.1.0 | 0.2.0 |
 | --- | :---: | :---: |
-| Entire dataset (536 tasks), Qwen3.8-27B + Moondream 3.1 | 157 min | 51 min |
+| Entire dataset (536 tasks), Qwen3.8-27B + Moondream 3.1 | 157 min | 30 min |
 | One capture | 14.6 s | 0.2 s |
 | Server with no display | Could not finish a task | Runs ([`docs/HEADLESS.md`](docs/HEADLESS.md)) |
 
